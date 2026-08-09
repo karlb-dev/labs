@@ -1,0 +1,96 @@
+{
+  "all_feasible": true,
+  "codebook_id": "cbv3_932b4918f8",
+  "note": "tokenizer-only tier; on-model neutral carrier gaps measured at GPU S2 per model (< 0.10 nats gate)",
+  "pairs": [
+    {
+      "channel": "AR",
+      "codes": "QF3|JX8",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ar0",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "3|3"
+    },
+    {
+      "channel": "AR",
+      "codes": "KP4|VM2",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ar1",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    },
+    {
+      "channel": "AR",
+      "codes": "HB9|TX6",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ar2",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    },
+    {
+      "channel": "AR",
+      "codes": "DN5|WL8",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "arR",
+      "role": "reserved_transfer",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    },
+    {
+      "channel": "RO",
+      "codes": "GS2|PK7",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ro0",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    },
+    {
+      "channel": "RO",
+      "codes": "RV4|MJ6",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ro1",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    },
+    {
+      "channel": "RO",
+      "codes": "BQ5|FZ6",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "ro2",
+      "role": "primary",
+      "shared_token_ids": 0,
+      "token_counts": "3|3"
+    },
+    {
+      "channel": "RO",
+      "codes": "RK2|TN7",
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_token_count": true,
+      "pair_id": "roR",
+      "role": "reserved_transfer",
+      "shared_token_ids": 0,
+      "token_counts": "2|2"
+    }
+  ],
+  "tokenizer_ref": "allenai/Olmo-3.1-32B-Instruct@ac0587e4"
+}

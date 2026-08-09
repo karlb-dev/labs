@@ -1,0 +1,512 @@
+{
+  "chat_template_sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3",
+  "codebook_pairs": [
+    {
+      "bare_token_counts": [
+        3,
+        3
+      ],
+      "channel": "AR",
+      "codes": [
+        "QF3",
+        "JX8"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ar0",
+      "role": "primary",
+      "space_token_counts": [
+        3,
+        3
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "AR",
+      "codes": [
+        "KP4",
+        "VM2"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ar1",
+      "role": "primary",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "AR",
+      "codes": [
+        "HB9",
+        "TX6"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ar2",
+      "role": "primary",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "AR",
+      "codes": [
+        "DN5",
+        "WL8"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "arR",
+      "role": "reserved_transfer",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "RO",
+      "codes": [
+        "GS2",
+        "PK7"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ro0",
+      "role": "primary",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "RO",
+      "codes": [
+        "RV4",
+        "MJ6"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ro1",
+      "role": "primary",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    },
+    {
+      "bare_token_counts": [
+        3,
+        3
+      ],
+      "channel": "RO",
+      "codes": [
+        "BQ5",
+        "FZ6"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "ro2",
+      "role": "primary",
+      "space_token_counts": [
+        3,
+        3
+      ]
+    },
+    {
+      "bare_token_counts": [
+        2,
+        2
+      ],
+      "channel": "RO",
+      "codes": [
+        "RK2",
+        "TN7"
+      ],
+      "distinct_final": true,
+      "distinct_first": true,
+      "equal_count": true,
+      "pair_id": "roR",
+      "role": "reserved_transfer",
+      "space_token_counts": [
+        2,
+        2
+      ]
+    }
+  ],
+  "failures": [],
+  "model_id": "allenai/Olmo-3.1-32B-Instruct",
+  "model_key": "olmo32b",
+  "n_sampled_rows": 104,
+  "passed": true,
+  "render_sample": [
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o0-c0-fe-p0-s0-ar0-00ca8b578d43",
+      "parity_ok": true,
+      "prompt_tokens": 131,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 130,
+        "menu_end": 91,
+        "option_a_end": 71,
+        "option_b_end": 91,
+        "response_instruction_start": 109
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o0-c0-fh-p0-s0-ar0-aa5426d8d02f",
+      "parity_ok": true,
+      "prompt_tokens": 136,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 135,
+        "menu_end": 91,
+        "option_a_end": 71,
+        "option_b_end": 91,
+        "response_instruction_start": 114
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o0-c1-fe-p0-s0-ar0-e8ccba0ec582",
+      "parity_ok": true,
+      "prompt_tokens": 131,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 130,
+        "menu_end": 91,
+        "option_a_end": 71,
+        "option_b_end": 91,
+        "response_instruction_start": 109
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o0-c1-fh-p0-s0-ar0-b763d80373ec",
+      "parity_ok": true,
+      "prompt_tokens": 136,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 135,
+        "menu_end": 91,
+        "option_a_end": 71,
+        "option_b_end": 91,
+        "response_instruction_start": 114
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o1-c0-fe-p0-s0-ar0-73c7c0e8166d",
+      "parity_ok": true,
+      "prompt_tokens": 131,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 130,
+        "menu_end": 91,
+        "option_a_end": 91,
+        "option_b_end": 72,
+        "response_instruction_start": 109
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o1-c0-fh-p0-s0-ar0-ac9dc32a7f0f",
+      "parity_ok": true,
+      "prompt_tokens": 136,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 135,
+        "menu_end": 91,
+        "option_a_end": 91,
+        "option_b_end": 72,
+        "response_instruction_start": 114
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o1-c1-fe-p0-s0-ar0-0013c894c33e",
+      "parity_ok": true,
+      "prompt_tokens": 131,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 130,
+        "menu_end": 91,
+        "option_a_end": 91,
+        "option_b_end": 72,
+        "response_instruction_start": 109
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-SYM",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fs-o1-c1-fh-p0-s0-ar0-b1e4fd33d123",
+      "parity_ok": true,
+      "prompt_tokens": 136,
+      "sites": {
+        "context_end": 52,
+        "final_prompt_token": 135,
+        "menu_end": 91,
+        "option_a_end": 91,
+        "option_b_end": 72,
+        "response_instruction_start": 114
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-P1",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fp-o0-c0-fe-p0-s0-ar0-ll-b0da64e73a1a",
+      "parity_ok": true,
+      "prompt_tokens": 133,
+      "sites": {
+        "context_end": 46,
+        "final_prompt_token": 132,
+        "menu_end": 100,
+        "response_instruction_start": 101
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-P1",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fp-o0-c0-fh-p0-s0-ar0-ll-b4bdd3f3762e",
+      "parity_ok": true,
+      "prompt_tokens": 138,
+      "sites": {
+        "context_end": 46,
+        "final_prompt_token": 137,
+        "menu_end": 105,
+        "response_instruction_start": 106
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-P1",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fp-o0-c1-fe-p0-s0-ar0-ll-494f2d1bde94",
+      "parity_ok": true,
+      "prompt_tokens": 133,
+      "sites": {
+        "context_end": 46,
+        "final_prompt_token": 132,
+        "menu_end": 100,
+        "response_instruction_start": 101
+      }
+    },
+    {
+      "bank": "B-DEV",
+      "channel": "AR",
+      "format_id": "F-P1",
+      "item_id": "bdev-dev_pc_reply-i00-ar-fp-o0-c1-fh-p0-s0-ar0-ll-b0bb49858ecc",
+      "parity_ok": true,
+      "prompt_tokens": 138,
+      "sites": {
+        "context_end": 46,
+        "final_prompt_token": 137,
+        "menu_end": 105,
+        "response_instruction_start": 106
+      }
+    }
+  ],
+  "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+  "sentinel_variants": {
+    "AR": 1,
+    "RO": 1
+  },
+  "target_tokenization": [
+    {
+      "code": "QF3",
+      "pair_id": "ar0",
+      "token_count": 3,
+      "token_ids": [
+        48,
+        37,
+        18
+      ]
+    },
+    {
+      "code": "JX8",
+      "pair_id": "ar0",
+      "token_count": 3,
+      "token_ids": [
+        41,
+        55,
+        23
+      ]
+    },
+    {
+      "code": "KP4",
+      "pair_id": "ar1",
+      "token_count": 2,
+      "token_ids": [
+        66136,
+        19
+      ]
+    },
+    {
+      "code": "VM2",
+      "pair_id": "ar1",
+      "token_count": 2,
+      "token_ids": [
+        11435,
+        17
+      ]
+    },
+    {
+      "code": "HB9",
+      "pair_id": "ar2",
+      "token_count": 2,
+      "token_ids": [
+        31825,
+        24
+      ]
+    },
+    {
+      "code": "TX6",
+      "pair_id": "ar2",
+      "token_count": 2,
+      "token_ids": [
+        23715,
+        21
+      ]
+    },
+    {
+      "code": "DN5",
+      "pair_id": "arR",
+      "token_count": 2,
+      "token_ids": [
+        32364,
+        20
+      ]
+    },
+    {
+      "code": "WL8",
+      "pair_id": "arR",
+      "token_count": 2,
+      "token_ids": [
+        62239,
+        23
+      ]
+    },
+    {
+      "code": "GS2",
+      "pair_id": "ro0",
+      "token_count": 2,
+      "token_ids": [
+        16929,
+        17
+      ]
+    },
+    {
+      "code": "PK7",
+      "pair_id": "ro0",
+      "token_count": 2,
+      "token_ids": [
+        23037,
+        22
+      ]
+    },
+    {
+      "code": "RV4",
+      "pair_id": "ro1",
+      "token_count": 2,
+      "token_ids": [
+        36381,
+        19
+      ]
+    },
+    {
+      "code": "MJ6",
+      "pair_id": "ro1",
+      "token_count": 2,
+      "token_ids": [
+        78832,
+        21
+      ]
+    },
+    {
+      "code": "BQ5",
+      "pair_id": "ro2",
+      "token_count": 3,
+      "token_ids": [
+        33,
+        48,
+        20
+      ]
+    },
+    {
+      "code": "FZ6",
+      "pair_id": "ro2",
+      "token_count": 3,
+      "token_ids": [
+        37,
+        57,
+        21
+      ]
+    },
+    {
+      "code": "RK2",
+      "pair_id": "roR",
+      "token_count": 2,
+      "token_ids": [
+        78120,
+        17
+      ]
+    },
+    {
+      "code": "TN7",
+      "pair_id": "roR",
+      "token_count": 2,
+      "token_ids": [
+        30271,
+        22
+      ]
+    }
+  ],
+  "tokenizer_class": "TokenizersBackend"
+}

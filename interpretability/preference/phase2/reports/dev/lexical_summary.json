@@ -1,0 +1,13 @@
+{
+  "ladder_guard_failures": 0,
+  "ladder_length_failures": 0,
+  "ladder_rows": 70,
+  "length_failures": 0,
+  "max_ro_jaccard": 0.1348,
+  "mention_failures": 0,
+  "nonpc_valence_flags": 0,
+  "option_rows": 1288,
+  "preflagged_for_human_review": 0,
+  "ro_overlap_failures": 0,
+  "ro_rows": 19
+}

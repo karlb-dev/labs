@@ -1,0 +1,17 @@
+{
+  "artifact_of_record_sha256": "7a8a1fce4232baca8c2dcbd44d8218b42d5a36d4fd49b954f74f5f9f00264845",
+  "purpose": "plan \u00a76.3 / P2-1: portable CPU reanalysis three-directory rerun proof",
+  "runs": {
+    "arbitrary_tmp_cwd": "6fa7f36646a15139ec8e34b2f220e9c78b3e3f1b4bc1cbd3a6a387e79bab22cf",
+    "phase2_package_cwd": "6fa7f36646a15139ec8e34b2f220e9c78b3e3f1b4bc1cbd3a6a387e79bab22cf",
+    "repo_root_cwd": "6fa7f36646a15139ec8e34b2f220e9c78b3e3f1b4bc1cbd3a6a387e79bab22cf"
+  },
+  "three_runs_byte_identical": true,
+  "vs_registered_original": {
+    "differences": [
+      "inputs block: absolute /Users/... paths in the original vs repo-relative now",
+      "NaN t-stats on identical-option NC rows compare as NaN==NaN (values equal)"
+    ],
+    "numeric_payload_identical": true
+  }
+}

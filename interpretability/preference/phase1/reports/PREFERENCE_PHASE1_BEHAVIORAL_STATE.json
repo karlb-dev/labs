@@ -1,0 +1,23 @@
+{
+  "capture": {
+    "bytes_approx": "185MB",
+    "file": "state/decision_residuals.pt",
+    "location": "Drive phase1/part1/runs/",
+    "status": "sealed for future preregistered phases"
+  },
+  "equality_license": "agent_dual_code_provisional (limitation carried)",
+  "frozen_run": "lab38_revealed_preference_report_channel-20260807_210537-9df027",
+  "graduated_scenarios": [],
+  "model": "allenai/Olmo-3-7B-Instruct@6e5971d9eba42665f5bd5a0fcf047f299ce1dccc",
+  "n_ar_ge_sesoi_descriptive": 4,
+  "nc_floor_p95": 0.11249999999999999,
+  "part": "part1",
+  "pc_gate": "PASS",
+  "phase": "phase1",
+  "rows": 2320,
+  "stated_revealed": "behavioral dissociation pattern on asymmetric scenarios (AR 0.09-0.19 vs RO 0.425-0.50 pole_1 rates); no latent/coupling claim",
+  "stop_rule": "Stop B (plan §9.3): PC passed, zero graduations; behavioral report is the Phase 1 primary result; mechanism not run",
+  "tag": "preference-phase1-freeze-v1",
+  "valid_rate": 0.9952586206896552,
+  "wrong_branch_count": 0
+}

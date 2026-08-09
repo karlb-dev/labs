@@ -1,0 +1,31 @@
+{
+  "bank_content_hash": "4a3a5047b2bbaa1778f9907ca82be1ea9ddf874ffe5bf49aed19b4014c3f348b",
+  "bank_jsonl_sha256": "119af21538daf6ec69b59efffa9c23d91b58f45b3f4fe688bfc4d49a5947662e",
+  "bank_version": "pref2_v3",
+  "banks": [
+    "B-DEV"
+  ],
+  "batch_size": 16,
+  "capture_sites": [],
+  "codebook_id": "cbv3_932b4918f8",
+  "config_hash": "a0f73491217cf5e1d2bc07c561715bde8b6882158c445666bff1846580167a74",
+  "generation": {
+    "choice_max_new_tokens": 8,
+    "do_sample": false,
+    "num_beams": 1,
+    "padding_side_generation": "left",
+    "scoring": "single_row_float32_logsoftmax_full_target"
+  },
+  "model": {
+    "dtype": "bfloat16",
+    "family": "qwen",
+    "model_id": "Qwen/Qwen3.6-27B",
+    "model_key": "qwen",
+    "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
+  },
+  "parser_policy": "strict_exact_code_v1",
+  "pcmech_variant": null,
+  "run_dir": "pref2_qwen_behavioral_dev-20260808_235635-05cb56",
+  "stage": "behavioral_dev",
+  "study": "preference-phase2"
+}

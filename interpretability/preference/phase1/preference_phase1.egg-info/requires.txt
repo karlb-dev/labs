@@ -1,0 +1,14 @@
+numpy
+pandas
+matplotlib
+scipy
+
+[dev]
+pytest
+
+[model]
+torch
+transformers
+huggingface_hub
+accelerate
+safetensors

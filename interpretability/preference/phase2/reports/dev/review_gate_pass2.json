@@ -1,0 +1,7 @@
+{
+  "gate": {
+    "failures": [],
+    "passed": true
+  },
+  "n_equality_disagreements": 2
+}

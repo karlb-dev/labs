@@ -1,0 +1,97 @@
+{
+  "audit": {
+    "n_failures": 0,
+    "passed": true
+  },
+  "bank_content_hash": "4a3a5047b2bbaa1778f9907ca82be1ea9ddf874ffe5bf49aed19b4014c3f348b",
+  "bank_jsonl_sha256": "119af21538daf6ec69b59efffa9c23d91b58f45b3f4fe688bfc4d49a5947662e",
+  "bank_version": "pref2_v3",
+  "codebook": {
+    "ar_pairs": [
+      {
+        "codes": [
+          "QF3",
+          "JX8"
+        ],
+        "pair_id": "ar0",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "KP4",
+          "VM2"
+        ],
+        "pair_id": "ar1",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "HB9",
+          "TX6"
+        ],
+        "pair_id": "ar2",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "DN5",
+          "WL8"
+        ],
+        "pair_id": "arR",
+        "role": "reserved_transfer"
+      }
+    ],
+    "codebook_id": "cbv3_932b4918f8",
+    "procedure": "pref2_codebook_families_v3",
+    "ro_pairs": [
+      {
+        "codes": [
+          "GS2",
+          "PK7"
+        ],
+        "pair_id": "ro0",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "RV4",
+          "MJ6"
+        ],
+        "pair_id": "ro1",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "BQ5",
+          "FZ6"
+        ],
+        "pair_id": "ro2",
+        "role": "primary"
+      },
+      {
+        "codes": [
+          "RK2",
+          "TN7"
+        ],
+        "pair_id": "roR",
+        "role": "reserved_transfer"
+      }
+    ],
+    "tokenizer_ref": "allenai/Olmo-3.1-32B-Instruct@ac0587e4"
+  },
+  "counts": {
+    "B-ARB3": 4608,
+    "B-CANON": 576,
+    "B-DEV": 432,
+    "B-MECH": 4800,
+    "B-NC": 640,
+    "B-PC": 480,
+    "B-PC-MECH": 2560,
+    "B-SURF": 1152,
+    "F-P1-CONT": 384,
+    "RO-DISJOINT": 2688
+  },
+  "primary_tokenizer": "allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae",
+  "schema_version": 2,
+  "total": 18320
+}

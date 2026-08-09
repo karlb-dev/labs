@@ -1,0 +1,9 @@
+{
+  "batched_vs_single_max_delta_nats_informational": 0.2523916717618704,
+  "generation_batch_size": 16,
+  "generations_identical_batched_vs_single": true,
+  "n_sample": 32,
+  "scoring_instrument": "single_row_exact",
+  "single_row_replay_deterministic": true,
+  "single_row_replay_max_delta_nats": 0.0
+}

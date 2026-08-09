@@ -185,6 +185,12 @@ python interp_bench.py --lab lab35 --tier b --prompt-set full
 python interp_bench.py --lab lab36 --tier a --mode smoke --no-plots
 python interp_bench.py --lab lab36 --tier b --mode all --prompt-set full
 python interp_bench.py --lab lab36 --tier c --mode all --prompt-set full
+
+# Lab 38 (Stated vs revealed preference; campaign lab under preference/):
+python interp_bench.py --lab lab38 --tier a --mode bank_audit --no-plots
+python interp_bench.py --lab lab38 --tier a --mode smoke --no-plots
+# Campaign stages (dev pilot, frozen battery) run via the pref1 CLI:
+#   python -m preference_phase1.cli behavioral --model-tier b --stage behavioral_dev
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -432,6 +438,23 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   frozen-run binding templates, paper and claim-card drafts, fixed
   adversarial-review rubric, repair accounting, reproduction guide, evidence
   matrix, failure-mode contribution, and package validation diagnostics.
+- Lab 38: stated vs revealed preference — implemented as a governed campaign
+  under `preference/` (branch `interp_preference_phase1`): 2,320-row
+  counterbalanced bank (12 AR / 6 PC / 2 NC scenarios + report-only twins),
+  model-audited opaque response codes, strict parser, action-binding branch
+  resolver with microtask validators, resumable runner, ten-criterion
+  graduation rule with an NC empirical false-positive floor, and a
+  freeze-gated conditional mechanism stage. The bench adapter runs
+  `bank_audit`/`smoke`; campaign stages run via the `pref1` CLI. Claim
+  ceiling: functional choice/report coupling only — never wants, welfare,
+  consent, or experience. Phase 1 outcome (frozen, tag
+  `preference-phase1-freeze-v1`): PC pipeline perfect on both models;
+  7B → zero graduations (Stop B) under a dominant first-position policy
+  with four sub-graduation content asymmetries and a stated/revealed
+  behavioral dissociation; 32B → one clean graduation
+  (`ar_docsection_readme`, −0.438) triggering the Stop C case study;
+  content asymmetries are model-specific (NC floor exactly 0.000 on both).
+  Read `preference/phase1/reports/PREFERENCE_PHASE1_STATE_OF_RECORD.md`.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +

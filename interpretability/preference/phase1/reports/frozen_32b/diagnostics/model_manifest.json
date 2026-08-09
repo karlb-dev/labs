@@ -1,0 +1,14 @@
+{
+  "anatomy": {
+    "architecture": "Olmo3ForCausalLM",
+    "d_model": 5120,
+    "n_layers": 64
+  },
+  "chat_template_sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3",
+  "dtype": "bfloat16",
+  "model_id": "allenai/Olmo-3.1-32B-Instruct",
+  "model_tier": "c",
+  "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+  "tokenizer_class": "TokenizersBackend",
+  "vocab_size": 100278
+}

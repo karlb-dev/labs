@@ -1,0 +1,72 @@
+{
+  "causal_claims_licensed": true,
+  "per_depth": {
+    "16": {
+      "band": 0.5742986731975687,
+      "gate": {
+        "design_full_rank": true,
+        "finite_train_margins": true,
+        "identifiable": false,
+        "margin_std_ok": true,
+        "n_train_ok": true,
+        "no_single_incidental_flip": true,
+        "validation_above_random_band": false
+      },
+      "validation_fit_corr": 0.1334710149573243
+    },
+    "26": {
+      "band": 0.48791411082950414,
+      "gate": {
+        "design_full_rank": true,
+        "finite_train_margins": true,
+        "identifiable": false,
+        "margin_std_ok": true,
+        "n_train_ok": true,
+        "no_single_incidental_flip": true,
+        "validation_above_random_band": false
+      },
+      "validation_fit_corr": 0.12974383016090696
+    },
+    "35": {
+      "band": 0.40168887340904413,
+      "gate": {
+        "design_full_rank": true,
+        "finite_train_margins": true,
+        "identifiable": false,
+        "margin_std_ok": true,
+        "n_train_ok": true,
+        "no_single_incidental_flip": true,
+        "validation_above_random_band": false
+      },
+      "validation_fit_corr": 0.08927259117334164
+    },
+    "45": {
+      "band": 0.46451226848539034,
+      "gate": {
+        "design_full_rank": true,
+        "finite_train_margins": true,
+        "identifiable": false,
+        "margin_std_ok": true,
+        "n_train_ok": true,
+        "no_single_incidental_flip": true,
+        "validation_above_random_band": false
+      },
+      "validation_fit_corr": 0.09086712526971301
+    },
+    "54": {
+      "band": 0.4317224875247033,
+      "gate": {
+        "design_full_rank": true,
+        "finite_train_margins": true,
+        "identifiable": false,
+        "margin_std_ok": true,
+        "n_train_ok": true,
+        "no_single_incidental_flip": true,
+        "validation_above_random_band": false
+      },
+      "validation_fit_corr": 0.09897145631695223
+    }
+  },
+  "scenario_id": "ar_docsection_readme",
+  "status": "DIRECTION_NOT_IDENTIFIABLE"
+}

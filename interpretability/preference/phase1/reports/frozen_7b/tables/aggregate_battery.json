@@ -1,0 +1,27 @@
+{
+  "ar_abs_effects_sorted": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.012500000000000011,
+    0.01898734177215189,
+    0.025000000000000022,
+    0.125,
+    0.2272727272727273,
+    0.363013698630137,
+    0.3875
+  ],
+  "n_graduated": 0,
+  "nc_abs_effects_sorted": [
+    0.0,
+    0.0
+  ],
+  "nc_p95_floor": 0.11249999999999999,
+  "note": "no global signed aggregate across unrelated pole anchors (addendum E1); rank comparison exploratory only",
+  "within_construct_signed_means_axes_ge2": {
+    "execution_mode": -0.29514321295143214,
+    "naming_convention": 0.0
+  }
+}

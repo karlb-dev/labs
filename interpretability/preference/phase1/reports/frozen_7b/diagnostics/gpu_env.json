@@ -1,0 +1,36 @@
+{
+  "captured_utc": "2026-08-07T21:05:37Z",
+  "git": {
+    "branch": "interp_preference_phase1",
+    "commit": "b82531ded902b43243da8f33514895adffc7456c",
+    "dirty_paths": [],
+    "dirty_tree": false
+  },
+  "gpu": {
+    "capability": [
+      12,
+      0
+    ],
+    "cuda_available": true,
+    "device_count": 1,
+    "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "driver_version": "580.82.07",
+    "mem_free_gb": 94.43,
+    "mem_total_gb": 94.97,
+    "torch_cuda_build": "12.8"
+  },
+  "hostname": "033399e7a703",
+  "packages": {
+    "huggingface_hub": "1.23.0",
+    "matplotlib": "3.10.0",
+    "numpy": "2.0.2",
+    "pandas": "2.2.2",
+    "scipy": "1.16.3",
+    "tokenizers": "0.22.2",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.13.1"
+  },
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+  "python": "3.12.13",
+  "session_id": "session-2026-08-07T21:05:39Z"
+}

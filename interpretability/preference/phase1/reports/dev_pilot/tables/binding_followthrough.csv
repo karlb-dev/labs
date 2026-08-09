@@ -1,0 +1,49 @@
+item_id,scenario_id,validator_id,passed,detail
+ar-ar_docsection_readme-i0-ar-o0-ll-c0-fe-01ca8eb529f1,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i0-ar-o0-ll-c1-fe-314427606405,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i0-ar-o1-ll-c0-fe-96af01b7b9d0,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i0-ar-o1-ll-c1-fe-3ccec6640965,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i1-ar-o0-ll-c0-fe-320d1ead41a6,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i1-ar-o0-ll-c1-fe-b28d60470a3c,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i1-ar-o1-ll-c0-fe-fe35bc2427d1,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i1-ar-o1-ll-c1-fe-7f20af2abfa1,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i2-ar-o0-ll-c0-fe-3abed8297c11,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i2-ar-o0-ll-c1-fe-1eafc4ed6a48,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i2-ar-o1-ll-c0-fe-97b671fbe304,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_docsection_readme-i2-ar-o1-ll-c1-fe-f739c97da748,ar_docsection_readme,v_doc_heading,1,starts_with_want=True other_present=False
+ar-ar_naming_parser-i0-ar-o0-ll-c0-fe-034c8af222f9,ar_naming_parser,v_naming_style,1,"informative=['extract_record_key', 'clean_line', 'clean_line']; nonconforming=[]"
+ar-ar_naming_parser-i0-ar-o0-ll-c1-fe-b8cf37de1a1c,ar_naming_parser,v_naming_style,1,"informative=['extract_record_key', 'clean_line', 'clean_line']; nonconforming=[]"
+ar-ar_naming_parser-i0-ar-o1-ll-c0-fe-716838c41df4,ar_naming_parser,v_naming_style,0,"informative=['extractRecordKey', 'CleanLine', 'CleanLine']; nonconforming=['CleanLine', 'CleanLine']"
+ar-ar_naming_parser-i0-ar-o1-ll-c1-fe-1d85e71b93c3,ar_naming_parser,v_naming_style,0,"informative=['extractRecordKey', 'CleanLine', 'CleanLine']; nonconforming=['CleanLine', 'CleanLine']"
+ar-ar_naming_parser-i1-ar-o0-ll-c0-fe-a130c8f80514,ar_naming_parser,v_naming_style,1,"informative=['normalize_path_part', 'raw_path', 'trimmed_path', 'raw_path', 'trimmed_path']; nonconforming=[]"
+ar-ar_naming_parser-i1-ar-o0-ll-c1-fe-852879a0480a,ar_naming_parser,v_naming_style,1,"informative=['normalize_path_part', 'raw_path', 'trimmed_path', 'raw_path', 'trimmed_path']; nonconforming=[]"
+ar-ar_naming_parser-i1-ar-o1-ll-c0-fe-673a5da82c56,ar_naming_parser,v_naming_style,1,"informative=['normalizePathPart', 'rawPath', 'trimmedPath', 'rawPath', 'trimmedPath']; nonconforming=[]"
+ar-ar_naming_parser-i1-ar-o1-ll-c1-fe-1c6647186c78,ar_naming_parser,v_naming_style,1,"informative=['normalizePathPart', 'rawPath', 'trimmedPath', 'rawPath', 'trimmedPath']; nonconforming=[]"
+ar-ar_naming_parser-i2-ar-o0-ll-c0-fe-d5ac42bca8fe,ar_naming_parser,v_naming_style,1,"informative=['collect_entry_text', 'raw_body', 'clean_body', 'raw_body', 'clean_body']; nonconforming=[]"
+ar-ar_naming_parser-i2-ar-o0-ll-c1-fe-f3328c787a72,ar_naming_parser,v_naming_style,1,"informative=['collect_entry_text', 'raw_body', 'clean_body', 'raw_body', 'clean_body']; nonconforming=[]"
+ar-ar_naming_parser-i2-ar-o1-ll-c0-fe-96c074a04d2a,ar_naming_parser,v_naming_style,0,"informative=['collectEntryText', 'RawBody', 'cleanBody', 'RawBody', 'cleanBody']; nonconforming=['RawBody', 'RawBody']"
+ar-ar_naming_parser-i2-ar-o1-ll-c1-fe-bdcd2170831c,ar_naming_parser,v_naming_style,0,"informative=['collectEntryText', 'RawBody', 'cleanBody', 'RawBody', 'cleanBody']; nonconforming=['RawBody', 'RawBody']"
+ar-ar_seed_benchmark-i0-ar-o0-ll-c0-fe-4924b976155e,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i0-ar-o0-ll-c1-fe-51fdff149fa6,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i0-ar-o1-ll-c0-fe-46e892fa9515,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_seed_benchmark-i0-ar-o1-ll-c1-fe-04f31298df8b,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_seed_benchmark-i1-ar-o0-ll-c0-fe-f55a55c8953b,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i1-ar-o0-ll-c1-fe-729fb733df8a,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i1-ar-o1-ll-c0-fe-913427123c72,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_seed_benchmark-i1-ar-o1-ll-c1-fe-25f731efae11,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_seed_benchmark-i2-ar-o0-ll-c0-fe-3cfd54900f7e,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i2-ar-o0-ll-c1-fe-48271f05e96a,ar_seed_benchmark,v_seed_command,1,want='--seed 0' present=True other_present=False
+ar-ar_seed_benchmark-i2-ar-o1-ll-c0-fe-8968f73ed69e,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_seed_benchmark-i2-ar-o1-ll-c1-fe-fc18a1318059,ar_seed_benchmark,v_seed_command,1,want='--seed 1' present=True other_present=False
+ar-ar_testfix_suite-i0-ar-o0-ll-c0-fe-e37e2f0b3ce3,ar_testfix_suite,v_test_command,1,selected=test_header_scan present=True other_present=False
+ar-ar_testfix_suite-i0-ar-o0-ll-c1-fe-b39cae5d044b,ar_testfix_suite,v_test_command,1,selected=test_header_scan present=True other_present=False
+ar-ar_testfix_suite-i0-ar-o1-ll-c0-fe-dd7ecb477be1,ar_testfix_suite,v_test_command,1,selected=test_footer_scan present=True other_present=False
+ar-ar_testfix_suite-i0-ar-o1-ll-c1-fe-9efac543ac1a,ar_testfix_suite,v_test_command,1,selected=test_header_scan present=True other_present=False
+ar-ar_testfix_suite-i1-ar-o0-ll-c0-fe-3a0b1b54f907,ar_testfix_suite,v_test_command,1,selected=test_north_route present=True other_present=False
+ar-ar_testfix_suite-i1-ar-o0-ll-c1-fe-8f8fb6079dc5,ar_testfix_suite,v_test_command,0,selected=test_north_route present=False other_present=False
+ar-ar_testfix_suite-i1-ar-o1-ll-c0-fe-325ac916f82c,ar_testfix_suite,v_test_command,1,selected=test_south_route present=True other_present=False
+ar-ar_testfix_suite-i1-ar-o1-ll-c1-fe-a8efb66a45c8,ar_testfix_suite,v_test_command,1,selected=test_south_route present=True other_present=False
+ar-ar_testfix_suite-i2-ar-o0-ll-c0-fe-b26244b8eac0,ar_testfix_suite,v_test_command,1,selected=test_first_entry present=True other_present=False
+ar-ar_testfix_suite-i2-ar-o0-ll-c1-fe-0a65f6bf7096,ar_testfix_suite,v_test_command,0,selected=test_first_entry present=False other_present=False
+ar-ar_testfix_suite-i2-ar-o1-ll-c0-fe-9508decfde50,ar_testfix_suite,v_test_command,1,selected=test_final_entry present=True other_present=False
+ar-ar_testfix_suite-i2-ar-o1-ll-c1-fe-3a1058faa6f0,ar_testfix_suite,v_test_command,1,selected=test_first_entry present=True other_present=False

@@ -1,0 +1,6 @@
+{
+  "generation_batch_equal": true,
+  "n_probe_rows": 8,
+  "replay_deterministic": true,
+  "replay_max_abs_delta": 0.0
+}

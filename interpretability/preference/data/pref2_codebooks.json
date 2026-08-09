@@ -1,0 +1,73 @@
+{
+  "ar_pairs": [
+    {
+      "codes": [
+        "QF3",
+        "JX8"
+      ],
+      "pair_id": "ar0",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "KP4",
+        "VM2"
+      ],
+      "pair_id": "ar1",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "HB9",
+        "TX6"
+      ],
+      "pair_id": "ar2",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "DN5",
+        "WL8"
+      ],
+      "pair_id": "arR",
+      "role": "reserved_transfer"
+    }
+  ],
+  "codebook_id": "cbv3_932b4918f8",
+  "procedure": "pref2_codebook_families_v3",
+  "ro_pairs": [
+    {
+      "codes": [
+        "GS2",
+        "PK7"
+      ],
+      "pair_id": "ro0",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "RV4",
+        "MJ6"
+      ],
+      "pair_id": "ro1",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "BQ5",
+        "FZ6"
+      ],
+      "pair_id": "ro2",
+      "role": "primary"
+    },
+    {
+      "codes": [
+        "RK2",
+        "TN7"
+      ],
+      "pair_id": "roR",
+      "role": "reserved_transfer"
+    }
+  ],
+  "tokenizer_ref": "allenai/Olmo-3.1-32B-Instruct@ac0587e4"
+}

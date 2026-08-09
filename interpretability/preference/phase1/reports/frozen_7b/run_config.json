@@ -1,0 +1,29 @@
+{
+  "bank_content_hash": "8d5039af581204a5a276ae71c7fd50f8a9911e22ad81a69933939344a2fc9f64",
+  "bank_jsonl_sha256": "1eea2c6017b536533ccac7b8de5ca1099ac2d3a699f0f6c04d48184fb2dca1f2",
+  "bank_version": "lab38_v2_phase1",
+  "batch_size": 16,
+  "capture_decision_residuals": true,
+  "codebook_id": "cb_final_41eec2d774",
+  "codebook_status": "final",
+  "config_hash": "4e3c869178b09f4c7041d6b09be387d722fc6d60057d4fe5c3ddeb2f9e4cdca1",
+  "generation": {
+    "choice_max_new_tokens": 8,
+    "do_sample": false,
+    "num_beams": 1,
+    "padding_side_generation": "left",
+    "scoring_batch_size": 1,
+    "scoring_note": "margins scored single-row (exact, resume-invariant; bf16 batched kernels differ)"
+  },
+  "model": {
+    "dtype": "bfloat16",
+    "model_id": "allenai/Olmo-3-7B-Instruct",
+    "model_tier": "b",
+    "revision": "6e5971d9eba42665f5bd5a0fcf047f299ce1dccc"
+  },
+  "parser_policy": "strict_exact_code_v1",
+  "prompt_subset": "full",
+  "run_dir": "lab38_revealed_preference_report_channel-20260807_210537-9df027",
+  "scoring": "full_target_sequence_sum_logprob",
+  "stage": "behavioral_frozen"
+}

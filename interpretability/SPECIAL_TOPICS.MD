@@ -1270,6 +1270,25 @@ the functional channel I actually tested.
 
 ---
 
+## Lab 38: Revealed Preference vs Report Channel (campaign, branch `interp_preference_phase1`)
+
+**Lab 38: Stated vs Revealed Preference** — a Lab-36-mold report-channel
+question specialized to preference: under fully counterbalanced,
+action-binding forced-choice menus, does the model show content-tracking
+revealed asymmetries, and is the scenario-specific residual handle that
+moves choice also causally involved in a matched report-only channel?
+Implementation lives in `preference/` (plans, 2,320-row bank with NC
+null-control scenarios as an empirical false-positive floor, strict
+response-code contract, resumable runner, evidence registry, freeze-gated
+mechanism). Evidence: `OBS + DECODE + CAUSAL + AUDIT`, never PHENOMENAL.
+Forbidden: "really prefers", wants, welfare, consent, experience,
+introspective truth, universal preference vector. Entry points:
+`python interp_bench.py --lab lab38 --tier a --mode bank_audit|smoke`;
+campaign stages via `python -m preference_phase1.cli`. Handout:
+`labs/lab38_revealed_preference_report_channel.md`.
+
+---
+
 ## Proposed extension: Lab 37 (draft, branch `interp_jspace`)
 
 **Lab 37: J-space Global Workspace Replication (OLMo-3-32B-Think)** — an

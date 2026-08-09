@@ -1,0 +1,34 @@
+{
+  "bank_content_hash": "4a3a5047b2bbaa1778f9907ca82be1ea9ddf874ffe5bf49aed19b4014c3f348b",
+  "bank_jsonl_sha256": "119af21538daf6ec69b59efffa9c23d91b58f45b3f4fe688bfc4d49a5947662e",
+  "bank_version": "pref2_v3",
+  "counts": {
+    "B-ARB3": 4608,
+    "B-CANON": 576,
+    "B-DEV": 432,
+    "B-MECH": 4800,
+    "B-NC": 640,
+    "B-PC": 480,
+    "B-PC-MECH": 2560,
+    "B-SURF": 1152,
+    "F-P1-CONT": 384,
+    "RO-DISJOINT": 2688
+  },
+  "expected_counts": {
+    "B-ARB3": 4608,
+    "B-CANON": 576,
+    "B-DEV": 432,
+    "B-MECH": 4800,
+    "B-NC": 640,
+    "B-PC": 480,
+    "B-PC-MECH": 2560,
+    "B-SURF": 1152,
+    "F-P1-CONT": 384,
+    "RO-DISJOINT": 2688
+  },
+  "failures": [],
+  "n_failures": 0,
+  "passed": true,
+  "regenerated_hash_matches_frozen": true,
+  "total": 18320
+}

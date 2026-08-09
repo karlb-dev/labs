@@ -1,0 +1,11 @@
+{
+  "case_study": true,
+  "generated_utc": "2026-08-07T21:50:56Z",
+  "pc_mech_pass": true,
+  "router": {
+    "ar_docsection_readme": null
+  },
+  "scenarios": [
+    "ar_docsection_readme"
+  ]
+}

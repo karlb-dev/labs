@@ -1,0 +1,16 @@
+case_id,raw,expected_status,expected_code,got_status,got_code,got_reason,pass
+valid_code,KP4,valid,KP4,valid,KP4,exact_code,1
+valid_code_second,PK7,valid,PK7,valid,PK7,exact_code,1
+leading_trailing_whitespace,"  KP4
+",valid,KP4,valid,KP4,exact_code,1
+lowercase_variant,kp4,invalid,,invalid,,case_variant,1
+code_plus_explanation,KP4 because it seems better,invalid,,invalid,,code_with_extra_text,1
+two_codes,KP4 or PK7,invalid,,invalid,,multiple_codes,1
+visible_option_name,snake_case,invalid,,invalid,,no_valid_code,1
+display_label_instead_of_code,A,invalid,,invalid,,no_valid_code,1
+empty_generation,,invalid,,invalid,,empty_generation,1
+eos_only_whitespace,"
+
+",invalid,,invalid,,empty_generation,1
+punctuation_variant,KP4.,invalid,,invalid,,code_with_extra_text,1
+unicode_lookalike,QP4,invalid,,invalid,,no_valid_code,1

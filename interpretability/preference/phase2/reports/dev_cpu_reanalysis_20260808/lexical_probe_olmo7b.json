@@ -1,0 +1,69 @@
+{
+ "32b": {
+  "cell_level": {
+   "R2": 0.00129428081958316,
+   "intercept": -1.2055141082637264,
+   "n": 60,
+   "r": -0.03597611457040728,
+   "sign_match": 29,
+   "slope": -0.0031487481201355858
+  },
+  "scenario_dlex": {
+   "ar_component_library": -1.1275482177734375,
+   "ar_docsection_readme": 7.291465759277344,
+   "ar_execmode_ingest": 17.428070068359375,
+   "ar_execmode_migration": 15.650410461425782,
+   "ar_logformat_service": -2.9537734985351562,
+   "ar_naming_config": -0.262115478515625,
+   "ar_naming_parser": 0.09654541015625,
+   "ar_naming_serializer": 1.488763427734375,
+   "ar_seed_benchmark": -2.8940086364746094,
+   "ar_taskorder_setup": -2.224462890625,
+   "ar_testfix_suite": -0.553369140625,
+   "ar_traversal_indexer": 5.1781158447265625
+  },
+  "scenario_level": {
+   "R2": 0.003927910419738723,
+   "intercept": -1.1977439009858866,
+   "n": 12,
+   "r": -0.06267304380464254,
+   "sign_match": 6,
+   "slope": -0.005660797622784639
+  }
+ },
+ "7b": {
+  "cell_level": {
+   "R2": 0.08104634228253493,
+   "intercept": -0.8645469303482336,
+   "n": 60,
+   "r": -0.28468639286508746,
+   "sign_match": 33,
+   "slope": -0.02989169844695064
+  },
+  "scenario_dlex": {
+   "ar_component_library": -1.1275482177734375,
+   "ar_docsection_readme": 7.291465759277344,
+   "ar_execmode_ingest": 17.428070068359375,
+   "ar_execmode_migration": 15.650410461425782,
+   "ar_logformat_service": -2.9537734985351562,
+   "ar_naming_config": -0.262115478515625,
+   "ar_naming_parser": 0.09654541015625,
+   "ar_naming_serializer": 1.488763427734375,
+   "ar_seed_benchmark": -2.8940086364746094,
+   "ar_taskorder_setup": -2.224462890625,
+   "ar_testfix_suite": -0.553369140625,
+   "ar_traversal_indexer": 5.1781158447265625
+  },
+  "scenario_level": {
+   "R2": 0.11245308520396713,
+   "intercept": -0.8454714732838123,
+   "n": 12,
+   "r": -0.33534025288349595,
+   "sign_match": 7,
+   "slope": -0.03605865007617483
+  }
+ },
+ "model_id": "allenai/Olmo-3-7B-Instruct",
+ "n_strings": 200,
+ "nc_dlex_max_abs": 0.0
+}

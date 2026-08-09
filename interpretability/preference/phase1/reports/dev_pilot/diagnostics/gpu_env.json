@@ -1,0 +1,47 @@
+{
+  "captured_utc": "2026-08-07T18:42:25Z",
+  "git": {
+    "branch": "interp_preference_phase1",
+    "commit": "fca4c6833f8e988fbe5d029bb1e44b52d5ffbe13",
+    "dirty_paths": [
+      "interpretability/preference/data/lab38_preference_bank.jsonl",
+      "interpretability/preference/data/lab38_preference_bank.meta.json",
+      "interpretability/preference/data/lab38_preference_bank_balance.csv",
+      "interpretability/preference/data/lab38_preference_bank_card.md",
+      "interpretability/preference/phase1/preference_phase1/analysis.py",
+      "interpretability/preference/phase1/preference_phase1/bank.py",
+      "interpretability/preference/phase1/preference_phase1/figures.py",
+      "interpretability/preference/phase1/preference_phase1/reporting.py",
+      "interpretability/preference/phase1/preregistration/DEVIATIONS.md",
+      "interpretability/preference/phase1/reports/session_log.md"
+    ],
+    "dirty_tree": true
+  },
+  "gpu": {
+    "capability": [
+      12,
+      0
+    ],
+    "cuda_available": true,
+    "device_count": 1,
+    "device_name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "driver_version": "580.82.07",
+    "mem_free_gb": 94.43,
+    "mem_total_gb": 94.97,
+    "torch_cuda_build": "12.8"
+  },
+  "hostname": "033399e7a703",
+  "packages": {
+    "huggingface_hub": "1.23.0",
+    "matplotlib": "3.10.0",
+    "numpy": "2.0.2",
+    "pandas": "2.2.2",
+    "scipy": "1.16.3",
+    "tokenizers": "0.22.2",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.13.1"
+  },
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+  "python": "3.12.13",
+  "session_id": "session-2026-08-07T18:42:27Z"
+}

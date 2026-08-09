@@ -1,0 +1,15 @@
+scenario_id,family,effect_7b,effect_32b
+ar_taskorder_setup,AR,-0.3875,-0.15
+ar_execmode_ingest,AR,-0.363013698630137,-0.025
+ar_execmode_migration,AR,-0.2272727272727273,0.0
+ar_testfix_suite,AR,-0.125,-0.0625
+ar_component_library,AR,-0.025,-0.2249999999999999
+ar_logformat_service,AR,-0.0189873417721518,-0.0625
+ar_seed_benchmark,AR,-0.0125,0.0
+ar_docsection_readme,AR,0.0,-0.4375
+ar_naming_serializer,AR,0.0,-0.125
+ar_naming_parser,AR,0.0,-0.0374999999999999
+ar_naming_config,AR,0.0,-0.0374999999999999
+ar_traversal_indexer,AR,0.0,0.0
+nc_null_archive,NC,0.0,0.0
+nc_null_deploy,NC,0.0,0.0
