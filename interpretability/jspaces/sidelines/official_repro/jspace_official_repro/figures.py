@@ -328,3 +328,101 @@ if __name__ == "__main__":
                         lane=lane)
     for path in outputs:
         print("built", path)
+
+
+def fig_battery(battery_dir: Path, out: Path, *, lane: str) -> None:
+    """Battery overview: modulation contrast, dual-task interference,
+    ignition widths by family, introspection ladder."""
+    fig, axes = plt.subplots(1, 4, figsize=(11.5, 2.9))
+    dm = _load(battery_dir / f"directed_modulation_{lane}.json")
+    kinds = ["focus", "control", "suppress"]
+    values = [dm["by_kind"][k]["hit_rank5"] for k in kinds]
+    axes[0].bar(range(3), values, width=0.55, color=[BLUE, INK2, ORANGE])
+    for i, v in enumerate(values):
+        axes[0].text(i, v + 0.02, f"{v:.0%}", ha="center", fontsize=8)
+    axes[0].set_xticks(range(3), kinds, fontsize=8)
+    axes[0].set_ylim(0, 1)
+    axes[0].set_title("modulation: tracked hit ≤5", fontsize=9)
+
+    dt = _load(battery_dir / f"dual_task_{lane}.json")
+    groups = [("concept", dt["concept_math"]["concept"]),
+              ("math", dt["concept_math"]["math"])]
+    x = np.arange(2)
+    singles = [g[1]["single_rate"] for g in groups]
+    duals = [g[1]["dual_rate"] for g in groups]
+    axes[1].bar(x - 0.17, singles, width=0.3, color=BLUE, label="single")
+    axes[1].bar(x + 0.17, duals, width=0.3, color=ORANGE, label="dual")
+    axes[1].set_xticks(x, [g[0] for g in groups], fontsize=8)
+    axes[1].set_ylim(0, 1.05)
+    axes[1].legend(frameon=False, fontsize=7)
+    axes[1].set_title("dual-task reachability", fontsize=9)
+
+    ig = _load(battery_dir / f"ignition_{lane}.json")
+    families = ["country", "alt", "scrambled", "idiom"]
+    widths = [ig["by_family_width_band_mean"].get(f) for f in families]
+    axes[2].bar(range(len(families)),
+                [w if w is not None else 0 for w in widths],
+                width=0.55, color=[BLUE, AQUA, INK2, ORANGE])
+    axes[2].set_xticks(range(len(families)), families, fontsize=8)
+    axes[2].set_title("ignition 10–90% width (mid-band)", fontsize=9)
+
+    intro = _load(battery_dir / f"verbal_introspection_{lane}.json")
+    strengths = intro["strengths"]
+    for name, color in (("default", BLUE), ("word", ORANGE)):
+        ladder = intro["median_rr_by_strength"][name]
+        axes[3].plot(strengths, [ladder[f"s{s:g}"] for s in strengths],
+                     "o-", color=color, lw=2, ms=4, label=name)
+    axes[3].set_xscale("symlog", linthresh=1)
+    axes[3].set_yscale("log")
+    axes[3].set_xlabel("steering strength")
+    axes[3].legend(frameon=False, fontsize=7)
+    axes[3].set_title("introspection median RR", fontsize=9)
+    fig.suptitle(f"Extended battery — {lane}", y=1.05)
+    fig.tight_layout()
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
+
+
+def fig_crossover(out: Path) -> None:
+    """Cross-over: intervention families on the frozen official subset."""
+    from .paths import DRIVE_ROOT
+
+    lanes = []
+    for lane in ("qwen", "olmo"):
+        path = DRIVE_ROOT / f"crossover_{lane}" / f"crossover_{lane}.json"
+        if path.exists():
+            lanes.append((lane, _load(path)))
+    fig, axes = plt.subplots(1, len(lanes), figsize=(5.6 * len(lanes), 3.2),
+                             squeeze=False)
+    for ax, (lane, data) in zip(axes[0], lanes):
+        rows = [r for r in data["rows"] if r.get("state") == "EXECUTED"]
+        def broke(arm, lens_name="primary"):
+            n = 0
+            for r in rows:
+                pair = r.get(f"campaign_pair_{lens_name}")
+                if not pair:
+                    continue
+                key = next(iter(pair["clean_ranks"]))
+                if pair["clean_ranks"][key] == 1 and pair[arm][key] > 1:
+                    n += 1
+            return n
+        labels = ["paper swap\n(paper band)", "paper swap\n(campaign band)",
+                  "J-ablation\nbreaks top-1", "matched ctrl\nbreaks top-1"]
+        values = [
+            data["paper_swap_top1_primary"] or 0,
+            data["paper_swap_top1_primary_campaign_band"] or 0,
+            broke("protected_ranks") / max(len(rows), 1),
+            broke("matched_ranks") / max(len(rows), 1),
+        ]
+        colors = [BLUE, BLUE, ORANGE, INK2]
+        ax.bar(range(4), values, width=0.6, color=colors)
+        for i, v in enumerate(values):
+            ax.text(i, v + 0.02, f"{v:.0%}", ha="center", fontsize=8)
+        ax.set_xticks(range(4), labels, fontsize=7)
+        ax.set_ylim(0, 1)
+        ax.set_title(f"{lane} — frozen 30-item official subset", fontsize=9)
+    fig.suptitle("Instrument cross-over: swap success vs broad-ablation "
+                 "selectivity on the same released prompts", y=1.04)
+    fig.tight_layout()
+    fig.savefig(out, bbox_inches="tight")
+    plt.close(fig)
