@@ -75,6 +75,16 @@ under the plan §14 drop order (first candidates to drop), not a second
 primary. The smoke admission (scratch, unregistered) surfaced this;
 the registered admission carries the same audit values.
 
+**OLMo addendum (2026-08-09, logged before any OLMo intervention):**
+the OLMo lane audit returned min cosine **0.9886** — marginally under
+the 0.99 bar, i.e. essentially immaterial, in sharp contrast to Qwen's
+0.382. The same decision applies: paper-literal unfolded ``v_t`` is the
+one primary on both lanes. The Qwen-vs-OLMo folding asymmetry is
+recorded as a lane fact and is itself OR-Q4 evidence: the campaign's
+g-folded ablation dictionaries and the paper's unfolded swap basis are
+nearly the same object on OLMo but materially different objects on
+Qwen.
+
 ## D12 — modulation/ignition pairing dimensions (pre-data)
 
 The release fixes the item sets but not the trial-pairing counts.
