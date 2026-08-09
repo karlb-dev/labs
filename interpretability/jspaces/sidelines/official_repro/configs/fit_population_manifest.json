@@ -1,0 +1,28 @@
+{
+  "canonical_text_concat_sha256": "6ec31e0c269bad5fdb6928d8dabd3923e4a92a3144a87f9dbb22e578bb0cbd52",
+  "char_stats": {
+    "raw_max": 2878,
+    "raw_mean": 985.826,
+    "raw_min": 603
+  },
+  "criterion": "len(record['text'].strip()) >= 600  (upstream verbatim)",
+  "fit_jsonl_sha256": "fd102f3e070482b0f588813ad448c4c791784afcdec2fde00c5e1cc965e21f79",
+  "halves": {
+    "A": "even fit_index",
+    "B": "odd fit_index"
+  },
+  "n_fit": 1000,
+  "n_sentinel_pool": 8,
+  "sentinel_jsonl_sha256": "25a24587b02cd61a6e7b894c8786d0ea9db653697a0a2365640517d8754b009a",
+  "source": {
+    "config": "wikitext-103-raw-v1",
+    "dataset": "Salesforce/wikitext",
+    "hub_revision": "b08601e04326c79dfdd32d625aee71d232d685c3",
+    "split": "train"
+  },
+  "stream_index_range": [
+    3,
+    4596
+  ],
+  "text_form": "raw unstripped record text"
+}

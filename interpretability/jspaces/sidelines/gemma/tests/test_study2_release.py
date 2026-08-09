@@ -94,6 +94,37 @@ def test_rendered_bundle_and_registry_snapshot_are_exact():
     assert verification["release_artifacts"] == 13
 
 
+def test_pre_reorg_protocol_guard_uses_boundary_tag_not_head_ancestry():
+    # The campaign line was squash-merged to main, so the recorded pre-reorg
+    # generation commit is no longer a HEAD ancestor; the guard must accept
+    # it via boundary-tag ancestry (verified above by verify_bundle_source
+    # passing) and must still reject commits outside the tag's history.
+    import subprocess
+
+    from jspace_gemma.experiments.gm2_study2_release import (
+        REORG_BOUNDARY_TAG,
+        _generation_protocol_unchanged,
+    )
+    from jspace_gemma.paths import REPO_ROOT
+
+    head = subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"], text=True
+    ).strip()
+    head_is_pre_reorg = (
+        subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "merge-base", "--is-ancestor",
+             REORG_BOUNDARY_TAG, head],
+            check=False,
+        ).returncode
+        != 0
+    )
+    if not head_is_pre_reorg:
+        pytest.skip("HEAD descends from the reorg tag; squash scenario absent")
+    # HEAD itself is neither post-reorg nor an ancestor of the boundary tag,
+    # so the pre-reorg path must reject it.
+    assert _generation_protocol_unchanged(head, CONFIG) is False
+
+
 def test_terminal_study2_release_event_is_methods_only_and_partial_safe():
     rows = [
         json.loads(line)

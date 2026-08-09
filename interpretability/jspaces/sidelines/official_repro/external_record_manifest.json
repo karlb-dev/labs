@@ -1,0 +1,366 @@
+{
+  "clone_path_at_build": "/content/or1_work/jacobian-lens",
+  "note": "vendored files are byte-identical to the pinned upstream commit; the clone is immutable and installed editable for the engine",
+  "upstream_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "upstream_repo": "https://github.com/anthropics/jacobian-lens",
+  "upstream_reproducibility_surface": [
+    {
+      "bytes": 11358,
+      "path": "LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "bytes": 3806,
+      "path": "README.md",
+      "sha256": "350f7dc3d7a6921a211083506dc065593b938b7bf223e8d79530373821c3f4b7"
+    },
+    {
+      "bytes": 3815,
+      "path": "data/evaluations/README.md",
+      "sha256": "e061d9cce02a1cc651d58a81927833b760d3cef65bf4995126ecbe372a0ebe07"
+    },
+    {
+      "bytes": 24228,
+      "path": "data/evaluations/lens-eval-association.json",
+      "sha256": "d1a98cd4911b594282e74168091c77d849dae18ffe2acb5761074853f327d71c"
+    },
+    {
+      "bytes": 21869,
+      "path": "data/evaluations/lens-eval-multihop.json",
+      "sha256": "50b7e4c9255291c0ca2a8e94615be9f44531fa57bb1a844e4f9616056d987416"
+    },
+    {
+      "bytes": 24284,
+      "path": "data/evaluations/lens-eval-multilingual.json",
+      "sha256": "fa70b9bd89416a6d8d985a80dc628b109ae6fd3b25b9275c0fc5065d7ff4a0ef"
+    },
+    {
+      "bytes": 9589,
+      "path": "data/evaluations/lens-eval-order-ops.json",
+      "sha256": "b203206d16ff628152cc86f3838604e06cb54776f3e14fa1c34f150db8bc7560"
+    },
+    {
+      "bytes": 21533,
+      "path": "data/evaluations/lens-eval-poetry.json",
+      "sha256": "6aeb3415c5a5c3f3827c9efe63f006de02f5ef39a816bbac68e15e733aba60cc"
+    },
+    {
+      "bytes": 14646,
+      "path": "data/evaluations/lens-eval-typo.json",
+      "sha256": "9d05e16b7234a57d0773d120a4e1c4e94fd3bc2235a8125d4200a70e60ab17aa"
+    },
+    {
+      "bytes": 8570,
+      "path": "data/experiments/README.md",
+      "sha256": "1d78c702fa22ba610990d545b4c9c96839cc75cd4e451f2badb1cab23e04ad0f"
+    },
+    {
+      "bytes": 27564,
+      "path": "data/experiments/capacity.json",
+      "sha256": "6dd4dcd7adef79585dbdad9d09766afe750da721d6b14ffd31a30523ba72f22e"
+    },
+    {
+      "bytes": 10602,
+      "path": "data/experiments/directed-modulation.json",
+      "sha256": "f3478bb7f3b9e19423f0c056a289fdaf1759942daf67e5304e4f55d9ad555b92"
+    },
+    {
+      "bytes": 7286,
+      "path": "data/experiments/dual-task.json",
+      "sha256": "48519e75a6104a04a32573126b55977347e76e62834f7fd3a99b794072c07c70"
+    },
+    {
+      "bytes": 4946,
+      "path": "data/experiments/flexible-generalization.json",
+      "sha256": "f48d8e877c7422e14fa60794984fde07bbd11acbda4030c0149ec0a593773fdd"
+    },
+    {
+      "bytes": 4438,
+      "path": "data/experiments/ignition.json",
+      "sha256": "4cb961861174f466a6c37c9a5ff39cbb5a477721a89ffa4bc319b3b6d40cc1b1"
+    },
+    {
+      "bytes": 26567,
+      "path": "data/experiments/probe-swap.json",
+      "sha256": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    {
+      "bytes": 2963,
+      "path": "data/experiments/selectivity-language.json",
+      "sha256": "be35ac37e304b28dbe1aa65a6491b102bbe9bf84a9e896886307e8218bcfd2b2"
+    },
+    {
+      "bytes": 3547,
+      "path": "data/experiments/selectivity-linecount.json",
+      "sha256": "ae562a8cceadcf2293813d6255437b165a520e7928f941fc531f72332de394de"
+    },
+    {
+      "bytes": 4841,
+      "path": "data/experiments/top-down-summoning.json",
+      "sha256": "0c33be04bf1aa35ad1066d3999ec4e7b66f6112a91e68b5aadcfdd20c7abb02c"
+    },
+    {
+      "bytes": 7061,
+      "path": "data/experiments/verbal-introspection.json",
+      "sha256": "c16e92d32b43e50027863d939445bb839301457f494363c00e2d00e5c6e73560"
+    },
+    {
+      "bytes": 3321,
+      "path": "data/experiments/verbal-report.json",
+      "sha256": "9a33b48074c4565413247bace11d37537a963774936740287f0fb7dff460652c"
+    },
+    {
+      "bytes": 637,
+      "path": "jlens/__init__.py",
+      "sha256": "bd7bb6302565a712583b05b91d48c8638d9f5d2ace00e52db0db2fd300f7fe3a"
+    },
+    {
+      "bytes": 714,
+      "path": "jlens/__pycache__/__init__.cpython-312.pyc",
+      "sha256": "7188e1f269411c48c47b6639087557879661832f37ff27f850cff96f241f388f"
+    },
+    {
+      "bytes": 3381,
+      "path": "jlens/__pycache__/_logging.cpython-312.pyc",
+      "sha256": "6c4b330cad23c8550a29a04130fbd685c6c5f3195dcc335f878e275309fbe3cf"
+    },
+    {
+      "bytes": 15884,
+      "path": "jlens/__pycache__/fitting.cpython-312.pyc",
+      "sha256": "6c7230f9c0bf2eeae9ad9e429908d8f9d063dc0b2b681b63e6f8a84cbbe64204"
+    },
+    {
+      "bytes": 10604,
+      "path": "jlens/__pycache__/hf.cpython-312.pyc",
+      "sha256": "5f3d0f89aa20b284c3c142683bee8bfba260aa807710fbac570bf12270da8d61"
+    },
+    {
+      "bytes": 3788,
+      "path": "jlens/__pycache__/hooks.cpython-312.pyc",
+      "sha256": "72d8b2948091fcf769b015cd8aa900a8631e431d1a2e4744aad7aaa7051e2eaa"
+    },
+    {
+      "bytes": 11753,
+      "path": "jlens/__pycache__/lens.cpython-312.pyc",
+      "sha256": "3263d5388b3f2ae808b57f3f12458b597126e1dd80a9bc61d1042fac88fa19df"
+    },
+    {
+      "bytes": 2379,
+      "path": "jlens/__pycache__/protocol.cpython-312.pyc",
+      "sha256": "a9c0ce3f034e7efec3bf93688a9d6ec4370ae2f2827cb8b71178c2cb453b93aa"
+    },
+    {
+      "bytes": 1804,
+      "path": "jlens/_logging.py",
+      "sha256": "5943d28520b8fe0e1b2f8ba16d7802522a2370f11f213bc6bb694e09bcfc06ae"
+    },
+    {
+      "bytes": 298,
+      "path": "jlens/data/README.md",
+      "sha256": "10d36304f8bde26e2b09aa10c31ad1fd7a3c6ef2616ade1159d6d126c87da788"
+    },
+    {
+      "bytes": 9128,
+      "path": "jlens/data/blackmail.json",
+      "sha256": "5669487c78043535450506cd3ec9aa7b0a07b8309783437c093dc165ce79b30a"
+    },
+    {
+      "bytes": 43663,
+      "path": "jlens/data/slice_vis.html",
+      "sha256": "d19d843aa5d1fa5073c925a7723c4e9503b9b83c5622d9775033887c64bf62d9"
+    },
+    {
+      "bytes": 6300,
+      "path": "jlens/examples.py",
+      "sha256": "17270d800ffa169b72c1ab50940ae9a22cadf8a7a2449d897fa2a74b56569d6d"
+    },
+    {
+      "bytes": 15078,
+      "path": "jlens/fitting.py",
+      "sha256": "5be8959db8efc34cee41ed677beba84e21ba3c9e3ccb958bdbc1600c86b5e080"
+    },
+    {
+      "bytes": 8182,
+      "path": "jlens/hf.py",
+      "sha256": "228cf078e4586a7b7f61a6f5064403b8960de337afd19256efa56f04d53e3222"
+    },
+    {
+      "bytes": 2735,
+      "path": "jlens/hooks.py",
+      "sha256": "c781d6944fd23396d3fc65a04db1f1db807f6f12cd5912cdbd2fb67eb3508081"
+    },
+    {
+      "bytes": 8646,
+      "path": "jlens/lens.py",
+      "sha256": "e231e7d3a6c8e8f7791b53705a34342d0bba376a127a82376eaf6ec30ca11808"
+    },
+    {
+      "bytes": 1774,
+      "path": "jlens/protocol.py",
+      "sha256": "7217a3bc2c1cd01fed3e6b00c53effbd957effddc49fe073da89cb10d1b1a344"
+    },
+    {
+      "bytes": 19984,
+      "path": "jlens/vis.py",
+      "sha256": "3d3b442c3d4686a632043cd8390c9923a243b3940726baeadd8e854e7dacc9b6"
+    },
+    {
+      "bytes": 847,
+      "path": "pyproject.toml",
+      "sha256": "b498f1977a64df5ebd0d990088e4956874f62ead1adba8d62f2acf36780a52b0"
+    },
+    {
+      "bytes": 69,
+      "path": "tests/__init__.py",
+      "sha256": "0121edc9cf69e843d460427ac8b8ebaafc1799a88edcaac94041bd0a9c99110b"
+    },
+    {
+      "bytes": 3388,
+      "path": "tests/test_compute_slice.py",
+      "sha256": "a7f92c02214ad8309ea68fdeabbe7233c14b8e00e29ff195a8ba536abb0e770f"
+    },
+    {
+      "bytes": 10803,
+      "path": "tests/test_fitting.py",
+      "sha256": "1ff5c03e33090d280b13c2e3cbf48b4b876d24e3a73257a4640db5481e39db6b"
+    },
+    {
+      "bytes": 2462,
+      "path": "tests/test_hf_layout.py",
+      "sha256": "373432eaad1e01ea885245acfdfb872669646b122fb3449104c0af5de50bd740"
+    },
+    {
+      "bytes": 1244,
+      "path": "tests/test_ranks_of.py",
+      "sha256": "744ca52517ddb51216cc8cc6b6e266b3db507af3ced79ea5ab7141975c81fff0"
+    },
+    {
+      "bytes": 3791,
+      "path": "tests/test_vis_modes.py",
+      "sha256": "7f62810748a92ec26b41fdf924de8103c525c1e0682e2d98f370160b0a6eb028"
+    },
+    {
+      "bytes": 2871,
+      "path": "tests/tiny.py",
+      "sha256": "af208b3d6a448f63c27de5667de22065cf9d2b3a184699bb9e66acd3c11b41ad"
+    },
+    {
+      "bytes": 556572,
+      "path": "uv.lock",
+      "sha256": "981e580531e517be1bd1a3fef98ac12822f40d626ba8f365e59973ff258f36ea"
+    },
+    {
+      "bytes": 9038,
+      "path": "walkthrough.ipynb",
+      "sha256": "96ba7c7945f0902e6cdacd32320309176dcfd891b571c2734a1aa60facfc5d4a"
+    }
+  ],
+  "vendored_files": [
+    {
+      "bytes": 11358,
+      "path": "LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "bytes": 3806,
+      "path": "README.md",
+      "sha256": "350f7dc3d7a6921a211083506dc065593b938b7bf223e8d79530373821c3f4b7"
+    },
+    {
+      "bytes": 3815,
+      "path": "data/evaluations/README.md",
+      "sha256": "e061d9cce02a1cc651d58a81927833b760d3cef65bf4995126ecbe372a0ebe07"
+    },
+    {
+      "bytes": 24228,
+      "path": "data/evaluations/lens-eval-association.json",
+      "sha256": "d1a98cd4911b594282e74168091c77d849dae18ffe2acb5761074853f327d71c"
+    },
+    {
+      "bytes": 21869,
+      "path": "data/evaluations/lens-eval-multihop.json",
+      "sha256": "50b7e4c9255291c0ca2a8e94615be9f44531fa57bb1a844e4f9616056d987416"
+    },
+    {
+      "bytes": 24284,
+      "path": "data/evaluations/lens-eval-multilingual.json",
+      "sha256": "fa70b9bd89416a6d8d985a80dc628b109ae6fd3b25b9275c0fc5065d7ff4a0ef"
+    },
+    {
+      "bytes": 9589,
+      "path": "data/evaluations/lens-eval-order-ops.json",
+      "sha256": "b203206d16ff628152cc86f3838604e06cb54776f3e14fa1c34f150db8bc7560"
+    },
+    {
+      "bytes": 21533,
+      "path": "data/evaluations/lens-eval-poetry.json",
+      "sha256": "6aeb3415c5a5c3f3827c9efe63f006de02f5ef39a816bbac68e15e733aba60cc"
+    },
+    {
+      "bytes": 14646,
+      "path": "data/evaluations/lens-eval-typo.json",
+      "sha256": "9d05e16b7234a57d0773d120a4e1c4e94fd3bc2235a8125d4200a70e60ab17aa"
+    },
+    {
+      "bytes": 8570,
+      "path": "data/experiments/README.md",
+      "sha256": "1d78c702fa22ba610990d545b4c9c96839cc75cd4e451f2badb1cab23e04ad0f"
+    },
+    {
+      "bytes": 27564,
+      "path": "data/experiments/capacity.json",
+      "sha256": "6dd4dcd7adef79585dbdad9d09766afe750da721d6b14ffd31a30523ba72f22e"
+    },
+    {
+      "bytes": 10602,
+      "path": "data/experiments/directed-modulation.json",
+      "sha256": "f3478bb7f3b9e19423f0c056a289fdaf1759942daf67e5304e4f55d9ad555b92"
+    },
+    {
+      "bytes": 7286,
+      "path": "data/experiments/dual-task.json",
+      "sha256": "48519e75a6104a04a32573126b55977347e76e62834f7fd3a99b794072c07c70"
+    },
+    {
+      "bytes": 4946,
+      "path": "data/experiments/flexible-generalization.json",
+      "sha256": "f48d8e877c7422e14fa60794984fde07bbd11acbda4030c0149ec0a593773fdd"
+    },
+    {
+      "bytes": 4438,
+      "path": "data/experiments/ignition.json",
+      "sha256": "4cb961861174f466a6c37c9a5ff39cbb5a477721a89ffa4bc319b3b6d40cc1b1"
+    },
+    {
+      "bytes": 26567,
+      "path": "data/experiments/probe-swap.json",
+      "sha256": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    {
+      "bytes": 2963,
+      "path": "data/experiments/selectivity-language.json",
+      "sha256": "be35ac37e304b28dbe1aa65a6491b102bbe9bf84a9e896886307e8218bcfd2b2"
+    },
+    {
+      "bytes": 3547,
+      "path": "data/experiments/selectivity-linecount.json",
+      "sha256": "ae562a8cceadcf2293813d6255437b165a520e7928f941fc531f72332de394de"
+    },
+    {
+      "bytes": 4841,
+      "path": "data/experiments/top-down-summoning.json",
+      "sha256": "0c33be04bf1aa35ad1066d3999ec4e7b66f6112a91e68b5aadcfdd20c7abb02c"
+    },
+    {
+      "bytes": 7061,
+      "path": "data/experiments/verbal-introspection.json",
+      "sha256": "c16e92d32b43e50027863d939445bb839301457f494363c00e2d00e5c6e73560"
+    },
+    {
+      "bytes": 3321,
+      "path": "data/experiments/verbal-report.json",
+      "sha256": "9a33b48074c4565413247bace11d37537a963774936740287f0fb7dff460652c"
+    }
+  ],
+  "vendored_root": "external/anthropics_jacobian_lens_581d3986"
+}

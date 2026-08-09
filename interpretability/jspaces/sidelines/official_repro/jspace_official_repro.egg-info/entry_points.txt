@@ -1,0 +1,2 @@
+[console_scripts]
+jspace-or1 = jspace_official_repro.cli:main

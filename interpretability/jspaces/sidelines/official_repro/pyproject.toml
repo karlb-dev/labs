@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace-official-repro"
+version = "0.1.0"
+description = "J-space official released-materials reproduction, Study 1 (or1-)"
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "transformers",
+    "tokenizers",
+    "safetensors",
+    "huggingface-hub",
+    "datasets",
+    "numpy",
+    "pyyaml",
+    "pandas",
+    "pyarrow",
+    "matplotlib",
+]
+
+[project.scripts]
+jspace-or1 = "jspace_official_repro.cli:main"
+
+[tool.setuptools]
+packages = [
+    "jspace_official_repro",
+    "jspace_official_repro.experiments",
+]

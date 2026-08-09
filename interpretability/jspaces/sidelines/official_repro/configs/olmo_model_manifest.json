@@ -1,0 +1,139 @@
+{
+  "files": [
+    {
+      "bytes": 1573,
+      "path": ".gitattributes",
+      "sha256": "fe8d0403bfae10d6fa1aa89546455a246fd815f578a2151ffc21fd7c70b41544"
+    },
+    {
+      "bytes": 11267,
+      "path": "README.md",
+      "sha256": "937c83504fc8c2d422922913af601feb6ec7b21415061d86d9e793c52359525b"
+    },
+    {
+      "bytes": 2748,
+      "path": "chat_template.jinja",
+      "sha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3"
+    },
+    {
+      "bytes": 2396,
+      "path": "config.json",
+      "sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    {
+      "bytes": 207,
+      "path": "generation_config.json",
+      "sha256": "9ca20766a58daf4a6e1bf5f6552d27dbe57733dba2c3af507dd9f4b12aacc0b0"
+    },
+    {
+      "bytes": 916646,
+      "path": "merges.txt",
+      "sha256": "b6fe424e334903f7fb84d3a106d9730455f4744b9fe3c21ee136d97a00e72502"
+    },
+    {
+      "bytes": 4990600552,
+      "path": "model-00001-of-00014.safetensors",
+      "sha256": "76c4ff003d256af108eb106802d0a7d9c56e0aed971ad9833c42f9ff3d739658"
+    },
+    {
+      "bytes": 4938975944,
+      "path": "model-00002-of-00014.safetensors",
+      "sha256": "61b212b654fbd42e3f0feac629efe40ab4f06c5aa6b8f63a53139d586565e3c4"
+    },
+    {
+      "bytes": 4876048688,
+      "path": "model-00003-of-00014.safetensors",
+      "sha256": "a6adb4f3c8d0d66fe6ac59e9dc06d1c75e1aaddacbc9af4575a70bd4c854f031"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00004-of-00014.safetensors",
+      "sha256": "916989c288fc54234702ad554e2da03e10557a9351b8767fd70deef1f6eac65d"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00005-of-00014.safetensors",
+      "sha256": "ec1299445d7252628919ad972c4785431c687f918240161af3cd3d822f4a3b29"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00006-of-00014.safetensors",
+      "sha256": "e3dbed4eecd007d825368445058e3bc1e598f7c828ed3fa51d8ffd75d6b6c22e"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00007-of-00014.safetensors",
+      "sha256": "7425bb023430a8fd7a18311ae0d2740d5f65165d0f456ee07c1930020dbb6221"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00008-of-00014.safetensors",
+      "sha256": "32a037059f6291bc46bc24fd231b91f92b06153e201eee5409f07fc9d60b4b8e"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00009-of-00014.safetensors",
+      "sha256": "5c6f115eeaa8e9d5e77797d861183849085fa10a3b82b60b3e5863e975795964"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00010-of-00014.safetensors",
+      "sha256": "682fe995d4caa2822c59bc222e8d459cb7872d83391a0233a22817add08d4e38"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00011-of-00014.safetensors",
+      "sha256": "311cc3118f2f8f146b9739b8d480a20d02df623595a92a4b9a8414396dfa415a"
+    },
+    {
+      "bytes": 4876048704,
+      "path": "model-00012-of-00014.safetensors",
+      "sha256": "f3ac88d5fb5faaef4f56a55bfd4a6f522be1647e393ea7f8636ccf93676a4db2"
+    },
+    {
+      "bytes": 4750216928,
+      "path": "model-00013-of-00014.safetensors",
+      "sha256": "3a636d6dbb5330aa870e74d6d7b8d5acead97c217ae83b7e68814e77ab80228c"
+    },
+    {
+      "bytes": 1026846848,
+      "path": "model-00014-of-00014.safetensors",
+      "sha256": "24f12c4a96797ac6a1199bf7a88b0b00cdb88d89572216d2f1a8c83196cc5f29"
+    },
+    {
+      "bytes": 59072,
+      "path": "model.safetensors.index.json",
+      "sha256": "3f639e0b434e75af1bc14942b8ad0e4ab100923f2ca071c6985208d50293a269"
+    },
+    {
+      "bytes": 105001,
+      "path": "olmo-instruct.png",
+      "sha256": "9ae64ca9d1e2a551eb275120ec9d4dd8a3276eb10035ff118e566750d80b0435"
+    },
+    {
+      "bytes": 581,
+      "path": "special_tokens_map.json",
+      "sha256": "78afb564e81264029b25f9caf24bda2521d5bdaeff5cd3fdbc01d3da2e8ce2f2"
+    },
+    {
+      "bytes": 7137175,
+      "path": "tokenizer.json",
+      "sha256": "7738a25c46a6043a0e2e605138851baa450269ce9d800af6ca9bf6192e45510c"
+    },
+    {
+      "bytes": 7103,
+      "path": "tokenizer_config.json",
+      "sha256": "80fbc2a161419760bb8a84ed1d3b9550a2d68b7abd07a72706b8f5977e044b8d"
+    },
+    {
+      "bytes": 1611055,
+      "path": "vocab.json",
+      "sha256": "d8eb44d0d51f5e39c9b14825ca8bd10a2500f99c438ca81d4462f0263acd3b53"
+    }
+  ],
+  "model_id": "allenai/Olmo-3.1-32B-Instruct",
+  "n_files": 26,
+  "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+  "snapshot_path_at_build": "/content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae",
+  "total_bytes": 64476982120
+}

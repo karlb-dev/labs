@@ -1,0 +1,20 @@
+{
+  "payload": {
+    "schema_version": 1,
+    "study_id": "jspace-official-repro-1",
+    "bundle_id": "official-repro-1-terminal",
+    "advisory": true,
+    "consumes_automatically": [],
+    "source_git": {
+      "code_commit": "ef9343e5a9c3444faaade09088bbe01fa4fff136",
+      "branch": "interp_jspace_official_repro_1",
+      "dirty_tree": false
+    },
+    "registry_snapshot_sha256": "239a4408ac3bcad3889d9355902986861a3e3178a790f1d8edff6e3d41d54862",
+    "headline_grid_sha256": "66707c360088b6adf2c6358ac78320b47c8b0ca9e9787e00f65828961d6e31a0",
+    "claim_ledger_sha256": "c581cf39d51668c079a318f03abc1f6a8ad1dcc64636fb99e9923a89f9bee0b0",
+    "state_of_record_sha256": "57ac92168caa1e673fd5bfe80d3c010807bf193446a34850b93984641834c4d7",
+    "n_live_events": 25
+  },
+  "payload_sha256": "a3d7565e7e4101313e86c8767d0bf0518e5cedbefa9f04e35b15f560ad637e3e"
+}

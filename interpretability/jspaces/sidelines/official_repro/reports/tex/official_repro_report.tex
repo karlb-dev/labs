@@ -1,0 +1,447 @@
+% OFFICIAL_REPRO_DEVELOPMENT_REPORT — built by latexmk; numbers from
+% numbers.tex (auto-generated); figures from reports/figures (regenerable
+% from registered JSON without model weights).
+\documentclass[10pt]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\graphicspath{{../figures/}}
+\input{numbers.tex}
+\input{examples.tex}
+
+\definecolor{jblue}{HTML}{2A78D6}
+\definecolor{jorange}{HTML}{EB6834}
+\definecolor{ink2}{HTML}{52514E}
+
+\title{\textbf{Released-Materials Reproduction, Study 1 (\texttt{or1-})}\\
+\large Running the Anthropic Jacobian-lens battery on Qwen 3.6 27B and
+OLMo 3.1 32B Instruct\\
+\normalsize development/methods tier --- prompt-exact where released,
+method-reconstructed where specified, gated where not identified}
+\author{J-space campaign --- official-repro sideline\\
+\small branch \texttt{interp\_jspace\_official\_repro\_1} ---
+upstream \texttt{anthropics/jacobian-lens @ 581d3986}}
+\date{2026-08-08/09 --- terminal (OR1-A..D complete; 32 registered or1- events)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent We run the released Jacobian-lens evaluations (6 sets) and
+experiment prompt sets (11 sets) from the public companion release of
+``Verbalizable Representations Form a Global Workspace in Language
+Models'' under one audited harness on two open-weight models, and
+separate prompt, lens, intervention, capability, and model effects.
+Both lanes are complete: Qwen 3.6 27B under the campaign-validated
+published $n{=}1000$ lens (OR-Q1/Q2), and OLMo 3.1 32B Instruct under
+one prospectively fitted, fit-stable $n{=}250$ official-estimator lens
+(OR-Q3), closed by a bounded instrument cross-over (OR-Q4). Headline:
+released \emph{readout} contrasts reproduce directionally on both
+models (selectivity exactly); the paper-literal \emph{coordinate
+interventions} transfer weakly and concordantly ($\sim$5--30\% vs the
+paper's 40--88\%, with the $\alpha{=}2$ remedy inverting); and the
+campaign's broad protected J-suppression is selectively destructive on
+the official prompts of both lanes while matched controls are not ---
+the two intervention families estimate different causal questions.
+Fidelity classes and gate states are carried on every cell; gated
+cells are missing, never zero; no confirmatory language is licensed
+anywhere in Study 1.
+\end{abstract}
+
+\section{Provenance and instrument identity}
+
+\begin{table}[h]\centering\small
+\begin{tabular}{ll}
+\toprule
+Upstream release & \texttt{anthropics/jacobian-lens} @ \texttt{581d3986} (11 experiments + 6 evals, hash-pinned)\\
+Qwen checkpoint & \texttt{Qwen/Qwen3.6-27B} @ \texttt{6a9e13bd} (64 layers, $d{=}5120$, 48 GDN blocks verified)\\
+Published lens & \texttt{neuronpedia/jacobian-lens} @ \texttt{a4114d7}, $n{=}1000$, sha256 \texttt{1718c8c5\ldots} byte-verified\\
+Readout parity & max abs.\ diff \qwparity{} (hard stop threshold $10^{-4}$; exact top-20 order agreement)\\
+$\alpha{=}0$ no-op & exact (0.0 logit difference across a full-position band session)\\
+g-folding audit & min cosine \qwgfold{} over 26 battery tokens $\times$ 14 band layers --- \textbf{material}; D9: paper-literal unfolded $v_t$ stays primary\\
+Bands & paper grid 25 layers; workspace band $[24,58]$; campaign band sensitivity $[20\ldots44]$\\
+\bottomrule
+\end{tabular}
+\caption{Lane admission. The boot-probe sentinel (Fig.~\ref{fig:slice})
+reads the latent country mid-band and the currency near the output ---
+the instrument behaves as the paper describes before any experiment
+runs.}
+\end{table}
+
+\section{The paper's own example, on Qwen}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f06_slice_boot_qwen.pdf}
+\caption{\label{fig:slice}The upstream README walkthrough probe
+(``The currency used in the country shaped like a boot is'') under the
+published lens on Qwen 3.6 27B. Left: J-lens top-1 token per (layer,
+position); colored cells are tracked words. Right: tracked-word best
+rank by layer (shaded: workspace band). \textcolor{jblue}{Italy} appears
+as latent content mid-band and hands off to
+\textcolor{jorange}{euro}/lira toward the output --- the paper's
+slice-visualisation phenomenology, reproduced from released materials.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f07_slice_amazon_qwen.pdf}
+\caption{Released probe-swap item 0 (``the language spoken in the
+country where the Amazon River ends'') --- the two-hop structure is
+visible: \textcolor{jblue}{Brazil} (bridge entity) carried in-band while
+the output side resolves toward \textcolor{jorange}{Portuguese}.}
+\end{figure}
+
+\section{Six released lens evaluations (OR-Q1)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f01_evals_qwen.pdf}
+\caption{pass@$k$ per released set, token-valid denominators,
+min-over-24-paper-grid-layers at the released readout position.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f02_layer_profiles_qwen.pdf}
+\caption{\label{fig:profiles}Median intermediate rank by layer. On the
+latent-content sets (multihop, multilingual) the J-lens reaches useful
+ranks by the band onset while the logit lens remains near rank $10^4$
+until $\sim$L45 --- the paper's central methods-comparison claim,
+visible on an open model. On typo the logit lens is stronger (the
+correction is surface-adjacent); order-ops numbers sit in the prompt, so
+the logit lens copies them early.}
+\end{figure}
+
+\begin{table}[h]\centering\small
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{3}{c}{Jacobian lens} & \multicolumn{3}{c}{logit lens}\\
+Set & @1 & @5 & @20 & @1 & @5 & @20\\
+\midrule
+multihop ($n{=}\qwmultihopn$) & \qwmultihopjlenspone & \qwmultihopjlenspfive & \qwmultihopjlensptwenty & \qwmultihoplogitpone & \qwmultihoplogitpfive & \qwmultihoplogitptwenty\\
+multilingual ($n{=}\qwmultilingualn$) & \qwmultilingualjlenspone & \qwmultilingualjlenspfive & \qwmultilingualjlensptwenty & \qwmultilinguallogitpone & \qwmultilinguallogitpfive & \qwmultilinguallogitptwenty\\
+poetry ($n{=}\qwpoetryn$) & \qwpoetryjlenspone & \qwpoetryjlenspfive & \qwpoetryjlensptwenty & \qwpoetrylogitpone & \qwpoetrylogitpfive & \qwpoetrylogitptwenty\\
+typo ($n{=}\qwtypon$) & \qwtypojlenspone & \qwtypojlenspfive & \qwtypojlensptwenty & \qwtypologitpone & \qwtypologitpfive & \qwtypologitptwenty\\
+order-ops ($n{=}\qworderopsn$) & \qworderopsjlenspone & \qworderopsjlenspfive & \qworderopsjlensptwenty & \qworderopslogitpone & \qworderopslogitpfive & \qworderopslogitptwenty\\
+association ($n{=}\qwassociationn$) & \qwassociationjlenspone & \qwassociationjlenspfive & \qwassociationjlensptwenty & \qwassociationlogitpone & \qwassociationlogitpfive & \qwassociationlogitptwenty\\
+\bottomrule
+\end{tabular}
+\caption{pass@$k$, token-valid primary. All-source-layer sensitivity and
+released-denominator sensitivity live in the registered JSON.}
+\end{table}
+
+\section{Qwen causal core (OR-Q2)}
+
+\subsection{Verbal report}
+Release-literal rule (first ten listed candidates, skip the answer),
+swap-out = greedy token at the generation boundary (D1), $\alpha{=}1$
+across the band at every prompt position. \textbf{Primary numbers are
+the v2 rerun} (\texttt{or1-qwen-verbal-report-v2}): category-equal
+top-1 \qwvrvtwocattopone{} and top-5 \qwvrvtwocattopfive{}
+(\qwvrvtwonexec{} executed trials; \qwvrvtwoimproved{} improved /
+\qwvrvtwoworsened{} worsened). Paper context (Claude): 88\% top-5.
+
+\textbf{Incident or1-001 (resolved):} the superseded v1 run scored the
+leading-space token form at a boundary whose in-context form is bare
+and reported top-5 \qwvrcattopfive{} --- i.e.\ \emph{three quarters of
+the apparent Qwen verbal-report deficit was a scoring-form artifact}
+(the model's top-1 literally became \texttt{Red} while the scored
+\texttt{\textvisiblespace Red} form sat at rank 5). v2 scores min over
+both single-token forms with the boundary in-context swap vector; OLMo
+ran v2 semantics from its first execution. See
+\texttt{reports/INCIDENT\_or1-001\_vr\_token\_form.md}.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f03_verbal_report_qwen.pdf}
+\caption{\label{fig:vr}Verbal report on Qwen: per-category success rates
+(left) and per-trial rank shifts (right; below the diagonal = swap moved
+the candidate toward the output).}
+\end{figure}
+
+\subsection{Flexible generalization}
+All 192 ordered off-diagonal swaps; capability-conditioned primary
+(source and target baselines correct; baseline accuracy
+\qwfgbaseline{}); $\alpha{=}2$ full sensitivity. Category-equal
+capable top-1: \qwfgcapaone{} ($\alpha{=}1$) $\to$ \qwfgcapatwo{}
+($\alpha{=}2$); diagnostic all-executable: \qwfgdiagaone{}. Paper
+context: $76/192 \to 101/192$ (Sonnet 4.5). Per-category grids in
+Fig.~\ref{fig:fg}.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f04_flexgen_qwen.pdf}
+\caption{\label{fig:fg}Function $\times$ ordered-argument-swap outcomes,
+$\alpha{=}1$ (filled = target answer reached rank 1).}
+\end{figure}
+
+\subsection{Probe-swap, raw J-lens token arm}
+Fidelity \texttt{prompt\_exact\_representation\_adapted\_raw\_jlens}
+(the paper's own \S3.3 headline arm; the official linear-probe arm is
+NOT-IDENTIFIED --- its training corpus is absent from the release).
+Population: 90 released items, \qwpsntokgated{} tokenization-gated,
+\qwpsnexec{} executed, \qwpsncap{} baseline-capable. Capable top-1
+\qwpscaptopone{} (diagnostic \qwpsdiagtopone{}); multihop
+\qwpsmulti{} vs non-multihop \qwpsnonmulti{}. Paper context: 60\%
+(Claude, $n{=}90$).
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f05_probe_swap_qwen.pdf}
+\caption{Probe-swap raw arm on Qwen: per-item rank movement of the
+predicted swapped answer (left) and capable top-1 by category group
+(right).}
+\end{figure}
+
+\section{Worked examples: what the swaps actually do}
+
+The aggregate rates hide a bimodal reality worth seeing item by item.
+When the paper-literal swap works on Qwen, it works emphatically — the
+predicted counterfactual answer jumps hundreds of ranks to top-1:
+
+\begin{table}[h]\centering\small
+\qwpswinstable
+\caption{The \qwpsnwins{} probe-swap successes (of 63 baseline-capable
+items), largest baseline distance first. \texttt{ex2-city-capital-Munich}:
+swapping the J-lens vector Munich$\to$(released target) at every prompt
+position moves the predicted capital from rank 122 to the model's
+literal output. One success (\texttt{rhyme-rain-neighbor}) was already
+rank 1 before the swap (\qwpsnwinstrivial{} such trivial cell in the
+count); \qwpsnnear{} further items land in the top-5 without reaching
+top-1 — the modal failure is \emph{under-strength}, not wrong-direction.}
+\end{table}
+
+\begin{table}[h]\centering\small
+\qwfgwinstable
+\caption{The \qwfgnwins{} flexible-generalization $\alpha{=}1$ successes
+concentrate in the \emph{countries} category (capable top-1 23.3\%
+there): \texttt{capital Egypt$\to$Canada} drives \texttt{Ottawa} from
+rank 480 to the output. Months and numbers show none — the four
+released categories differ enormously, exactly the per-category
+variance the paper's own appendix warns about.}
+\end{table}
+
+Two structural observations. First, successes cluster where the
+swapped-in argument has a strong, single-token, high-frequency identity
+(cities, countries, elements); the sparse-identity categories (months
+as time-words, small numbers) never flip. Second, the near-miss mass
+(top-5 but not top-1) plus the incident-or1-001 form effect mean the
+honest Qwen picture is ``the mechanism visibly engages but rarely
+completes the flip at $\alpha{=}1$'' — which makes the $\alpha{=}2$
+\emph{reversal} (0\% capable) the more interesting anomaly: on Qwen the
+doubled patch overshoots into off-distribution territory rather than
+completing near-misses, unlike the paper's Sonnet where $\alpha{=}2$
+lifted 76/192 to 101/192.
+
+\section{OR1-B: the OLMo official-estimator fit}
+
+Timing gate (frozen before any outcome): dim\_batch ladder
+161/164/181/232/386\,s per prompt for 16/8/4/2/1 $\Rightarrow$
+dim\_batch=\olfitdimbatch{} at \olfitsperprompt{}\,s/prompt; only the
+2$\times$125 tier fits the 18\,GPU-hour ceiling $\Rightarrow$ merged
+$n{=}\olfitmerged$ (the addendum's honest-prior tier). Both halves
+completed 125/125 with zero skips. Split-half operator audit: median
+symmetric relative Frobenius \olshmedfrob{} across the 32 fitted layers
+(\olshbandfrob{} in-band); minus-identity cosines $\approx$1.0
+(fp32-accumulation readings marginally above 1 are numerical); late
+layers are near-identity (identity fraction 0.93--0.97), so their
+low top-64 subspace overlaps reflect noise-dominated residuals, not
+disagreement. Readout stability: half-A/half-B eval pass@20 gaps
+$\le$0.015 on every set --- far inside the 0.10 margin. \textbf{No
+FIT-SENSITIVE classification; the merged lens is the OLMo primary.}
+
+\section{OR1-C: the OLMo lane}
+
+Admission: readout parity \olparity{} (exact), $\alpha{=}0$ no-op exact,
+g-folding min cosine \olgfold{} --- \emph{essentially immaterial}, in
+sharp contrast to Qwen's \qwgfold{} (D9 addendum): the campaign's
+g-folded dictionaries and the paper's unfolded basis are nearly the same
+object on OLMo but materially different objects on Qwen.
+
+\begin{table}[h]\centering\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+pass@20 & merged & half A & half B & campaign & merged$_9$ & campaign$_9$ & logit\\
+\midrule
+multihop & \olmultihopjlensptwenty & \olhalfamultihopjlensptwenty & \olhalfbmultihopjlensptwenty & \olcampmultihopjlensptwenty & \olmninemultihopjlensptwenty & \olcninemultihopjlensptwenty & \olmultihoplogitptwenty\\
+multilingual & \olmultilingualjlensptwenty & \olhalfamultilingualjlensptwenty & \olhalfbmultilingualjlensptwenty & \olcampmultilingualjlensptwenty & \olmninemultilingualjlensptwenty & \olcninemultilingualjlensptwenty & \olmultilinguallogitptwenty\\
+poetry & \olpoetryjlensptwenty & \olhalfapoetryjlensptwenty & \olhalfbpoetryjlensptwenty & \olcamppoetryjlensptwenty & \olmninepoetryjlensptwenty & \olcninepoetryjlensptwenty & \olpoetrylogitptwenty\\
+typo & \oltypojlensptwenty & \olhalfatypojlensptwenty & \olhalfbtypojlensptwenty & \olcamptypojlensptwenty & \olmninetypojlensptwenty & \olcninetypojlensptwenty & \oltypologitptwenty\\
+order-ops & \olorderopsjlensptwenty & \olhalfaorderopsjlensptwenty & \olhalfborderopsjlensptwenty & \olcamporderopsjlensptwenty & \olmnineorderopsjlensptwenty & \olcnineorderopsjlensptwenty & \olorderopslogitptwenty\\
+association & \olassociationjlensptwenty & \olhalfaassociationjlensptwenty & \olhalfbassociationjlensptwenty & \olcampassociationjlensptwenty & \olmnineassociationjlensptwenty & \olcnineassociationjlensptwenty & \olassociationlogitptwenty\\
+\bottomrule
+\end{tabular}
+\caption{OLMo six-view eval grid (token-valid pass@20). The merged OR1
+lens ($n{=}250$, official recipe) and the frozen campaign lens
+($n{=}120$, campaign recipe) are concordant on the fair nine-layer
+intersection; halves bracket the merged lens tightly. \textbf{The
+logit lens matches or beats the J-lens on OLMo} --- the reverse of
+Qwen.}
+\end{table}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f02_layer_profiles_olmo.pdf}
+\caption{OLMo per-layer profiles: the two lenses nearly coincide
+through the band (vs.\ Qwen's 1--2 order-of-magnitude J-lens
+advantage on latent-content sets). Consistent with the operator audit:
+OLMo's in-band/late $J_\ell$ are close to identity, so transport adds
+little where the residual stream is already output-aligned. The
+J-lens \emph{advantage} is itself model-dependent.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f06_slice_boot_olmo.pdf}
+\caption{The boot-currency probe on OLMo with the freshly fitted
+$n{=}250$ lens: the latent country and currency handoff appear here
+too.}
+\end{figure}
+
+\subsection{OLMo causal core (v2 scoring throughout)}
+
+\textbf{Verbal report}: category-equal top-1 \olvrcattopone{}, top-5
+\olvrcattopfive{} (\olvrnexec{} executed; \olvrimproved{} improved /
+\olvrworsened{} worsened). This is an order of magnitude above Qwen's
+v1 numbers (v2 rerun pending) though far below the paper's 88\%
+(Claude). \textbf{Flexible generalization}: capable top-1
+\olfgcapaone{} ($\alpha{=}1$) $\to$ \olfgcapatwo{} ($\alpha{=}2$) ---
+numerically indistinguishable from Qwen (5.8\%/0.0\%), \emph{including
+the $\alpha{=}2$ reversal}: the over-strength overshoot is a
+cross-model regularity of the paper-literal swap on open models,
+whereas Sonnet 4.5 improved 76/192$\to$101/192. \textbf{Probe-swap raw
+arm}: capable top-1 \olpscaptopone{} (diagnostic \olpsdiagtopone{};
+\olpsncap{} capable of 90; paper 60\%).
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f03_verbal_report_olmo.pdf}
+\caption{OLMo verbal report: per-category rates and rank shifts. The
+25.5\% top-5 rate is the strongest core effect either open lane has
+shown.}
+\end{figure}
+
+\section{Extended battery (Groups A--C, both lanes)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f08_battery_qwen.pdf}\\[2pt]
+\includegraphics[width=\textwidth]{or1f08_battery_olmo.pdf}
+\caption{\label{fig:battery}Battery overview, Qwen (top) and OLMo
+(bottom): modulation contrast, dual-task reachability, ignition
+transition width by pair family, introspection dose-response.}
+\end{figure}
+
+\textbf{Reproduced on both lanes.} Selectivity-language: the released
+readout contrast is \emph{perfect on both models} (explicit 1.00 vs
+automatic 0.00). Directed modulation: focus $>$ suppress $>0$ with the
+white-bear residue (Qwen .72/.26; OLMo .44/.06; ``mention'' controls
+pattern with focus, as expected when the instruction itself names the
+target). Ignition: real concept pairs switch far more sharply than
+idiom controls (Qwen .035 vs .209; OLMo .040 vs .100); the
+depth-profile differs (Qwen narrows monotonically into the output;
+OLMo is sharpest mid-band).
+
+\textbf{Qwen-only.} Dual-task interference is present and asymmetric
+(math 31\% $\gg$ concept 7\%). On OLMo the math cell is
+\emph{capability-gated} --- single-task math reachability is 4.8\%, so
+the interference estimand is missing, not zero; concept interference is
+minimal (2.4\%).
+
+\textbf{Null on both lanes.} Verbal introspection shows no
+dose-response anywhere on the reconstructed ladder $\{0,1,2,4,8,16\}$
+(OLMo's steered median RR is exactly 0); top-down summoning's
+Q2$-$Q1 readout contrast is 0.0 on both lanes (7 items). Capacity
+(descriptive): $\sim$2.9 (Qwen) / 1.6 (OLMo) list words at band-rank
+$\le$5 at the end of 80-word lists ($\sim$8.2 / 4.6 at $\le$20).
+Line-break family: R2 corpus-empty under the pinned filter (recorded
+gap). Selectivity-linecount: rare rank-1 canon presence with weak
+condition ordering in the paper direction on both lanes.
+
+\section{Instrument cross-over (OR-Q4)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=0.98\textwidth]{or1f09_crossover.pdf}
+\caption{\label{fig:xo}The frozen 30-item official probe-swap subset
+under both intervention families. Broad protected top-10 J-ablation
+(campaign machinery, campaign band, g-folded dictionaries) knocks the
+released answer out of top-1 on 14/30 (Qwen) and 5/19 (OLMo)
+top-1-capable items versus $\le$1/30 and 1/19 for exact rank/energy
+matched controls; paper-literal coordinate swaps complete the flip on
+only 10--27\%.}
+\end{figure}
+
+Three OR-Q4 facts. (1) \emph{Intervention semantics dominate}: on the
+same released prompts, broad J-space suppression is selectively
+destructive while two-coordinate substitution rarely completes ---
+Route~E's sentence is licensed: \textbf{the two interventions estimate
+different causal questions}. (2) \emph{Population moderates}: the
+campaign's C1-style ablation selectivity, established on campaign
+banks, reappears on the official prompt population on both lanes ---
+Route~F's moderator sentence is licensed. (3) \emph{The lens is not
+the explanation}: the freshly fitted OR1 lens and the frozen campaign
+lens agree under both families on OLMo (swap 10.0\% vs 10.0\%;
+ablation 5/19 vs 6/19), and on Qwen the swap is if anything
+\emph{stronger} on the campaign band (26.7\% vs 16.7\%) --- band and
+fit choices do not rescue the paper-literal operation.
+
+\section{Interpretation under the wording router (two lanes)}
+
+Conformance and admission passed mechanically on both lanes (exact
+parity, exact no-ops, verified pins; fit stability inside every
+margin), so all results above are scientific observations about
+model/instrument cells, not harness states.
+
+The two lanes \textbf{dissociate the readout and intervention
+properties}. On Qwen the J-lens readout advantage reproduces exactly as
+the paper describes (multihop/multilingual profiles), yet paper-literal
+swaps barely move behavior. On OLMo the readout advantage largely
+\emph{disappears} (logit lens already strong in-band; near-identity
+$J_\ell$), yet verbal report shows the strongest open-model swap effect
+so far (25.5\% top-5). Meanwhile flexible generalization behaves
+identically on both lanes ($\approx$5\% capable at $\alpha{=}1$, 0\% at
+$\alpha{=}2$) --- the $\alpha{=}2$ reversal is a shared open-model
+regularity that inverts the paper's Sonnet finding. The g-folding
+asymmetry (material on Qwen, immaterial on OLMo) marks a concrete
+basis-choice difference between the campaign's instruments and the
+paper's, live on exactly the lane where interventions are weakest.
+
+\textbf{Terminal routed sentences} (plan \S16.2; the complete
+per-property accounting is the \S16.1 grid,
+\texttt{reports/HEADLINE\_GRID.md}):
+
+\begin{itemize}\itemsep2pt
+\item \textbf{Readout properties} (lens quality, selectivity,
+modulation, ignition, dual-task): a property-specific Route~A ---
+multiple released readout contrasts reproduce directionally on both
+open models at development tier, with selectivity-language exact on
+both.
+\item \textbf{Coordinate-intervention core} (verbal report, flexible
+generalization, probe-swap): Route~D --- the released battery does not
+reproduce the paper's core directional effects cleanly on the tested
+open-model cells despite mechanically validated readout and
+intervention implementations; effects are concordant across lanes but
+sit at 5--30\% where the paper reports 40--88\%, and the paper's
+$\alpha{=}2$ remedy inverts. This is a model/generalization result
+bounded to the public release and reconstructed methods, not a
+refutation of the Claude findings.
+\item \textbf{Cross-over}: Routes E$+$F --- targeted substitution and
+broad protected suppression estimate different causal questions, and
+task population is a major moderator; the campaign's suppression
+selectivity extends to the official prompts on both lanes while
+lens-fit differences explain nothing.
+\item \textbf{Report channel} (introspection, top-down): the
+reconstructed protocols yield nulls on both lanes; because the
+strength ladder is reconstructed rather than released (R1),
+instrument-limitation is not excluded.
+\end{itemize}
+
+No workspace-existence or -absence claim is licensed for either model;
+no frozen campaign claim is regraded; Claude magnitudes remain
+descriptive context throughout.
+
+\section{Population accounting}
+
+Every released row carries source-present / tokenization-valid /
+geometry-valid / baseline-capable / executed states in the registered
+raw records (\texttt{*\_raw.jsonl}, plan \S12 schema); the attrition
+waterfall figure ships with the OLMo lane so both lanes share one
+accounting frame. Nothing gated was encoded as zero anywhere in this
+report.
+
+\end{document}

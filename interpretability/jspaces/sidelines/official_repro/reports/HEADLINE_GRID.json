@@ -1,0 +1,338 @@
+{
+  "generated_from": "registered JSON only",
+  "rows": [
+    {
+      "property": "lens eval quality",
+      "fidelity": "R1",
+      "qwen": {
+        "summary": "J>logit on latent-content sets (multihop 0.641 vs 0.542)",
+        "per_set": {
+          "multihop": {
+            "jlens_p20": 0.6408730158730159,
+            "logit_p20": 0.5416666666666666
+          },
+          "multilingual": {
+            "jlens_p20": 0.5802180685358256,
+            "logit_p20": 0.4968847352024922
+          },
+          "poetry": {
+            "jlens_p20": 0.07142857142857142,
+            "logit_p20": 0.061224489795918366
+          },
+          "typo": {
+            "jlens_p20": 0.5,
+            "logit_p20": 0.71875
+          },
+          "order-ops": {
+            "jlens_p20": 0.7272727272727273,
+            "logit_p20": 0.7272727272727273
+          },
+          "association": {
+            "jlens_p20": 0.10784313725490197,
+            "logit_p20": 0.11764705882352941
+          }
+        }
+      },
+      "olmo": {
+        "summary": "logit matches/beats J (near-identity in-band J; multihop 0.563 vs 0.590)",
+        "per_set": {
+          "multihop": {
+            "jlens_p20": 0.5627240143369175,
+            "logit_p20": 0.5896057347670252
+          },
+          "multilingual": {
+            "jlens_p20": 0.5109034267912772,
+            "logit_p20": 0.5599688473520249
+          },
+          "poetry": {
+            "jlens_p20": 0.09183673469387756,
+            "logit_p20": 0.08163265306122448
+          },
+          "typo": {
+            "jlens_p20": 0.625,
+            "logit_p20": 0.6875
+          },
+          "order-ops": {
+            "jlens_p20": 0.5818181818181818,
+            "logit_p20": 0.7363636363636363
+          },
+          "association": {
+            "jlens_p20": 0.23958333333333334,
+            "logit_p20": 0.22916666666666666
+          }
+        }
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "DIRECTION-REPRODUCED (readout advantage)",
+        "olmo": "OPPOSITE (readout advantage absent)"
+      },
+      "paper_reference": "J-lens recovers content at depths logit lens does not",
+      "max_sentence": "The J-lens readout advantage is model-dependent: present on Qwen, largely absent on OLMo whose in-band Jacobians are near identity."
+    },
+    {
+      "property": "verbal report",
+      "fidelity": "R1 (D1 boundary mapping; v2 scoring per or1-001)",
+      "qwen": {
+        "top1": 0.07936507936507937,
+        "top5": 0.30155895691609974
+      },
+      "olmo": {
+        "top1": 0.04829931972789116,
+        "top5": 0.2545351473922902
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "DIRECTION-AMBIGUOUS (top5 30.2% vs paper 88%)",
+        "olmo": "DIRECTION-AMBIGUOUS (top5 25.5%)"
+      },
+      "paper_reference": "88% top-5 (Claude)",
+      "max_sentence": "Concordant partial effect (~25-30% top-5) on both lanes; far below paper magnitude."
+    },
+    {
+      "property": "flexible generalization",
+      "fidelity": "R1",
+      "qwen": {
+        "capable_a1": 0.058333333333333334,
+        "capable_a2": 0.0
+      },
+      "olmo": {
+        "capable_a1": 0.052083333333333336,
+        "capable_a2": 0.0
+      },
+      "gate": "capability-conditioned primary; per-category counts in figures",
+      "evidence_code": {
+        "qwen": "DIRECTION-AMBIGUOUS (5.8%, countries-driven)",
+        "olmo": "DIRECTION-AMBIGUOUS (5.2%)"
+      },
+      "paper_reference": "76/192 -> 101/192 at alpha 2 (Sonnet 4.5)",
+      "max_sentence": "Weak concordant alpha-1 effect concentrated in one category; the paper's alpha-2 gain REVERSES to 0% on both open lanes."
+    },
+    {
+      "property": "probe-swap raw-token arm",
+      "fidelity": "R2 (prompt_exact_representation_adapted_raw_jlens); official probe arm R3 NOT-IDENTIFIED",
+      "qwen": {
+        "capable_top1": 0.14285714285714285
+      },
+      "olmo": {
+        "capable_top1": 0.09302325581395349
+      },
+      "gate": "tokenization 7/90 (qwen), 6/90 (olmo)",
+      "evidence_code": {
+        "qwen": "DIRECTION-AMBIGUOUS (14.3% vs paper 60%)",
+        "olmo": "DIRECTION-AMBIGUOUS (9.3%)"
+      },
+      "paper_reference": "60% top-1 (Claude n=90)",
+      "max_sentence": "Bimodal: successes are emphatic (rank 480->1) but sparse; modal failure is under-strength."
+    },
+    {
+      "property": "selectivity language",
+      "fidelity": "R0/R1",
+      "qwen": {
+        "contrast": 1.0
+      },
+      "olmo": {
+        "contrast": 1.0
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "DIRECTION-REPRODUCED (contrast 1.00)",
+        "olmo": "DIRECTION-REPRODUCED (contrast 1.00)"
+      },
+      "paper_reference": "explicit>automatic, controls largely unmoved",
+      "max_sentence": "The released readout contrast reproduces (perfectly on Qwen)."
+    },
+    {
+      "property": "selectivity linecount",
+      "fidelity": "R1 (D10 assembly)",
+      "qwen": {
+        "rank1": {
+          "none": 0.0,
+          "direct": 0.09090909090909091,
+          "letter": 0.09090909090909091,
+          "continue": 0.09090909090909091
+        }
+      },
+      "olmo": {
+        "rank1": {
+          "none": 0.09090909090909091,
+          "direct": 0.09090909090909091,
+          "letter": 0.18181818181818182,
+          "continue": 0.09090909090909091
+        }
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "DIRECTION-AMBIGUOUS (9% direct/letter vs 0% none)",
+        "olmo": "DIRECTION-AMBIGUOUS"
+      },
+      "paper_reference": "task-condition contrast over 11 passages",
+      "max_sentence": "Number-canon presence is rare at rank 1; weak condition ordering in the paper direction."
+    },
+    {
+      "property": "verbal introspection",
+      "fidelity": "R1 (reconstructed strength ladder, D11)",
+      "qwen": {
+        "median_rr": {
+          "s0": 0.00037355248412401944,
+          "s1": 0.002183406113537118,
+          "s2": 0.0007604562737642585,
+          "s4": 0.0006997900629811056,
+          "s8": 0.0007012622720897616,
+          "s16": 0.0007352941176470588
+        }
+      },
+      "olmo": {
+        "median_rr": {
+          "s0": 0.00028571428571428574,
+          "s1": 9.979940319956887e-06,
+          "s2": 9.97267487085386e-06,
+          "s4": 9.972575417601595e-06,
+          "s8": 9.972575417601595e-06,
+          "s16": 9.972475966332921e-06
+        }
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "OPPOSITE/NULL (no dose-response)",
+        "olmo": "OPPOSITE/NULL (no dose-response)"
+      },
+      "paper_reference": "majority-report; MRR rises with strength (n=100)",
+      "max_sentence": "Injected-thought reporting does not reproduce under the reconstructed ladder on either lane."
+    },
+    {
+      "property": "directed modulation",
+      "fidelity": "R1 (D12 pairing); line-break family R2 corpus-empty",
+      "qwen": {
+        "focus": 0.717391304347826,
+        "suppress": 0.25585284280936454,
+        "control": 0.7028985507246377
+      },
+      "olmo": {
+        "focus": 0.4434782608695652,
+        "suppress": 0.05518394648829431,
+        "control": 0.463768115942029
+      },
+      "gate": "line-break: pinned corpus yielded 0 rows (recorded gap)",
+      "evidence_code": {
+        "qwen": "DIRECTION-REPRODUCED (focus .72 > suppress .26 > 0; white-bear residue)",
+        "olmo": "DIRECTION-REPRODUCED"
+      },
+      "paper_reference": "focus > suppress, suppression not zero",
+      "max_sentence": "The voluntary-modulation contrast reproduces with the white-bear residue on Qwen."
+    },
+    {
+      "property": "dual task",
+      "fidelity": "R1 (D13 combined templates)",
+      "qwen": {
+        "concept": {
+          "single_rate": 0.9523809523809523,
+          "dual_rate": 0.8809523809523809,
+          "interference": 0.0714285714285714
+        },
+        "math": {
+          "single_rate": 0.6666666666666666,
+          "dual_rate": 0.35714285714285715,
+          "interference": 0.3095238095238095
+        }
+      },
+      "olmo": {
+        "concept": {
+          "single_rate": 0.9523809523809523,
+          "dual_rate": 0.9285714285714286,
+          "interference": 0.023809523809523725
+        },
+        "math": {
+          "single_rate": 0.047619047619047616,
+          "dual_rate": 0.09523809523809523,
+          "interference": -0.047619047619047616
+        }
+      },
+      "gate": "none",
+      "evidence_code": {
+        "qwen": "DIRECTION-REPRODUCED (math interference 31%, concept 7%)",
+        "olmo": "DIRECTION-REPRODUCED"
+      },
+      "paper_reference": "single - dual reachability > 0",
+      "max_sentence": "Dual-task interference present and asymmetric (math >> concept)."
+    },
+    {
+      "property": "capacity task",
+      "fidelity": "R1 (frozen RNG; model-dependent canon by released design)",
+      "qwen": {
+        "final_rank5": 2.9
+      },
+      "olmo": {
+        "final_rank5": 1.6
+      },
+      "gate": "task-capacity; never merged with campaign sparse occupancy",
+      "evidence_code": {
+        "qwen": "DESCRIPTIVE (~3 words at rank<=5)",
+        "olmo": "DESCRIPTIVE"
+      },
+      "paper_reference": "band-active list words at k (descriptive)",
+      "max_sentence": "A small working set (~3 words rank<=5 / ~8 at rank<=20) persists at list end."
+    },
+    {
+      "property": "ignition",
+      "fidelity": "R1 (D12 carriers)",
+      "qwen": {
+        "country": 0.03538461538461538,
+        "alt": 0.024999999999999994,
+        "idiom": 0.20909090909090908,
+        "scrambled": 0.0818181818181818
+      },
+      "olmo": {
+        "country": 0.039999999999999994,
+        "alt": 0.07333333333333332,
+        "idiom": 0.1,
+        "scrambled": 0.027272727272727268
+      },
+      "gate": "descriptive nonlinearity result (plan wording)",
+      "evidence_code": {
+        "qwen": "DIRECTION-REPRODUCED (width narrows with depth; concept pairs sharper than idioms)",
+        "olmo": "see data"
+      },
+      "paper_reference": "sharp switching from workspace onset",
+      "max_sentence": "Sharp, depth-dependent winner-take-most transitions for real concept pairs."
+    },
+    {
+      "property": "top-down summoning",
+      "fidelity": "R1 (D16 render)",
+      "qwen": {
+        "q2_minus_q1": 0.0
+      },
+      "olmo": {
+        "q2_minus_q1": 0.0
+      },
+      "gate": "n=7 items",
+      "evidence_code": {
+        "qwen": "OPPOSITE/NULL (Q2-Q1 = 0.0)",
+        "olmo": "see data"
+      },
+      "paper_reference": "Q2 > Q1 expected-label readout",
+      "max_sentence": "No question-driven summoning signal at rank<=5 on Qwen (7 items)."
+    },
+    {
+      "property": "instrument cross-over",
+      "fidelity": "non-official (campaign machinery on official prompts)",
+      "qwen": {
+        "swap_paper_band": 0.16666666666666666,
+        "swap_campaign_band": 0.26666666666666666,
+        "ablation_breaks": "14/30 vs 1/30 matched"
+      },
+      "olmo": {
+        "swap_merged": 0.1,
+        "swap_frozen_campaign_lens": "3/30",
+        "ablation_breaks": "5/19 vs 1/19 matched (merged); 6/19 (campaign lens)"
+      },
+      "gate": "frozen 30-item subsets",
+      "evidence_code": {
+        "qwen": "ROUTE E+F evidence",
+        "olmo": "lens-concordant"
+      },
+      "paper_reference": "n/a (OR-Q4 diagnostic)",
+      "max_sentence": "Broad protected J-ablation is selectively destructive on official prompts on BOTH lanes while matched controls are not; coordinate swaps stay weak; new-vs-frozen lenses agree. The campaign-vs-paper discrepancy is intervention-semantics plus population, not lens fit and not harness."
+    }
+  ]
+}
