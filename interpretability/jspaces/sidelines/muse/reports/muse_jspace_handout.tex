@@ -1,0 +1,66 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\title{Muse Glimmer 30B \\ J-space instrument probe}
+\author{jspace\_muse sideline \\ development/methods tier}
+\date{\today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We port the Phase-2 Jacobian-lens assay to Meta's Muse Glimmer 30B
+(52 layers $\times$ $d=6656$), test residual-stack geometry, fit a
+120-prompt WikiText lens, and run a compact battery of the strongest
+open-model cells from prior OLMo/Qwen work. Tier: development/methods only.
+\end{abstract}
+
+\section{Geometry}
+\begin{itemize}
+  \item Shape: 52 $\times$ 6656; softcap=20.0
+  \item Identity parity: True
+  \item All pre-fit gates: True
+\end{itemize}
+
+\section{Lens fit}
+\begin{itemize}
+  \item $n=120$ WikiText (Phase-2 draw-A recipe)
+  \item dim\_batch=16; target layer 51
+  \item sources: 21 layers
+\end{itemize}
+
+\section{Battery headline}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Cell & Value \\
+\midrule
+J-lens band advantage (ranks) & 4.33e+03 \\
+Selectivity-language contrast & 0.5 \\
+Modulation focus improves & True \\
+Dual-task math interference & 3.7e+03 \\
+Capacity mean active@$\le$5 & 1.38 \\
+Ignition median $\alpha$@$\le$5 & n/a \\
+Verbal-report top5 hit rate & 0 \\
+Ablation J / random damage & 116 / 98.5 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Figures}
+
+\begin{figure}[h]\centering\includegraphics[width=0.92\textwidth]{fig_depth_profile.png}\caption{J-lens vs logit-lens depth profile}\end{figure}
+
+\begin{figure}[h]\centering\includegraphics[width=0.92\textwidth]{fig_modulation.png}\caption{Directed modulation}\end{figure}
+
+\begin{figure}[h]\centering\includegraphics[width=0.92\textwidth]{fig_ignition.png}\caption{Ignition curves}\end{figure}
+
+\begin{figure}[h]\centering\includegraphics[width=0.92\textwidth]{fig_headline_bars.png}\caption{Headline metrics}\end{figure}
+
+\section{Reading}
+See \texttt{MUSE\_STATE\_OF\_RECORD.md} for the live narrative. No confirmatory
+claims; frozen campaign registries were not modified.
+
+\end{document}

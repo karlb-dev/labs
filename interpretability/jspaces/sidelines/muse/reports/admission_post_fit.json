@@ -1,0 +1,170 @@
+{
+  "boot_sentinel_jlens": {
+    "per_layer": [
+      {
+        "layer": 4,
+        "top5": [
+          ".<",
+          " \\(",
+          ".[",
+          ":.",
+          "."
+        ]
+      },
+      {
+        "layer": 8,
+        "top5": [
+          " |\n\n",
+          "`\n\n",
+          " also",
+          " olds",
+          " n't"
+        ]
+      },
+      {
+        "layer": 12,
+        "top5": [
+          " also",
+          ",",
+          ".",
+          " called",
+          " not"
+        ]
+      },
+      {
+        "layer": 16,
+        "top5": [
+          " \\(",
+          " not",
+          " only",
+          " also",
+          ".\\"
+        ]
+      },
+      {
+        "layer": 20,
+        "top5": [
+          " \\(",
+          " only",
+          " not",
+          " (",
+          " the"
+        ]
+      },
+      {
+        "layer": 24,
+        "top5": [
+          " actually",
+          " not",
+          " only",
+          " the",
+          " ("
+        ]
+      },
+      {
+        "layer": 28,
+        "top5": [
+          " actually",
+          " named",
+          " Italian",
+          " Italy",
+          " called"
+        ]
+      },
+      {
+        "layer": 32,
+        "top5": [
+          " called",
+          " named",
+          " Italian",
+          " Italy",
+          " Spain"
+        ]
+      },
+      {
+        "layer": 36,
+        "top5": [
+          " called",
+          " named",
+          " Italy",
+          " Italian",
+          " currency"
+        ]
+      },
+      {
+        "layer": 40,
+        "top5": [
+          " Italian",
+          " Italy",
+          " currency",
+          " euro",
+          " euros"
+        ]
+      },
+      {
+        "layer": 44,
+        "top5": [
+          " euros",
+          " euro",
+          " Euros",
+          " Italian",
+          " Euro"
+        ]
+      },
+      {
+        "layer": 48,
+        "top5": [
+          " euros",
+          " euro",
+          " lira",
+          " Euros",
+          " Euro"
+        ]
+      }
+    ],
+    "prompt": "Fact: The currency used in the country shaped like a boot is"
+  },
+  "check_layers": [
+    20,
+    22,
+    24,
+    26
+  ],
+  "evidence_id": "muse-admission-postfit-v1",
+  "g_folding": {
+    "applicable": true,
+    "immaterial": false,
+    "min_cosine": -0.3409218490123749,
+    "worst_cell": {
+      "layer": 20,
+      "token_id": 23223
+    }
+  },
+  "readout_parity": {
+    "layers": [
+      20,
+      22,
+      24,
+      26
+    ],
+    "max_abs_diff": 0.0,
+    "ok": true,
+    "positions": [
+      13
+    ]
+  },
+  "runtime": {
+    "capability": [
+      12,
+      0
+    ],
+    "cuda_available": true,
+    "cuda_build": "12.8",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.0.dev0",
+    "utc": "2026-08-11T10:34:50Z",
+    "vram_total_bytes": 101974081536
+  },
+  "utc": "2026-08-11T10:34:50Z"
+}

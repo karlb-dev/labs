@@ -1,0 +1,55 @@
+{
+  "dim_batch": 16,
+  "max_seq_len": 128,
+  "measured_s_per_prompt": 182.7,
+  "n_prompts": 120,
+  "note": "ladder short-circuited after dim_batch=16 probe; 8/4/2 skipped to save wall time",
+  "probe_results": [
+    {
+      "dim_batch": 16,
+      "peak_vram_bytes": 88100000000,
+      "wall_seconds": 182.7
+    }
+  ],
+  "projected_hours": 6.09,
+  "projected_total_seconds": 21924.0,
+  "runtime": {
+    "capability": [
+      12,
+      0
+    ],
+    "cuda_available": true,
+    "cuda_build": "12.8",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.0.dev0",
+    "utc": "2026-08-11T04:11:02Z",
+    "vram_total_bytes": 101974081536
+  },
+  "skip_first": 16,
+  "source_layers": [
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    36,
+    40,
+    44,
+    48,
+    50
+  ],
+  "target_layer": 51,
+  "utc": "2026-08-11T04:11:03Z"
+}

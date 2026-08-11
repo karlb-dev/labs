@@ -1,0 +1,3575 @@
+{
+  "admission_post_fit": {
+    "boot_sentinel_jlens": {
+      "per_layer": [
+        {
+          "layer": 4,
+          "top5": [
+            ".<",
+            " \\(",
+            ".[",
+            ":.",
+            "."
+          ]
+        },
+        {
+          "layer": 8,
+          "top5": [
+            " |\n\n",
+            "`\n\n",
+            " also",
+            " olds",
+            " n't"
+          ]
+        },
+        {
+          "layer": 12,
+          "top5": [
+            " also",
+            ",",
+            ".",
+            " called",
+            " not"
+          ]
+        },
+        {
+          "layer": 16,
+          "top5": [
+            " \\(",
+            " not",
+            " only",
+            " also",
+            ".\\"
+          ]
+        },
+        {
+          "layer": 20,
+          "top5": [
+            " \\(",
+            " only",
+            " not",
+            " (",
+            " the"
+          ]
+        },
+        {
+          "layer": 24,
+          "top5": [
+            " actually",
+            " not",
+            " only",
+            " the",
+            " ("
+          ]
+        },
+        {
+          "layer": 28,
+          "top5": [
+            " actually",
+            " named",
+            " Italian",
+            " Italy",
+            " called"
+          ]
+        },
+        {
+          "layer": 32,
+          "top5": [
+            " called",
+            " named",
+            " Italian",
+            " Italy",
+            " Spain"
+          ]
+        },
+        {
+          "layer": 36,
+          "top5": [
+            " called",
+            " named",
+            " Italy",
+            " Italian",
+            " currency"
+          ]
+        },
+        {
+          "layer": 40,
+          "top5": [
+            " Italian",
+            " Italy",
+            " currency",
+            " euro",
+            " euros"
+          ]
+        },
+        {
+          "layer": 44,
+          "top5": [
+            " euros",
+            " euro",
+            " Euros",
+            " Italian",
+            " Euro"
+          ]
+        },
+        {
+          "layer": 48,
+          "top5": [
+            " euros",
+            " euro",
+            " lira",
+            " Euros",
+            " Euro"
+          ]
+        }
+      ],
+      "prompt": "Fact: The currency used in the country shaped like a boot is"
+    },
+    "check_layers": [
+      20,
+      22,
+      24,
+      26
+    ],
+    "evidence_id": "muse-admission-postfit-v1",
+    "g_folding": {
+      "applicable": true,
+      "immaterial": false,
+      "min_cosine": -0.3409218490123749,
+      "worst_cell": {
+        "layer": 20,
+        "token_id": 23223
+      }
+    },
+    "readout_parity": {
+      "layers": [
+        20,
+        22,
+        24,
+        26
+      ],
+      "max_abs_diff": 0.0,
+      "ok": true,
+      "positions": [
+        13
+      ]
+    },
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:50Z",
+      "vram_total_bytes": 101974081536
+    },
+    "utc": "2026-08-11T10:34:50Z"
+  },
+  "capacity": {
+    "experiment": "capacity",
+    "mean_active_rank1": 0.5,
+    "mean_active_rank20": 2.25,
+    "mean_active_rank5": 1.375,
+    "n_trials": 8,
+    "note": "end-of-list band-min ranks; descriptive working-set estimate",
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:58Z",
+      "vram_total_bytes": 101974081536
+    },
+    "trials": [
+      {
+        "active_rank1": 0,
+        "active_rank20": 4,
+        "active_rank5": 2,
+        "n_words": 16,
+        "ranks": {
+          "cobra": 2005,
+          "cyan": 8,
+          "goose": 2342,
+          "gray": 97,
+          "green": 3,
+          "organ": 20155,
+          "otter": 67980,
+          "pink": 41,
+          "purple": 7,
+          "raven": 70036,
+          "red": 78,
+          "shark": 216,
+          "tiger": 139,
+          "trumpet": 30493,
+          "whale": 2277,
+          "yellow": 3
+        },
+        "trial": 0
+      },
+      {
+        "active_rank1": 0,
+        "active_rank20": 2,
+        "active_rank5": 1,
+        "n_words": 13,
+        "ranks": {
+          "cyan": 395,
+          "drum": 4,
+          "eagle": 103,
+          "gold": 23,
+          "goose": 171,
+          "lion": 40,
+          "orange": 21,
+          "pink": 29,
+          "red": 40,
+          "shark": 81,
+          "tiger": 64,
+          "yellow": 23,
+          "zebra": 18
+        },
+        "trial": 1
+      },
+      {
+        "active_rank1": 0,
+        "active_rank20": 1,
+        "active_rank5": 1,
+        "n_words": 16,
+        "ranks": {
+          "beige": 976,
+          "blue": 233,
+          "brown": 332,
+          "crane": 43,
+          "drum": 1105,
+          "eagle": 2,
+          "orange": 407,
+          "otter": 454,
+          "piano": 265,
+          "pink": 158,
+          "shark": 52,
+          "silver": 502,
+          "tiger": 26,
+          "viola": 4369,
+          "violin": 138,
+          "yellow": 265
+        },
+        "trial": 2
+      },
+      {
+        "active_rank1": 1,
+        "active_rank20": 1,
+        "active_rank5": 1,
+        "n_words": 15,
+        "ranks": {
+          "beige": 479,
+          "brown": 993,
+          "cobra": 12864,
+          "gold": 718,
+          "goose": 6344,
+          "green": 3715,
+          "llama": 743,
+          "panda": 529,
+          "piano": 1,
+          "purple": 564,
+          "raven": 180893,
+          "red": 836,
+          "silver": 560,
+          "tiger": 419,
+          "yellow": 375
+        },
+        "trial": 3
+      },
+      {
+        "active_rank1": 1,
+        "active_rank20": 3,
+        "active_rank5": 2,
+        "n_words": 15,
+        "ranks": {
+          "blue": 345,
+          "brown": 1836,
+          "crane": 2719,
+          "drum": 8,
+          "eagle": 2324,
+          "gold": 796,
+          "goose": 949,
+          "green": 373,
+          "lion": 4190,
+          "piano": 3,
+          "red": 2071,
+          "silver": 239,
+          "tiger": 2030,
+          "trumpet": 1,
+          "zebra": 274
+        },
+        "trial": 4
+      },
+      {
+        "active_rank1": 1,
+        "active_rank20": 2,
+        "active_rank5": 1,
+        "n_words": 15,
+        "ranks": {
+          "cobra": 3717,
+          "crane": 8958,
+          "cyan": 1955,
+          "drum": 1,
+          "goose": 3814,
+          "gray": 24039,
+          "guitar": 14,
+          "lion": 1504,
+          "magenta": 2426,
+          "navy": 1424,
+          "organ": 123,
+          "otter": 99217,
+          "purple": 730,
+          "violin": 45,
+          "white": 5522
+        },
+        "trial": 5
+      },
+      {
+        "active_rank1": 1,
+        "active_rank20": 3,
+        "active_rank5": 2,
+        "n_words": 13,
+        "ranks": {
+          "beige": 115,
+          "blue": 682,
+          "cobra": 20,
+          "drum": 268,
+          "gray": 508,
+          "orange": 68,
+          "purple": 60,
+          "raven": 50516,
+          "shark": 2,
+          "tiger": 1,
+          "violin": 413,
+          "whale": 34,
+          "white": 247
+        },
+        "trial": 6
+      },
+      {
+        "active_rank1": 0,
+        "active_rank20": 2,
+        "active_rank5": 1,
+        "n_words": 15,
+        "ranks": {
+          "blue": 27,
+          "brown": 3,
+          "crane": 296,
+          "cyan": 474,
+          "goose": 370,
+          "guitar": 134,
+          "navy": 474,
+          "panda": 907,
+          "piano": 386,
+          "pink": 16,
+          "raven": 2351,
+          "shark": 308,
+          "white": 103,
+          "yellow": 36,
+          "zebra": 152
+        },
+        "trial": 7
+      }
+    ],
+    "wall_seconds": 2.898695707321167
+  },
+  "depth_profile": {
+    "experiment": "depth_profile",
+    "j_advantage_band": 4329.964285714285,
+    "mean_j_rank_band": 772.2321428571429,
+    "mean_j_rank_early": 19207.0,
+    "mean_j_rank_late": 5.625,
+    "mean_logit_rank_band": 5102.196428571428,
+    "mean_logit_rank_early": 45381.4375,
+    "mean_logit_rank_late": 2.75,
+    "n_prompts": 8,
+    "rows": [
+      {
+        "name": "boot_currency",
+        "per_layer": [
+          {
+            "j_rank": 33301,
+            "j_top5": [
+              ".<",
+              " \\(",
+              ".[",
+              ":.",
+              "."
+            ],
+            "layer": 4,
+            "logit_rank": 13270,
+            "logit_top5": [
+              "\u3066\u306a\u30d6\u30c3\u30af\u30de\u30fc\u30af",
+              " \u0a26",
+              " Fridays",
+              "/w",
+              "\u0cbe\u0ca1"
+            ]
+          },
+          {
+            "j_rank": 40151,
+            "j_top5": [
+              " |\n\n",
+              "`\n\n",
+              " also",
+              " olds",
+              " n't"
+            ],
+            "layer": 8,
+            "logit_rank": 5428,
+            "logit_top5": [
+              " ISBN",
+              "faktor",
+              " \ubaa8",
+              ",.",
+              " Philippe"
+            ]
+          },
+          {
+            "j_rank": 37356,
+            "j_top5": [
+              " also",
+              ",",
+              ".",
+              " called",
+              " not"
+            ],
+            "layer": 12,
+            "logit_rank": 75132,
+            "logit_top5": [
+              " God's",
+              "icu",
+              " Moines",
+              "/are",
+              "348"
+            ]
+          },
+          {
+            "j_rank": 20692,
+            "j_top5": [
+              " \\(",
+              " not",
+              " only",
+              " also",
+              ".\\"
+            ],
+            "layer": 16,
+            "logit_rank": 2149,
+            "logit_top5": [
+              " nations",
+              " membutuhkan",
+              " \u043c\u043d\u043e\u0433\u043e\u0435",
+              " not",
+              " n\u00f4"
+            ]
+          },
+          {
+            "j_rank": 6527,
+            "j_top5": [
+              " \\(",
+              " only",
+              " not",
+              " (",
+              " the"
+            ],
+            "layer": 20,
+            "logit_rank": 1538,
+            "logit_top5": [
+              " KG",
+              " autop",
+              " only",
+              "ute",
+              "\u0e2d\u0e23\u0e4c"
+            ]
+          },
+          {
+            "j_rank": 606,
+            "j_top5": [
+              " actually",
+              " not",
+              " only",
+              " the",
+              " ("
+            ],
+            "layer": 24,
+            "logit_rank": 323,
+            "logit_top5": [
+              " celle",
+              "\u30f3\u30c8",
+              " \u043e\u0442\u043e\u043f\u043b\u0435\u043d\u0438\u044f",
+              " svolgere",
+              " Orlando"
+            ]
+          },
+          {
+            "j_rank": 405,
+            "j_top5": [
+              " actually",
+              " named",
+              " Italian",
+              " Italy",
+              " called"
+            ],
+            "layer": 28,
+            "logit_rank": 7225,
+            "logit_top5": [
+              " actually",
+              "/are",
+              " moneda",
+              " called",
+              "currency"
+            ]
+          },
+          {
+            "j_rank": 285,
+            "j_top5": [
+              " called",
+              " named",
+              " Italian",
+              " Italy",
+              " Spain"
+            ],
+            "layer": 32,
+            "logit_rank": 80,
+            "logit_top5": [
+              " called",
+              " actually",
+              " named",
+              "/are",
+              "\u2026"
+            ]
+          },
+          {
+            "j_rank": 45,
+            "j_top5": [
+              " called",
+              " named",
+              " Italy",
+              " Italian",
+              " currency"
+            ],
+            "layer": 36,
+            "logit_rank": 10,
+            "logit_top5": [
+              " called",
+              " currency",
+              " Italy",
+              "called",
+              " named"
+            ]
+          },
+          {
+            "j_rank": 4,
+            "j_top5": [
+              " Italian",
+              " Italy",
+              " currency",
+              " euro",
+              " euros"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italian",
+              " euro",
+              " lira",
+              " currency",
+              " euros"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " euros",
+              " euro",
+              " Euros",
+              " Italian",
+              " Euro"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " euro",
+              " euros",
+              " lira",
+              " Euros",
+              " Euro"
+            ]
+          },
+          {
+            "j_rank": 2,
+            "j_top5": [
+              " euros",
+              " euro",
+              " lira",
+              " Euros",
+              " Euro"
+            ],
+            "layer": 48,
+            "logit_rank": 2,
+            "logit_top5": [
+              " called",
+              " euros",
+              " Euros",
+              " euro",
+              " Euro"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 6,
+            "logit_top5": [
+              " the",
+              " called",
+              " not",
+              " lira",
+              " a"
+            ]
+          }
+        ],
+        "prompt": "Fact: The currency used in the country shaped like a boot is",
+        "targets": [
+          "euro",
+          "Euro",
+          "EUR"
+        ]
+      },
+      {
+        "name": "capital_japan",
+        "per_layer": [
+          {
+            "j_rank": 98985,
+            "j_top5": [
+              ".<",
+              "er",
+              " also",
+              ".[",
+              "ment"
+            ],
+            "layer": 4,
+            "logit_rank": 71347,
+            "logit_top5": [
+              "\uac1c\uc6d4",
+              "\u3066\u306a\u30d6\u30c3\u30af\u30de\u30fc\u30af",
+              "\uff0c\u81ea\u5df1",
+              " \u0646\u062a\u06cc\u062c\u0647",
+              " easily"
+            ]
+          },
+          {
+            "j_rank": 9195,
+            "j_top5": [
+              " Salazar",
+              " also",
+              " Saskatchewan",
+              " Quebec",
+              " Bala"
+            ],
+            "layer": 8,
+            "logit_rank": 78151,
+            "logit_top5": [
+              " \u2666",
+              " Ringgit",
+              " antecedentes",
+              " Guia",
+              " M\u00e9todo"
+            ]
+          },
+          {
+            "j_rank": 949,
+            "j_top5": [
+              " also",
+              ",",
+              " the",
+              " called",
+              " only"
+            ],
+            "layer": 12,
+            "logit_rank": 2947,
+            "logit_top5": [
+              " imagin",
+              "\u4e0d\u7b49",
+              "\u80a1\u5e02",
+              "-benar",
+              "\u6025\u6027"
+            ]
+          },
+          {
+            "j_rank": 28,
+            "j_top5": [
+              " also",
+              " the",
+              ",",
+              " city",
+              " only"
+            ],
+            "layer": 16,
+            "logit_rank": 276,
+            "logit_top5": [
+              " Metropolitan",
+              " Speedway",
+              "\u5b8c\u5168\u306b",
+              "cenes",
+              " Kroner"
+            ]
+          },
+          {
+            "j_rank": 25,
+            "j_top5": [
+              " the",
+              " also",
+              " city",
+              " only",
+              ","
+            ],
+            "layer": 20,
+            "logit_rank": 73,
+            "logit_top5": [
+              " \u0433\u043e\u0440\u043e\u0434\u0435",
+              " Wach",
+              "\u65e7",
+              " \u092e\u0930",
+              "prove"
+            ]
+          },
+          {
+            "j_rank": 2,
+            "j_top5": [
+              " city",
+              " cities",
+              " Tokyo",
+              " **",
+              " Seoul"
+            ],
+            "layer": 24,
+            "logit_rank": 38,
+            "logit_top5": [
+              " \u0622\u0647\u064a",
+              " \u0433\u043e\u0440\u043e\u0434\u0435",
+              "\u8033\u6735",
+              " \u0433\u043e\u0440\u043e\u0434\u043e\u0432",
+              "\u65e7"
+            ]
+          },
+          {
+            "j_rank": 3,
+            "j_top5": [
+              " city",
+              " cities",
+              " Tokyo",
+              " **",
+              " city's"
+            ],
+            "layer": 28,
+            "logit_rank": 1405,
+            "logit_top5": [
+              "\u3067\u3042\u308b",
+              " city",
+              " oczywi\u015bcie",
+              " \u0622\u0647\u064a",
+              " traditionally"
+            ]
+          },
+          {
+            "j_rank": 12,
+            "j_top5": [
+              " **",
+              " ________",
+              " ______",
+              " city",
+              " __________"
+            ],
+            "layer": 32,
+            "logit_rank": 64,
+            "logit_top5": [
+              " ______",
+              " ________",
+              " **",
+              " ____",
+              "_____"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Tokyo",
+              " located",
+              " Seoul",
+              "Tokyo",
+              " ________"
+            ],
+            "layer": 36,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Tokyo",
+              "Tokyo",
+              " \u6771\u4eac",
+              " ________",
+              " ____"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Tokyo",
+              " Japan",
+              "Tokyo",
+              " \ub3c4\ucfc4",
+              " Osaka"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Tokyo",
+              "Tokyo",
+              "\u6771\u4eac",
+              " \u6771\u4eac",
+              " Tokio"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Tokyo",
+              "Tokyo",
+              " \ub3c4\ucfc4",
+              " Tokio",
+              " \u6771\u4eac"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Tokyo",
+              "Tokyo",
+              "\u6771\u4eac",
+              " \ub3c4\ucfc4",
+              " Tokio"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Tokyo",
+              "Tokyo",
+              " Tokio",
+              " Kyoto",
+              " \ub3c4\ucfc4"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Tokyo",
+              "Tokyo",
+              " \ub3c4\ucfc4",
+              " Tokio",
+              " \u6771\u4eac"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Tokyo",
+              " a",
+              " the",
+              " **",
+              " one"
+            ]
+          }
+        ],
+        "prompt": "The capital of Japan is",
+        "targets": [
+          "Tokyo",
+          "tokyo"
+        ]
+      },
+      {
+        "name": "gold",
+        "per_layer": [
+          {
+            "j_rank": 49623,
+            "j_top5": [
+              ".<",
+              ".[",
+              "er",
+              " \\(",
+              "ment"
+            ],
+            "layer": 4,
+            "logit_rank": 10091,
+            "logit_top5": [
+              " \u0434\u0430\u0432\u043b\u0435\u043d\u0438\u044f",
+              "mercial",
+              "\u0cbe\u0ca1",
+              "\u3055\u308c\u3066\u3044",
+              "\u4e24\u4e2a\u4eba"
+            ]
+          },
+          {
+            "j_rank": 12230,
+            "j_top5": [
+              ".<",
+              " <",
+              ":<",
+              " Salazar",
+              "?<"
+            ],
+            "layer": 8,
+            "logit_rank": 84885,
+            "logit_top5": [
+              "irteen",
+              "/are",
+              " tariffs",
+              "{cases",
+              " efficient"
+            ]
+          },
+          {
+            "j_rank": 7164,
+            "j_top5": [
+              ".<",
+              ".",
+              ".\\",
+              ";",
+              ":<"
+            ],
+            "layer": 12,
+            "logit_rank": 18704,
+            "logit_top5": [
+              ".Threading",
+              " \u0646\u0634\u0627\u0646",
+              "\u5b81",
+              " \u2666",
+              "\u251c"
+            ]
+          },
+          {
+            "j_rank": 4756,
+            "j_top5": [
+              ".<",
+              ":<",
+              "<code",
+              ".",
+              ".\\"
+            ],
+            "layer": 16,
+            "logit_rank": 44858,
+            "logit_top5": [
+              " zasi",
+              " dokonce",
+              "?(:",
+              " \u6bdb",
+              "\u0ba4\u0bcd\u0ba4"
+            ]
+          },
+          {
+            "j_rank": 6594,
+            "j_top5": [
+              " \\(",
+              ":<",
+              ".<",
+              " \\({\\",
+              " <"
+            ],
+            "layer": 20,
+            "logit_rank": 33663,
+            "logit_top5": [
+              " \u00ae",
+              " nanometer",
+              " much",
+              " p\u00e9riph",
+              "So\u00f1ar"
+            ]
+          },
+          {
+            "j_rank": 5100,
+            "j_top5": [
+              " \\(",
+              " \\(\\",
+              ":<",
+              ".<",
+              " **"
+            ],
+            "layer": 24,
+            "logit_rank": 98971,
+            "logit_top5": [
+              " atoms",
+              "_changed",
+              "-prote",
+              " unchanged",
+              "ulkan"
+            ]
+          },
+          {
+            "j_rank": 4813,
+            "j_top5": [
+              ":<",
+              " name",
+              " _____",
+              " ________",
+              " named"
+            ],
+            "layer": 28,
+            "logit_rank": 3985,
+            "logit_top5": [
+              " anum",
+              " \u10e0\u10dd\u10db",
+              " \u0644\u0626\u06d2",
+              "-symbol",
+              " adesea"
+            ]
+          },
+          {
+            "j_rank": 6063,
+            "j_top5": [
+              " ________",
+              " ______",
+              " _____",
+              " __________",
+              " ____"
+            ],
+            "layer": 32,
+            "logit_rank": 161,
+            "logit_top5": [
+              " ____",
+              " ______",
+              "______",
+              " ________",
+              "____"
+            ]
+          },
+          {
+            "j_rank": 492,
+            "j_top5": [
+              " ____",
+              " ________",
+              " _____",
+              " __________",
+              " ______"
+            ],
+            "layer": 36,
+            "logit_rank": 4,
+            "logit_top5": [
+              " ________",
+              " ____",
+              " gold",
+              " Au",
+              " ______"
+            ]
+          },
+          {
+            "j_rank": 32,
+            "j_top5": [
+              " GOLD",
+              " gold",
+              " Gold",
+              " \u0437\u043e\u043b\u043e\u0442",
+              "gold"
+            ],
+            "layer": 40,
+            "logit_rank": 5,
+            "logit_top5": [
+              " gold",
+              " GOLD",
+              " Gold",
+              "\u91d1",
+              " alt\u0131n"
+            ]
+          },
+          {
+            "j_rank": 3,
+            "j_top5": [
+              " GOLD",
+              " gold",
+              "gold",
+              " Au",
+              " Gold"
+            ],
+            "layer": 44,
+            "logit_rank": 2,
+            "logit_top5": [
+              " gold",
+              " Au",
+              " GOLD",
+              " Gold",
+              "Au"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Au",
+              "Au",
+              " AU",
+              " Aur",
+              " au"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Au",
+              "Au",
+              " au",
+              " AU",
+              " gold"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Au",
+              " au",
+              " \"",
+              " AU",
+              " $\\"
+            ]
+          }
+        ],
+        "prompt": "The chemical symbol for gold is",
+        "targets": [
+          "Au",
+          "AU"
+        ]
+      },
+      {
+        "name": "shakespeare",
+        "per_layer": [
+          {
+            "j_rank": 1722,
+            "j_top5": [
+              " ''",
+              "''",
+              "\u300b\u300a",
+              "\u3002\u300a",
+              "\"\""
+            ],
+            "layer": 4,
+            "logit_rank": 5717,
+            "logit_top5": [
+              " \u0412\u043b\u0430\u0434\u0438\u043c\u0438\u0440\u043e\u0432\u0438\u0447",
+              "ized",
+              "(weight",
+              " \u0441\u0443\u0434\u044c\u0438",
+              "ungsk"
+            ]
+          },
+          {
+            "j_rank": 307,
+            "j_top5": [
+              " ''",
+              " Vaughan",
+              "    \n\n",
+              " Paolo",
+              " William"
+            ],
+            "layer": 8,
+            "logit_rank": 7900,
+            "logit_top5": [
+              "Https",
+              "\u4e16\u7eaa",
+              " identify",
+              "entuk",
+              "\u0441\u043f\u043e\u0440\u0442"
+            ]
+          },
+          {
+            "j_rank": 140,
+            "j_top5": [
+              ".\n\n",
+              " William",
+              " Robert",
+              " John's",
+              " Antonio"
+            ],
+            "layer": 12,
+            "logit_rank": 37437,
+            "logit_top5": [
+              " \u041d\u0438\u043a\u043e\u043b\u0430\u0435\u0432\u0438\u0447",
+              " actor",
+              " paycheck",
+              " economist",
+              " moral"
+            ]
+          },
+          {
+            "j_rank": 8,
+            "j_top5": [
+              ".\n\n",
+              " William",
+              " Robert",
+              " .\n\n",
+              "'.\n\n"
+            ],
+            "layer": 16,
+            "logit_rank": 109,
+            "logit_top5": [
+              "\u9690\u85cf",
+              " himself",
+              " \u041d\u0438\u043a\u043e\u043b\u0430\u0435\u0432\u0438\u0447",
+              "Ended",
+              "VERT"
+            ]
+          },
+          {
+            "j_rank": 19,
+            "j_top5": [
+              ".\n\n",
+              "  \n\n",
+              "    \n\n",
+              " William",
+              " .\n\n"
+            ],
+            "layer": 20,
+            "logit_rank": 10,
+            "logit_top5": [
+              " himself",
+              " Charles",
+              "Charles",
+              "\uff0c\u800c\u4e0d\u662f",
+              "ashington"
+            ]
+          },
+          {
+            "j_rank": 15,
+            "j_top5": [
+              ".\n\n",
+              ".\n\n\n",
+              " William",
+              " .\n\n",
+              " Robert"
+            ],
+            "layer": 24,
+            "logit_rank": 52432,
+            "logit_top5": [
+              " principalement",
+              " espec\u00edficamente",
+              "\u4eab\u6709",
+              " himself",
+              " principalmente"
+            ]
+          },
+          {
+            "j_rank": 6,
+            "j_top5": [
+              ".\n\n",
+              " William",
+              ".\n\n\n",
+              " Robert",
+              " Edward"
+            ],
+            "layer": 28,
+            "logit_rank": 1518,
+            "logit_top5": [
+              " himself",
+              " \u2705",
+              " principalement",
+              " pertenec",
+              " \u0418\u043c\u0435\u043d\u043d\u043e"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Shakespeare",
+              ".\n\n",
+              " William",
+              " Robert",
+              " Edward"
+            ],
+            "layer": 32,
+            "logit_rank": 24,
+            "logit_top5": [
+              " _______",
+              " ________",
+              " ______",
+              "-Louis",
+              " _________"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Shakespeare",
+              "akespeare",
+              " playwright",
+              " William",
+              " Writer"
+            ],
+            "layer": 36,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Shakespeare",
+              "akespeare",
+              " playwright",
+              "\u838e",
+              " Romeo"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Shakespeare",
+              "akespeare",
+              " playwright",
+              " Romeo",
+              " Hamlet"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Shakespeare",
+              "akespeare",
+              "\u838e",
+              " playwright",
+              " Shake"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Shakespeare",
+              " Shake",
+              " Shak",
+              " shakes",
+              ".Sh"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Shakespeare",
+              "akespeare",
+              "Sh",
+              "_Sh",
+              "-Sh"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Shakespeare",
+              " Shake",
+              " shakes",
+              " Shak",
+              " shak"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Shakespeare",
+              " shakes",
+              " Shake",
+              "akespeare",
+              " shak"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Shakespeare",
+              " Sh",
+              " sh",
+              " Shak",
+              " Shake"
+            ]
+          }
+        ],
+        "prompt": "The author of Romeo and Juliet is William",
+        "targets": [
+          "Shakespeare"
+        ]
+      },
+      {
+        "name": "hot_opposite",
+        "per_layer": [
+          {
+            "j_rank": 121149,
+            "j_top5": [
+              "er",
+              "nt",
+              " \\(",
+              "\uff0c",
+              "gram"
+            ],
+            "layer": 4,
+            "logit_rank": 178083,
+            "logit_top5": [
+              "\u0c4d\u0c28\u0c3f",
+              "esus",
+              "opropyl",
+              "bag",
+              "\uff0c\u6bd5\u7adf"
+            ]
+          },
+          {
+            "j_rank": 880,
+            "j_top5": [
+              " |\n\n",
+              "er",
+              " olds",
+              "ness",
+              " ow"
+            ],
+            "layer": 8,
+            "logit_rank": 164994,
+            "logit_top5": [
+              " minimized",
+              " efficacy",
+              " provavelmente",
+              " diminu",
+              "\u0cae"
+            ]
+          },
+          {
+            "j_rank": 188,
+            "j_top5": [
+              " not",
+              " maybe",
+              " the",
+              " nothing",
+              " something"
+            ],
+            "layer": 12,
+            "logit_rank": 87836,
+            "logit_top5": [
+              " \u2033",
+              "\ufffd\ufffd",
+              " UND",
+              "/op",
+              "\u90a3\u4e2a"
+            ]
+          },
+          {
+            "j_rank": 137,
+            "j_top5": [
+              " nothing",
+              " something",
+              " not",
+              " the",
+              " maybe"
+            ],
+            "layer": 16,
+            "logit_rank": 58274,
+            "logit_top5": [
+              " EMT",
+              " \u05dc\u05d4\u05d9\u05d5\u05ea",
+              "PTS",
+              " \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435",
+              " estren"
+            ]
+          },
+          {
+            "j_rank": 95,
+            "j_top5": [
+              " something",
+              " not",
+              " the",
+              " maybe",
+              " nothing"
+            ],
+            "layer": 20,
+            "logit_rank": 3945,
+            "logit_top5": [
+              ":",
+              " otro",
+              " neut",
+              " lov",
+              " beiden"
+            ]
+          },
+          {
+            "j_rank": 116,
+            "j_top5": [
+              " something",
+              " maybe",
+              " not",
+              " nothing",
+              " actually"
+            ],
+            "layer": 24,
+            "logit_rank": 8940,
+            "logit_top5": [
+              " opposite",
+              " ______",
+              " ATS",
+              " \u043f\u0440\u043e\u0442\u0438\u0432\u043e\u043f\u043e\u043b\u043e\u0436",
+              " UITable"
+            ]
+          },
+          {
+            "j_rank": 21,
+            "j_top5": [
+              " maybe",
+              " something",
+              " not",
+              " nothing",
+              " **"
+            ],
+            "layer": 28,
+            "logit_rank": 190,
+            "logit_top5": [
+              " thermodynamic",
+              " m\u00e1sik",
+              " therm",
+              " ____",
+              "\u53e6\u4e00\u4e2a"
+            ]
+          },
+          {
+            "j_rank": 193,
+            "j_top5": [
+              " ________",
+              " ______",
+              " _____",
+              " ____",
+              " _______"
+            ],
+            "layer": 32,
+            "logit_rank": 109,
+            "logit_top5": [
+              " ______",
+              " ____",
+              " ________",
+              " _______",
+              "____"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " cold",
+              " colder",
+              " ________",
+              "cold",
+              " fr\u00edo"
+            ],
+            "layer": 36,
+            "logit_rank": 1,
+            "logit_top5": [
+              " cold",
+              "cold",
+              "\u51b7",
+              " \u0445\u043e\u043b\u043e\u0434",
+              " fr\u00edo"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " cold",
+              " cool",
+              " ________",
+              " ____",
+              " _____"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " cold",
+              " ____",
+              " ______",
+              " not",
+              " cool"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " cold",
+              "\u51b7",
+              " cool",
+              " Cold",
+              " \u0445\u043e\u043b\u043e\u0434"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " cold",
+              "\u51b7",
+              "cold",
+              " cool",
+              " l\u1ea1nh"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " cold",
+              " Cold",
+              "cold",
+              " cool",
+              "Cold"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " cold",
+              "cold",
+              "\u51b7",
+              " Cold",
+              " fr\u00edo"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " cold",
+              " not",
+              " cool",
+              " ____",
+              " ________"
+            ]
+          }
+        ],
+        "prompt": "The opposite of hot is",
+        "targets": [
+          "cold",
+          "Cold"
+        ]
+      },
+      {
+        "name": "planet",
+        "per_layer": [
+          {
+            "j_rank": 104742,
+            "j_top5": [
+              ".<",
+              ".[",
+              ":<",
+              ",<",
+              ":."
+            ],
+            "layer": 4,
+            "logit_rank": 126556,
+            "logit_top5": [
+              "\uac1c\uc6d4",
+              " \u0a26",
+              " recomendaciones",
+              "/w",
+              " \u0434\u0430\u0432\u043b\u0435\u043d\u0438\u044f"
+            ]
+          },
+          {
+            "j_rank": 24565,
+            "j_top5": [
+              " <",
+              ".<",
+              ":<",
+              "?<",
+              " |\n\n"
+            ],
+            "layer": 8,
+            "logit_rank": 54752,
+            "logit_top5": [
+              " \u0434\u0438\u0430\u043c\u0435\u0442",
+              " \u0441\u0430\u043c\u0435",
+              " jakie",
+              " echte",
+              " experiencing"
+            ]
+          },
+          {
+            "j_rank": 437,
+            "j_top5": [
+              ".<",
+              " the",
+              " also",
+              ",",
+              "."
+            ],
+            "layer": 12,
+            "logit_rank": 16128,
+            "logit_top5": [
+              " ever",
+              " imagin",
+              " Visit",
+              "\u3001\u6700",
+              " visited"
+            ]
+          },
+          {
+            "j_rank": 93,
+            "j_top5": [
+              " \\(",
+              " the",
+              " .",
+              ".<",
+              "."
+            ],
+            "layer": 16,
+            "logit_rank": 452,
+            "logit_top5": [
+              "OBILE",
+              " undergoing",
+              " Rag",
+              "\u4e7e",
+              " Xiaomi"
+            ]
+          },
+          {
+            "j_rank": 84,
+            "j_top5": [
+              " \\(",
+              ".<",
+              " the",
+              " .",
+              " <"
+            ],
+            "layer": 20,
+            "logit_rank": 3920,
+            "logit_top5": [
+              " jaki",
+              " \u092e\u0930",
+              " pintu",
+              " Signal",
+              " AF"
+            ]
+          },
+          {
+            "j_rank": 48,
+            "j_top5": [
+              " the",
+              " \\(",
+              " ____",
+              " ________",
+              " "
+            ],
+            "layer": 24,
+            "logit_rank": 93,
+            "logit_top5": [
+              " planet",
+              " synchrotron",
+              "oscel",
+              "cente",
+              " QSize"
+            ]
+          },
+          {
+            "j_rank": 34,
+            "j_top5": [
+              " ________",
+              " ____",
+              " _____",
+              " ______",
+              ":\n\n"
+            ],
+            "layer": 28,
+            "logit_rank": 1179,
+            "logit_top5": [
+              "romet",
+              " ________",
+              "_______",
+              "/are",
+              " ______"
+            ]
+          },
+          {
+            "j_rank": 259,
+            "j_top5": [
+              " ________",
+              " __________",
+              " _____",
+              " ______",
+              " ____"
+            ],
+            "layer": 32,
+            "logit_rank": 330,
+            "logit_top5": [
+              " ______",
+              " ________",
+              "_____",
+              " ____",
+              "_______"
+            ]
+          },
+          {
+            "j_rank": 41,
+            "j_top5": [
+              " ________",
+              ":\n\n",
+              " ______",
+              " ____",
+              "________"
+            ],
+            "layer": 36,
+            "logit_rank": 9,
+            "logit_top5": [
+              " ________",
+              " ______",
+              ":\n",
+              " ____",
+              " ____________"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Jupiter",
+              " ________",
+              " ______",
+              " Saturn",
+              " ____"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Jupiter",
+              " Saturn",
+              " Neptune",
+              " Mercury",
+              " Venus"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Jupiter",
+              " Saturn",
+              " Neptune",
+              " planet",
+              " Venus"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Jupiter",
+              " Saturn",
+              " Neptune",
+              "upiter",
+              " ______"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Jupiter",
+              ":\n",
+              " Saturn",
+              ":\n\n",
+              " ________"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Jupiter",
+              " ________",
+              ":\n",
+              " Saturn",
+              " ______"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Jupiter",
+              "\n",
+              "\n\n",
+              " ________",
+              ":\n"
+            ]
+          }
+        ],
+        "prompt": "The largest planet in the solar system is",
+        "targets": [
+          "Jupiter",
+          "jupiter"
+        ]
+      },
+      {
+        "name": "rome",
+        "per_layer": [
+          {
+            "j_rank": 22286,
+            "j_top5": [
+              " be",
+              " minimise",
+              " organise",
+              "\u201c",
+              " \u201c"
+            ],
+            "layer": 4,
+            "logit_rank": 25325,
+            "logit_top5": [
+              " base",
+              " improve",
+              "base",
+              " east",
+              " \u09ac\u09bf\u099c"
+            ]
+          },
+          {
+            "j_rank": 95,
+            "j_top5": [
+              " Salazar",
+              " Malta",
+              " <",
+              " Bala",
+              " Lisbon"
+            ],
+            "layer": 8,
+            "logit_rank": 3737,
+            "logit_top5": [
+              "foundation",
+              " mamm",
+              "berecht",
+              " nurture",
+              " broccoli"
+            ]
+          },
+          {
+            "j_rank": 61,
+            "j_top5": [
+              " the",
+              " America",
+              " everything",
+              " world",
+              ".<"
+            ],
+            "layer": 12,
+            "logit_rank": 30886,
+            "logit_top5": [
+              " parenting",
+              " Wetter",
+              " Brent",
+              " filmm",
+              " longe"
+            ]
+          },
+          {
+            "j_rank": 8,
+            "j_top5": [
+              " the",
+              " America",
+              " Rome",
+              " \u201c",
+              " world"
+            ],
+            "layer": 16,
+            "logit_rank": 59512,
+            "logit_top5": [
+              " tourism",
+              " \u0434\u043e\u0441\u0442\u043e\u043f\u0440\u0438\u043c\u0435\u0447\u0430",
+              " Weimar",
+              "aws",
+              "axel"
+            ]
+          },
+          {
+            "j_rank": 50,
+            "j_top5": [
+              " the",
+              " .",
+              " \u201c",
+              " ",
+              ".\n\n"
+            ],
+            "layer": 20,
+            "logit_rank": 30824,
+            "logit_top5": [
+              " obnov",
+              "li\u010d",
+              " suburbs",
+              " political",
+              " ==>"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " the",
+              " Italy",
+              " Europe",
+              " England",
+              " Rome"
+            ],
+            "layer": 24,
+            "logit_rank": 1487,
+            "logit_top5": [
+              "-other",
+              "\uad6d\uc740",
+              " other",
+              "\uad6d\uc758",
+              " \u0434\u0440\u0443\u0433\u0443\u044e"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " ____",
+              " Italy",
+              " ________",
+              " ______",
+              " Europe"
+            ],
+            "layer": 28,
+            "logit_rank": 3652,
+            "logit_top5": [
+              " ______",
+              "______",
+              " ________",
+              " \u0433\u043e\u0441\u0443\u0434\u0430\u0440\u0441\u0442\u0432\u043e",
+              " ____________"
+            ]
+          },
+          {
+            "j_rank": 156,
+            "j_top5": [
+              " ______",
+              " ________",
+              " ____",
+              " _______",
+              " _____"
+            ],
+            "layer": 32,
+            "logit_rank": 759,
+            "logit_top5": [
+              " ______",
+              " ________",
+              " ____",
+              " _______",
+              " _________"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Italy",
+              " ________",
+              " ______",
+              "Italy",
+              " ____"
+            ],
+            "layer": 36,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italy",
+              "Italy",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " \uc774\ud0c8\ub9ac\uc544",
+              " ________"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              "Italy",
+              " Italy",
+              " ________",
+              " ____",
+              " _____"
+            ],
+            "layer": 40,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italy",
+              "Italy",
+              " ____",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " ______"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Italy",
+              "Italy",
+              " \u0418\u0442\u0430\u043b\u0438\u044f",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " Italia"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italy",
+              "Italy",
+              " \u0418\u0442\u0430\u043b\u0438\u044f",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " Italia"
+            ]
+          },
+          {
+            "j_rank": 1,
+            "j_top5": [
+              " Italy",
+              "Italy",
+              " Italia",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " Italian"
+            ],
+            "layer": 48,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italy",
+              "Italy",
+              " \u0418\u0442\u0430\u043b\u0438\u0438",
+              " \uc774\ud0c8\ub9ac\uc544",
+              " Italia"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 1,
+            "logit_top5": [
+              " Italy",
+              "\n\n",
+              " ____",
+              " ________",
+              " ______"
+            ]
+          }
+        ],
+        "prompt": "Paris is to France as Rome is to",
+        "targets": [
+          "Italy",
+          "italy"
+        ]
+      },
+      {
+        "name": "two_plus",
+        "per_layer": [
+          {
+            "j_rank": 18015,
+            "j_top5": [
+              " =",
+              " =\n",
+              "/=",
+              " =\n\n",
+              " \\(=\\)"
+            ],
+            "layer": 4,
+            "logit_rank": 21704,
+            "logit_top5": [
+              " bacon",
+              "_PRESS",
+              "ergency",
+              "\uff0c\u73b0",
+              "\ufffd"
+            ]
+          },
+          {
+            "j_rank": 3264,
+            "j_top5": [
+              " =",
+              " \u2260",
+              " \u2248",
+              " \u03b4",
+              " (="
+            ],
+            "layer": 8,
+            "logit_rank": 63819,
+            "logit_top5": [
+              " Camille",
+              " peso",
+              "cff",
+              "-just",
+              "formas"
+            ]
+          },
+          {
+            "j_rank": 1300,
+            "j_top5": [
+              " =",
+              " \u2260",
+              " \u2248",
+              "/=",
+              " =\n"
+            ],
+            "layer": 12,
+            "logit_rank": 19864,
+            "logit_top5": [
+              " \u211d",
+              " lapse",
+              " remer",
+              " retrou",
+              " enclosure"
+            ]
+          },
+          {
+            "j_rank": 797,
+            "j_top5": [
+              " =",
+              " \u2260",
+              " \u2248",
+              " =\n\n",
+              "/="
+            ],
+            "layer": 16,
+            "logit_rank": 81883,
+            "logit_top5": [
+              " Bill",
+              " Florin",
+              " Th\u1ecb",
+              "opar",
+              " mit\u00e4"
+            ]
+          },
+          {
+            "j_rank": 548,
+            "j_top5": [
+              " =",
+              " \u2248",
+              " \u2260",
+              " ^{",
+              " =\n"
+            ],
+            "layer": 20,
+            "logit_rank": 14243,
+            "logit_top5": [
+              " #=>",
+              " aparte",
+              "\u0e40\u0e17\u0e48\u0e32",
+              " th\u1ea5u",
+              "oiden"
+            ]
+          },
+          {
+            "j_rank": 3245,
+            "j_top5": [
+              " =",
+              " \u2260",
+              " \u2248",
+              " =\n",
+              " ________"
+            ],
+            "layer": 24,
+            "logit_rank": 7274,
+            "logit_top5": [
+              " \u043f\u043e\u043c\u043e\u0433",
+              "______",
+              "?\n",
+              " ?\n",
+              " \u0111\u1eadm"
+            ]
+          },
+          {
+            "j_rank": 1637,
+            "j_top5": [
+              " =",
+              " \u2260",
+              " ________",
+              " =\n",
+              " \u2248"
+            ],
+            "layer": 28,
+            "logit_rank": 6055,
+            "logit_top5": [
+              "______",
+              " ______",
+              "_______",
+              "\u0e99\ufffd",
+              "TEMP"
+            ]
+          },
+          {
+            "j_rank": 5168,
+            "j_top5": [
+              " ________",
+              " ______",
+              "?\n",
+              " ________________",
+              "?\n\n"
+            ],
+            "layer": 32,
+            "logit_rank": 1135,
+            "logit_top5": [
+              " ______",
+              " ________",
+              " _______",
+              "______",
+              "_______"
+            ]
+          },
+          {
+            "j_rank": 321,
+            "j_top5": [
+              "?\n",
+              "?\n\n",
+              " ____",
+              "?",
+              " ?\n"
+            ],
+            "layer": 36,
+            "logit_rank": 14,
+            "logit_top5": [
+              " ______",
+              "?\n",
+              " ____",
+              " ________",
+              " ?\n"
+            ]
+          },
+          {
+            "j_rank": 137,
+            "j_top5": [
+              "?\n",
+              "?\n\n",
+              " ?\n",
+              " ________",
+              " ____"
+            ],
+            "layer": 40,
+            "logit_rank": 17,
+            "logit_top5": [
+              " ____",
+              " ______",
+              " _____",
+              " ___",
+              " _______"
+            ]
+          },
+          {
+            "j_rank": 23,
+            "j_top5": [
+              "?\n",
+              "?\n\n",
+              " ?\n",
+              " ?\n\n",
+              " ____"
+            ],
+            "layer": 44,
+            "logit_rank": 1,
+            "logit_top5": [
+              "4",
+              " four",
+              " cuatro",
+              " d\u00f6rt",
+              " ____"
+            ]
+          },
+          {
+            "j_rank": 37,
+            "j_top5": [
+              " ?\n",
+              "?\n",
+              " ?\n\n",
+              "?\n\n",
+              " ?"
+            ],
+            "layer": 48,
+            "logit_rank": 17,
+            "logit_top5": [
+              " ?\n",
+              " ?\n\n",
+              "?\n",
+              " ?",
+              "?\n\n"
+            ]
+          },
+          {
+            "j_rank": null,
+            "j_top5": null,
+            "layer": 51,
+            "logit_rank": 7,
+            "logit_top5": [
+              " ",
+              " ?\n",
+              " ?\n\n",
+              " ?",
+              "?"
+            ]
+          }
+        ],
+        "prompt": "2 + 2 =",
+        "targets": [
+          "4",
+          "four"
+        ]
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:51Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 0.8610560894012451
+  },
+  "directed_modulation": {
+    "experiment": "directed_modulation",
+    "focus_improves": true,
+    "layer": 30,
+    "mean_rank_alpha0": 51154.0,
+    "mean_rank_focus_a2": 50846.5,
+    "mean_rank_suppress_am1": 51085.666666666664,
+    "rows": [
+      {
+        "alpha_-1.0": 77003,
+        "alpha_0.0": 76882,
+        "alpha_1.0": 76629,
+        "alpha_2.0": 76532,
+        "concept": "bear",
+        "layer": 30,
+        "token_id": 23592
+      },
+      {
+        "alpha_-1.0": 25148,
+        "alpha_0.0": 25694,
+        "alpha_1.0": 25880,
+        "alpha_2.0": 25588,
+        "concept": "piano",
+        "layer": 30,
+        "token_id": 33369
+      },
+      {
+        "alpha_-1.0": 28731,
+        "alpha_0.0": 28468,
+        "alpha_1.0": 27866,
+        "alpha_2.0": 27992,
+        "concept": "ocean",
+        "layer": 30,
+        "token_id": 27005
+      },
+      {
+        "alpha_-1.0": 45698,
+        "alpha_0.0": 44566,
+        "alpha_1.0": 43323,
+        "alpha_2.0": 42280,
+        "concept": "volcano",
+        "layer": 30,
+        "token_id": 102470
+      },
+      {
+        "alpha_-1.0": 79511,
+        "alpha_0.0": 80328,
+        "alpha_1.0": 80525,
+        "alpha_2.0": 80931,
+        "concept": "pyramid",
+        "layer": 30,
+        "token_id": 56517
+      },
+      {
+        "alpha_-1.0": 50423,
+        "alpha_0.0": 50986,
+        "alpha_1.0": 51289,
+        "alpha_2.0": 51756,
+        "concept": "galaxy",
+        "layer": 30,
+        "token_id": 54622
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:54Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 1.2602505683898926
+  },
+  "dual_task": {
+    "experiment": "dual_task",
+    "mean_concept_interference": 64629.333333333336,
+    "mean_math_interference": 3697.6666666666665,
+    "rows": [
+      {
+        "answer": "45",
+        "concept": "lion",
+        "concept_interference": 59857,
+        "dual": {
+          "concept_rank": 82719,
+          "math_rank": 12196
+        },
+        "math": "Compute 17 + 28.",
+        "math_interference": -392,
+        "single_concept": {
+          "concept_rank": 22862,
+          "math_rank": 126592
+        },
+        "single_math": {
+          "concept_rank": 148771,
+          "math_rank": 12588
+        }
+      },
+      {
+        "answer": "48",
+        "concept": "eagle",
+        "concept_interference": 34656,
+        "dual": {
+          "concept_rank": 39073,
+          "math_rank": 17637
+        },
+        "math": "Compute 12 * 4.",
+        "math_interference": 4386,
+        "single_concept": {
+          "concept_rank": 4417,
+          "math_rank": 149695
+        },
+        "single_math": {
+          "concept_rank": 98637,
+          "math_rank": 13251
+        }
+      },
+      {
+        "answer": "63",
+        "concept": "shark",
+        "concept_interference": 34843,
+        "dual": {
+          "concept_rank": 38889,
+          "math_rank": 14543
+        },
+        "math": "Compute 100 - 37.",
+        "math_interference": 6406,
+        "single_concept": {
+          "concept_rank": 4046,
+          "math_rank": 108713
+        },
+        "single_math": {
+          "concept_rank": 107578,
+          "math_rank": 8137
+        }
+      },
+      {
+        "answer": "63",
+        "concept": "spider",
+        "concept_interference": 82774,
+        "dual": {
+          "concept_rank": 84765,
+          "math_rank": 16890
+        },
+        "math": "Compute 9 * 7.",
+        "math_interference": 3833,
+        "single_concept": {
+          "concept_rank": 1991,
+          "math_rank": 114267
+        },
+        "single_math": {
+          "concept_rank": 179208,
+          "math_rank": 13057
+        }
+      },
+      {
+        "answer": "31",
+        "concept": "piano",
+        "concept_interference": 42905,
+        "dual": {
+          "concept_rank": 44216,
+          "math_rank": 11089
+        },
+        "math": "Compute 15 + 16.",
+        "math_interference": 3087,
+        "single_concept": {
+          "concept_rank": 1311,
+          "math_rank": 180197
+        },
+        "single_math": {
+          "concept_rank": 85728,
+          "math_rank": 8002
+        }
+      },
+      {
+        "answer": "64",
+        "concept": "violin",
+        "concept_interference": 132741,
+        "dual": {
+          "concept_rank": 136728,
+          "math_rank": 15721
+        },
+        "math": "Compute 8 * 8.",
+        "math_interference": 4866,
+        "single_concept": {
+          "concept_rank": 3987,
+          "math_rank": 156407
+        },
+        "single_math": {
+          "concept_rank": 172735,
+          "math_rank": 10855
+        }
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:55Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 0.9571349620819092
+  },
+  "headline": {
+    "ablation_j_damage": 116.5,
+    "ablation_n_selective": 1,
+    "ablation_random_damage": 98.5,
+    "capacity_mean_r5": 1.375,
+    "depth_j_advantage_band": 4329.964285714285,
+    "dual_math_interference": 3697.6666666666665,
+    "g_fold_min_cosine": -0.3409218490123749,
+    "ignition_median_alpha": null,
+    "modulation_focus_improves": true,
+    "readout_parity_ok": true,
+    "selectivity_contrast": 0.5,
+    "utc": "2026-08-11T10:35:03Z",
+    "vr_top5_hit_rate": 0.0
+  },
+  "ignition": {
+    "experiment": "ignition",
+    "median_alpha_rank5": null,
+    "n_pairs": 6,
+    "rows": [
+      {
+        "alpha_rank5": null,
+        "curve": [
+          {
+            "alpha": 0.0,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.2,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.4,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.6,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.8,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.0,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.2,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.4,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.6,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.8,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          },
+          {
+            "alpha": 2.0,
+            "rank_a": 9,
+            "rank_b": 1,
+            "winner_a": false
+          }
+        ],
+        "layer_inject": 30,
+        "layer_read": 44,
+        "pair": [
+          "lion",
+          "tiger"
+        ]
+      },
+      {
+        "alpha_rank5": null,
+        "curve": [
+          {
+            "alpha": 0.0,
+            "rank_a": 2835,
+            "rank_b": 873,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.2,
+            "rank_a": 2816,
+            "rank_b": 891,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.4,
+            "rank_a": 2841,
+            "rank_b": 878,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.6,
+            "rank_a": 2830,
+            "rank_b": 894,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.8,
+            "rank_a": 2838,
+            "rank_b": 877,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.0,
+            "rank_a": 2820,
+            "rank_b": 872,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.2,
+            "rank_a": 2837,
+            "rank_b": 878,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.4,
+            "rank_a": 2833,
+            "rank_b": 876,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.6,
+            "rank_a": 2842,
+            "rank_b": 876,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.8,
+            "rank_a": 2845,
+            "rank_b": 878,
+            "winner_a": false
+          },
+          {
+            "alpha": 2.0,
+            "rank_a": 2814,
+            "rank_b": 874,
+            "winner_a": false
+          }
+        ],
+        "layer_inject": 30,
+        "layer_read": 44,
+        "pair": [
+          "piano",
+          "violin"
+        ]
+      },
+      {
+        "alpha_rank5": null,
+        "curve": [
+          {
+            "alpha": 0.0,
+            "rank_a": 9352,
+            "rank_b": 2635,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.2,
+            "rank_a": 9360,
+            "rank_b": 2556,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.4,
+            "rank_a": 9375,
+            "rank_b": 2569,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.6,
+            "rank_a": 9408,
+            "rank_b": 2580,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.8,
+            "rank_a": 9375,
+            "rank_b": 2647,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.0,
+            "rank_a": 9384,
+            "rank_b": 2574,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.2,
+            "rank_a": 9353,
+            "rank_b": 2640,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.4,
+            "rank_a": 9373,
+            "rank_b": 2649,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.6,
+            "rank_a": 9375,
+            "rank_b": 2642,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.8,
+            "rank_a": 9425,
+            "rank_b": 2577,
+            "winner_a": false
+          },
+          {
+            "alpha": 2.0,
+            "rank_a": 9403,
+            "rank_b": 2579,
+            "winner_a": false
+          }
+        ],
+        "layer_inject": 30,
+        "layer_read": 44,
+        "pair": [
+          "ocean",
+          "river"
+        ]
+      },
+      {
+        "pair": [
+          "paris",
+          "london"
+        ],
+        "state": "TOKENIZATION_GATED"
+      },
+      {
+        "alpha_rank5": null,
+        "curve": [
+          {
+            "alpha": 0.0,
+            "rank_a": 2570,
+            "rank_b": 151,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.2,
+            "rank_a": 2501,
+            "rank_b": 152,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.4,
+            "rank_a": 2562,
+            "rank_b": 151,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.6,
+            "rank_a": 2586,
+            "rank_b": 152,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.8,
+            "rank_a": 2554,
+            "rank_b": 152,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.0,
+            "rank_a": 2564,
+            "rank_b": 151,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.2,
+            "rank_a": 2565,
+            "rank_b": 152,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.4,
+            "rank_a": 2583,
+            "rank_b": 151,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.6,
+            "rank_a": 2575,
+            "rank_b": 151,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.8,
+            "rank_a": 2588,
+            "rank_b": 152,
+            "winner_a": false
+          },
+          {
+            "alpha": 2.0,
+            "rank_a": 2591,
+            "rank_b": 152,
+            "winner_a": false
+          }
+        ],
+        "layer_inject": 30,
+        "layer_read": 44,
+        "pair": [
+          "apple",
+          "orange"
+        ]
+      },
+      {
+        "alpha_rank5": null,
+        "curve": [
+          {
+            "alpha": 0.0,
+            "rank_a": 4413,
+            "rank_b": 3009,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.2,
+            "rank_a": 4402,
+            "rank_b": 2999,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.4,
+            "rank_a": 4381,
+            "rank_b": 2981,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.6,
+            "rank_a": 4454,
+            "rank_b": 3026,
+            "winner_a": false
+          },
+          {
+            "alpha": 0.8,
+            "rank_a": 4444,
+            "rank_b": 3020,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.0,
+            "rank_a": 4475,
+            "rank_b": 3043,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.2,
+            "rank_a": 4445,
+            "rank_b": 3027,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.4,
+            "rank_a": 4469,
+            "rank_b": 3038,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.6,
+            "rank_a": 4469,
+            "rank_b": 3029,
+            "winner_a": false
+          },
+          {
+            "alpha": 1.8,
+            "rank_a": 4458,
+            "rank_b": 3028,
+            "winner_a": false
+          },
+          {
+            "alpha": 2.0,
+            "rank_a": 4459,
+            "rank_b": 3019,
+            "winner_a": false
+          }
+        ],
+        "layer_inject": 30,
+        "layer_read": 44,
+        "pair": [
+          "doctor",
+          "lawyer"
+        ]
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:35:01Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 2.8175177574157715
+  },
+  "protected_ablation": {
+    "experiment": "protected_ablation",
+    "mean_j_damage": 116.5,
+    "mean_random_damage": 98.5,
+    "n": 6,
+    "n_selective": 1,
+    "rows": [
+      {
+        "j_damage": 1,
+        "layer": 30,
+        "name": "capital_france",
+        "random_damage": 0,
+        "rank_ablate_j": 8,
+        "rank_ablate_random": 7,
+        "rank_base": 7,
+        "selective": false,
+        "target": "Paris"
+      },
+      {
+        "j_damage": -15,
+        "layer": 30,
+        "name": "currency_japan",
+        "random_damage": 0,
+        "rank_ablate_j": 100,
+        "rank_ablate_random": 115,
+        "rank_base": 115,
+        "selective": false,
+        "target": "yen"
+      },
+      {
+        "j_damage": 0,
+        "layer": 30,
+        "name": "author_hamlet",
+        "random_damage": 0,
+        "rank_ablate_j": 1,
+        "rank_ablate_random": 1,
+        "rank_base": 1,
+        "selective": false,
+        "target": "Shakespeare"
+      },
+      {
+        "j_damage": 730,
+        "layer": 30,
+        "name": "element_fe",
+        "random_damage": 586,
+        "rank_ablate_j": 10495,
+        "rank_ablate_random": 10351,
+        "rank_base": 9765,
+        "selective": true,
+        "target": "Fe"
+      },
+      {
+        "j_damage": -17,
+        "layer": 30,
+        "name": "planet_red",
+        "random_damage": 5,
+        "rank_ablate_j": 1019,
+        "rank_ablate_random": 1041,
+        "rank_base": 1036,
+        "selective": false,
+        "target": "Mars"
+      },
+      {
+        "j_damage": 0,
+        "layer": 30,
+        "name": "einstein",
+        "random_damage": 0,
+        "rank_ablate_j": 1,
+        "rank_ablate_random": 1,
+        "rank_base": 1,
+        "selective": false,
+        "target": "Einstein"
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:35:03Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 0.9292795658111572
+  },
+  "selectivity_language": {
+    "automatic_rate": 0.25,
+    "contrast": 0.5,
+    "experiment": "selectivity_language",
+    "explicit_rate": 0.75,
+    "n": 4,
+    "rows": [
+      {
+        "automatic": {
+          "best_rank": 1,
+          "hit_rank1": true
+        },
+        "explicit": {
+          "best_rank": 2,
+          "hit_rank1": false
+        },
+        "key": "fr1",
+        "labels": [
+          "French",
+          "fran\u00e7ais",
+          "Francais"
+        ],
+        "language": "French"
+      },
+      {
+        "automatic": {
+          "best_rank": 2,
+          "hit_rank1": false
+        },
+        "explicit": {
+          "best_rank": 1,
+          "hit_rank1": true
+        },
+        "key": "de1",
+        "labels": [
+          "German",
+          "Deutsch",
+          "deutsch"
+        ],
+        "language": "German"
+      },
+      {
+        "automatic": {
+          "best_rank": 2,
+          "hit_rank1": false
+        },
+        "explicit": {
+          "best_rank": 1,
+          "hit_rank1": true
+        },
+        "key": "es1",
+        "labels": [
+          "Spanish",
+          "espa\u00f1ol",
+          "Espanol"
+        ],
+        "language": "Spanish"
+      },
+      {
+        "automatic": {
+          "best_rank": 11,
+          "hit_rank1": false
+        },
+        "explicit": {
+          "best_rank": 1,
+          "hit_rank1": true
+        },
+        "key": "it1",
+        "labels": [
+          "Italian",
+          "italiano",
+          "Italiano"
+        ],
+        "language": "Italian"
+      }
+    ],
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:34:53Z",
+      "vram_total_bytes": 101974081536
+    },
+    "wall_seconds": 1.8341689109802246
+  },
+  "utc": "2026-08-11T10:34:50Z",
+  "verbal_report": {
+    "experiment": "verbal_report",
+    "n": 10,
+    "n_rank_improved": 0,
+    "runtime": {
+      "capability": [
+        12,
+        0
+      ],
+      "cuda_available": true,
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.16.0.dev0",
+      "utc": "2026-08-11T10:35:02Z",
+      "vram_total_bytes": 101974081536
+    },
+    "top5_hit_rate": 0.0,
+    "trials": [
+      {
+        "alpha0": {
+          "rank_dst_cap": 1416,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 1416,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "dst": "Canada",
+        "dst_cap": "Ottawa",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "France",
+        "src_cap": "Paris",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 394,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 394,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "dst": "China",
+        "dst_cap": "Beijing",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "France",
+        "src_cap": "Paris",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 211,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 211,
+          "rank_src_cap": 7,
+          "top5": [
+            "?\n\n",
+            " Wikipedia",
+            " France",
+            " ________",
+            " ______"
+          ]
+        },
+        "dst": "Egypt",
+        "dst_cap": "Cairo",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "France",
+        "src_cap": "Paris",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 57,
+          "rank_src_cap": 7,
+          "top5": [
+            " Canada",
+            " city",
+            " Toronto",
+            " Quebec",
+            " **"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 57,
+          "rank_src_cap": 7,
+          "top5": [
+            " Canada",
+            " city",
+            " Toronto",
+            " Quebec",
+            " **"
+          ]
+        },
+        "dst": "France",
+        "dst_cap": "Paris",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Canada",
+        "src_cap": "Ottawa",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 44,
+          "rank_src_cap": 3,
+          "top5": [
+            " city",
+            " Tokyo",
+            " Beijing",
+            " cities",
+            " China"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 44,
+          "rank_src_cap": 3,
+          "top5": [
+            " city",
+            " Tokyo",
+            " Beijing",
+            " cities",
+            " China"
+          ]
+        },
+        "dst": "France",
+        "dst_cap": "Paris",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "China",
+        "src_cap": "Beijing",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 41,
+          "rank_src_cap": 3,
+          "top5": [
+            " city",
+            " cities",
+            " Cairo",
+            " City",
+            " Mumbai"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 41,
+          "rank_src_cap": 3,
+          "top5": [
+            " city",
+            " cities",
+            " Cairo",
+            " City",
+            " Mumbai"
+          ]
+        },
+        "dst": "France",
+        "dst_cap": "Paris",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Egypt",
+        "src_cap": "Cairo",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 301,
+          "rank_src_cap": 1,
+          "top5": [
+            " Tokyo",
+            " city",
+            " Japan",
+            " cities",
+            " Mumbai"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 301,
+          "rank_src_cap": 1,
+          "top5": [
+            " Tokyo",
+            " city",
+            " Japan",
+            " cities",
+            " Mumbai"
+          ]
+        },
+        "dst": "Italy",
+        "dst_cap": "Rome",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Japan",
+        "src_cap": "Tokyo",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 22,
+          "rank_src_cap": 37,
+          "top5": [
+            " city",
+            " **",
+            " cities",
+            " Italy",
+            " Madrid"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 22,
+          "rank_src_cap": 37,
+          "top5": [
+            " city",
+            " **",
+            " cities",
+            " Italy",
+            " Madrid"
+          ]
+        },
+        "dst": "Japan",
+        "dst_cap": "Tokyo",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Italy",
+        "src_cap": "Rome",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 8,
+          "rank_src_cap": 3,
+          "top5": [
+            " Germany",
+            " city",
+            " cities",
+            " Berlin",
+            " **"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 8,
+          "rank_src_cap": 3,
+          "top5": [
+            " Germany",
+            " city",
+            " cities",
+            " Berlin",
+            " **"
+          ]
+        },
+        "dst": "Spain",
+        "dst_cap": "Madrid",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Germany",
+        "src_cap": "Berlin",
+        "top5_hit_dst": false
+      },
+      {
+        "alpha0": {
+          "rank_dst_cap": 40,
+          "rank_src_cap": 2,
+          "top5": [
+            " city",
+            " Madrid",
+            " Spain",
+            " cities",
+            " Barcelona"
+          ]
+        },
+        "alpha1": {
+          "rank_dst_cap": 40,
+          "rank_src_cap": 2,
+          "top5": [
+            " city",
+            " Madrid",
+            " Spain",
+            " cities",
+            " Barcelona"
+          ]
+        },
+        "dst": "Germany",
+        "dst_cap": "Berlin",
+        "layer": 30,
+        "rank_dst_improved": false,
+        "src": "Spain",
+        "src_cap": "Madrid",
+        "top5_hit_dst": false
+      }
+    ],
+    "wall_seconds": 1.0436301231384277
+  }
+}
