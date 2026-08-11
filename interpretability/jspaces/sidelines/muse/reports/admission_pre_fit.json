@@ -1,0 +1,413 @@
+{
+  "boot_sentinel_logit_lens": {
+    "per_layer": [
+      {
+        "layer": 0,
+        "top5": [
+          "/are",
+          " bagaimana",
+          " \u00fe",
+          "claimer",
+          " how"
+        ],
+        "top5_ids": [
+          152652,
+          66522,
+          23862,
+          58455,
+          1659
+        ]
+      },
+      {
+        "layer": 4,
+        "top5": [
+          "\u3066\u306a\u30d6\u30c3\u30af\u30de\u30fc\u30af",
+          " \u0a26",
+          " Fridays",
+          "/w",
+          "\u0cbe\u0ca1"
+        ],
+        "top5_ids": [
+          188474,
+          29633,
+          184193,
+          5793,
+          110230
+        ]
+      },
+      {
+        "layer": 8,
+        "top5": [
+          " ISBN",
+          "faktor",
+          " \ubaa8",
+          ",.",
+          " Philippe"
+        ],
+        "top5_ids": [
+          33226,
+          164944,
+          8559,
+          27994,
+          67496
+        ]
+      },
+      {
+        "layer": 12,
+        "top5": [
+          " God's",
+          "icu",
+          " Moines",
+          "/are",
+          "348"
+        ],
+        "top5_ids": [
+          79635,
+          47999,
+          195165,
+          152652,
+          33803
+        ]
+      },
+      {
+        "layer": 16,
+        "top5": [
+          " nations",
+          " membutuhkan",
+          " \u043c\u043d\u043e\u0433\u043e\u0435",
+          " not",
+          " n\u00f4"
+        ],
+        "top5_ids": [
+          40756,
+          98083,
+          116436,
+          702,
+          161860
+        ]
+      },
+      {
+        "layer": 20,
+        "top5": [
+          " KG",
+          " autop",
+          " only",
+          "ute",
+          "\u0e2d\u0e23\u0e4c"
+        ],
+        "top5_ids": [
+          96238,
+          103154,
+          1809,
+          1545,
+          17741
+        ]
+      },
+      {
+        "layer": 24,
+        "top5": [
+          " celle",
+          "\u30f3\u30c8",
+          " \u043e\u0442\u043e\u043f\u043b\u0435\u043d\u0438\u044f",
+          " svolgere",
+          " Orlando"
+        ],
+        "top5_ids": [
+          33545,
+          17979,
+          109489,
+          192105,
+          56746
+        ]
+      },
+      {
+        "layer": 28,
+        "top5": [
+          " actually",
+          "/are",
+          " moneda",
+          " called",
+          "currency"
+        ],
+        "top5_ids": [
+          8086,
+          152652,
+          91867,
+          4569,
+          37415
+        ]
+      },
+      {
+        "layer": 32,
+        "top5": [
+          " called",
+          " actually",
+          " named",
+          "/are",
+          "\u2026"
+        ],
+        "top5_ids": [
+          4569,
+          8086,
+          12843,
+          152652,
+          1456
+        ]
+      },
+      {
+        "layer": 36,
+        "top5": [
+          " called",
+          " currency",
+          " Italy",
+          "called",
+          " named"
+        ],
+        "top5_ids": [
+          4569,
+          16863,
+          26049,
+          72124,
+          12843
+        ]
+      },
+      {
+        "layer": 40,
+        "top5": [
+          " Italian",
+          " euro",
+          " lira",
+          " currency",
+          " euros"
+        ],
+        "top5_ids": [
+          28449,
+          17442,
+          108109,
+          16863,
+          25639
+        ]
+      },
+      {
+        "layer": 44,
+        "top5": [
+          " euro",
+          " euros",
+          " lira",
+          " Euros",
+          " Euro"
+        ],
+        "top5_ids": [
+          17442,
+          25639,
+          108109,
+          109424,
+          14434
+        ]
+      },
+      {
+        "layer": 48,
+        "top5": [
+          " called",
+          " euros",
+          " Euros",
+          " euro",
+          " Euro"
+        ],
+        "top5_ids": [
+          4569,
+          25639,
+          109424,
+          17442,
+          14434
+        ]
+      },
+      {
+        "layer": 51,
+        "top5": [
+          " the",
+          " called",
+          " not",
+          " lira",
+          " a"
+        ],
+        "top5_ids": [
+          290,
+          4569,
+          702,
+          108109,
+          262
+        ]
+      }
+    ],
+    "position": 13,
+    "prompt": "Fact: The currency used in the country shaped like a boot is"
+  },
+  "evidence_id": "muse-admission-prefit-v1",
+  "facts": {
+    "add_bos_token_attr": true,
+    "attn_implementation": "sdpa",
+    "bos_token": "<|begin_of_text|>",
+    "bos_token_id": 200000,
+    "chat_template_present": true,
+    "d_model": 6656,
+    "device": "cuda:0",
+    "dtype": "torch.bfloat16",
+    "eos_token_id": 200001,
+    "hf_class": "MuseGlimmerForConditionalGeneration",
+    "jlens_class": "HFLensModel",
+    "layout_path": "model.language_model",
+    "logit_softcap": 20.0,
+    "model_id": "meta-models/Muse-Glimmer-30B",
+    "n_layers": 52,
+    "output_multiplier": 0.19611613513818404,
+    "revision": "97c77dff50b2797bcc558fa2d909761dbc575c59",
+    "vocab_size": 202048
+  },
+  "final_layer": 51,
+  "fit_source_layers": [
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    36,
+    40,
+    44,
+    48,
+    50
+  ],
+  "gates": {
+    "all_pass": true,
+    "cuda_ok": true,
+    "finite_acts": true,
+    "hard_all_pass": true,
+    "identity_parity_ok": true,
+    "linearity_finite": true,
+    "linearity_odd_symmetry_ok_eps1e2": false,
+    "linearity_odd_symmetry_ok_eps1e3": false,
+    "shape_ok": true,
+    "smoke_top1_sensible": true
+  },
+  "identity_geometry": {
+    "identity_parity": {
+      "layers": [
+        51
+      ],
+      "max_abs_diff": 0.0,
+      "ok": true,
+      "positions": [
+        13
+      ]
+    },
+    "logit_softcap": 20.0,
+    "position": 13,
+    "prompt": "Fact: The currency used in the country shaped like a boot is"
+  },
+  "local_linearity_smoke": {
+    "eps": 0.01,
+    "finite": true,
+    "jvp_fd_norm": 330.13067626953125,
+    "layer": 25,
+    "note": "canary only; not an exact JVP / not Gemma gate thresholds",
+    "odd_symmetry_rel_err": 1.866443395614624,
+    "response_norm_per_eps": 749.1372680664062
+  },
+  "local_linearity_smoke_eps1e3": {
+    "eps": 0.001,
+    "finite": true,
+    "jvp_fd_norm": 3450.7021484375,
+    "layer": 25,
+    "note": "canary only; not an exact JVP / not Gemma gate thresholds",
+    "odd_symmetry_rel_err": 1.8884997367858887,
+    "response_norm_per_eps": 7157.07421875
+  },
+  "note": "Hard gates: shape/cuda/finite/identity-parity/smoke-top1. Local-linearity odd-symmetry is a soft canary only.",
+  "paper_band": [
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40,
+    42,
+    44,
+    46
+  ],
+  "runtime": {
+    "capability": [
+      12,
+      0
+    ],
+    "cuda_available": true,
+    "cuda_build": "12.8",
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "torch": "2.11.0+cu128",
+    "transformers": "5.16.0.dev0",
+    "utc": "2026-08-11T04:06:59Z",
+    "vram_total_bytes": 101974081536
+  },
+  "smoke_forward": {
+    "activation_shapes": {
+      "0": [
+        1,
+        6,
+        6656
+      ],
+      "25": [
+        1,
+        6,
+        6656
+      ],
+      "51": [
+        1,
+        6,
+        6656
+      ]
+    },
+    "final_topk": [
+      [
+        " Paris",
+        17.25
+      ],
+      [
+        " a",
+        16.125
+      ],
+      [
+        " one",
+        15.5625
+      ],
+      [
+        " the",
+        15.5625
+      ],
+      [
+        " also",
+        15.125
+      ]
+    ],
+    "finite_acts": true,
+    "peak_vram_gb": 59.56,
+    "prompt": "The capital of France is",
+    "seq_len": 6,
+    "wall_seconds": 0.2285949699999037
+  },
+  "utc": "2026-08-11T04:06:59Z"
+}

@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace-muse"
+version = "0.1.0"
+description = "J-space Muse Glimmer 30B sideline probe (development/methods)"
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "transformers",
+    "tokenizers",
+    "safetensors",
+    "huggingface-hub",
+    "datasets",
+    "numpy",
+    "pyyaml",
+    "pandas",
+    "matplotlib",
+]
+
+[project.scripts]
+jspace-muse = "jspace_muse.cli:main"
+
+[tool.setuptools]
+packages = [
+    "jspace_muse",
+    "jspace_muse.experiments",
+]
