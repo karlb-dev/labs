@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "primaryMessagePolicy": "single-user-turn-v1",
+  "carriers": {
+    "direct-v1": { "maxTokens": 600, "template": "{{content}}" },
+    "explain-v1": { "maxTokens": 600, "template": "{{content}}\n\nGive the answer and a concise explanation in about 80–150 words." },
+    "structured-v1": { "maxTokens": 800, "heldOut": true, "template": "{{content}}\n\nRespond with four sections titled Heading, Short answer, Rationale, and Caveat." },
+    "code-explain-v1": { "maxTokens": 1000, "template": "{{content}}\n\nProvide code, a compact explanation, and one concrete example." },
+    "expand-v1": { "maxTokens": 500, "template": "Develop the following sentence into a coherent short paragraph of about 60–120 words:\n\n{{content}}" },
+    "rag-grounded-v1": { "maxTokens": 700, "evaluationOnly": true, "template": "Use only the supplied context to answer the question. If the context is insufficient, say so.\n\nContext:\n{{context}}\n\nQuestion:\n{{content}}" },
+    "persona-v1": { "maxTokens": 400, "evaluationOnly": true, "template": "{{content}}" }
+  }
+}

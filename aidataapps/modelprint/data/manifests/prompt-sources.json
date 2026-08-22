@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "relation-probes",
+      "path": "interpretability/data/relation_probes_lab1.csv",
+      "sha256": "483e298630d6437c5aed908024d6bbfe037a5285518293f4889f9dce5d9da3a7",
+      "kind": "repository"
+    },
+    {
+      "id": "advanced-relations",
+      "path": "interpretability/data/advanced_relation_geometry.csv",
+      "sha256": "1126f54728e0626c39a6a657fdf647f463629cb938961198b7bbc24478172a02",
+      "kind": "repository"
+    },
+    {
+      "id": "certainty",
+      "path": "interpretability/data/certainty_calibration_items.csv",
+      "sha256": "4998731870d758ae2542fc84f479535869a818e6e9749e7f0f4411a6c4457643",
+      "kind": "repository"
+    },
+    {
+      "id": "steering",
+      "path": "interpretability/data/steering_eval_prompts.csv",
+      "sha256": "f169dd19c9c830dae6211cbac4d859ad71b17d0321eec9810d8cde6b0d3fd4be",
+      "kind": "repository"
+    },
+    {
+      "id": "sae-corpus",
+      "path": "interpretability/data/sae_feature_corpus.csv",
+      "sha256": "38124db30616fe81c91c08a5b9ce25986c291b2b0ec9890ad968d8e100383599",
+      "kind": "repository"
+    },
+    {
+      "id": "persona",
+      "path": "interpretability/data/persona_register_pairs.csv",
+      "sha256": "fdafd17a9be0ee4d7a1e46fb2dbc6f2243354a40e5e9f701560cb9f04db795bc",
+      "kind": "repository"
+    },
+    {
+      "id": "sycophancy",
+      "path": "interpretability/data/sycophancy_pressure_items.csv",
+      "sha256": "a6324141f57a3539f5d7aa82456226c51271aabb569dc2acfa24a9654b2734fa",
+      "kind": "repository"
+    },
+    {
+      "id": "belief-revision",
+      "path": "interpretability/data/belief_revision_dialogues.csv",
+      "sha256": "13b0925092f8d1b4c0187e6a27af15a8c7a6ae61d128d57a3d231aff4721f8e3",
+      "kind": "repository"
+    },
+    {
+      "id": "g1",
+      "path": "interpretability/jspaces/sidelines/gemma/data/g1_prompts_v1.jsonl",
+      "sha256": "6a3eb469db0987db5849075884920129b7e10742f0efc4ce93a4c6b3197f1b7d",
+      "kind": "repository"
+    },
+    {
+      "id": "rag-lab1",
+      "kind": "rag",
+      "inputs": {
+        "aidataapps/rag/data/knowledge.json": "eaa94161214992ccbebb214b27a12c9843fcb45930b065d226151174a893eb86",
+        "aidataapps/rag/data/benchmark-cases.json": "a165484fb66508d8fd379cc436af2aaa1df7553e2c773fe2480eefd1ab8778e3"
+      },
+      "sha256": "cd413e0c26e8d671629a95b2b53747911d63cf977f7181941238f11495237a7e"
+    },
+    {
+      "id": "dolly",
+      "kind": "external",
+      "drops": {
+        "category_or_context": 4467,
+        "exact_duplicate": 154,
+        "live_or_attachment": 80,
+        "model_or_identity": 21,
+        "near_duplicate": 88,
+        "safety": 12,
+        "word_count": 331
+      },
+      "license": "CC-BY-SA-3.0",
+      "license_sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+      "raw_sha256": "2df9083338b4abd6bceb5635764dab5d833b393b55759dffb0959b6fcbf794ec",
+      "repository": "databricks/databricks-dolly-15k",
+      "revision": "bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a",
+      "selected": 550,
+      "source": "https://huggingface.co/datasets/databricks/databricks-dolly-15k/resolve/bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a/databricks-dolly-15k.jsonl"
+    },
+    {
+      "id": "oasst1",
+      "kind": "external",
+      "drops": {
+        "exact_duplicate": 15,
+        "language": 1,
+        "live_or_attachment": 115,
+        "model_or_identity": 58,
+        "near_duplicate": 8,
+        "safety": 20,
+        "word_count": 89
+      },
+      "license": "Apache-2.0",
+      "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "raw_sha256": "286a6e9a5a413b3272ae9c0b5a20d327983dea1c24342ae28cb244a6da65185c",
+      "repository": "OpenAssistant/oasst1",
+      "revision": "fdf72ae0827c1cda404aff25b6603abec9e3399b",
+      "selected": 300,
+      "source": "https://huggingface.co/datasets/OpenAssistant/oasst1/resolve/fdf72ae0827c1cda404aff25b6603abec9e3399b/2023-04-12_oasst_ready.messages.jsonl.gz"
+    }
+  ],
+  "groupCount": 1662,
+  "variantCount": 3154,
+  "bankHash": "0e1516c102742b4d6f42fd63e7d2732ceab1feda3fa2033ecb02651ec413aa39"
+}

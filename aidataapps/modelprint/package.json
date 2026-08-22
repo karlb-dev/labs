@@ -1,0 +1,47 @@
+{
+  "name": "@labs/aidataapps-modelprint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Closed-set local LLM output attribution lab with SQL Server 2025 vectors",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run build && npm test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "run:init": "node --import tsx scripts/run-init.ts",
+    "models:sync": "node --import tsx scripts/sync-model-registry.ts",
+    "model": "node --import tsx scripts/model-server.ts",
+    "doctor": "node --import tsx scripts/doctor.ts",
+    "db:setup": "node --import tsx scripts/setup-database.ts",
+    "prompts:build": "node --import tsx scripts/prompts-build.ts",
+    "campaign:freeze": "node --import tsx scripts/campaign-freeze.ts",
+    "port:gate": "node --import tsx scripts/port-gate.ts",
+    "generate": "node --import tsx scripts/generate.ts",
+    "segments:build": "node --import tsx scripts/build-features.ts --stage segments",
+    "embeddings:build": "node --import tsx scripts/build-features.ts --stage embeddings",
+    "style:build": "node --import tsx scripts/build-features.ts --stage style",
+    "features:build": "node --import tsx scripts/build-features.ts --stage all",
+    "evaluate": "./scripts/python.sh analysis/run_experiment.py",
+    "reports": "./scripts/python.sh analysis/build_reports.py",
+    "db:backup": "./scripts/export-database.sh backup",
+    "db:bacpac": "./scripts/export-database.sh bacpac",
+    "start": "node --import tsx src/server.ts",
+    "dev": "node --watch --import tsx src/server.ts"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "csv-parse": "^6.1.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.12.1",
+    "mssql": "^12.7.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

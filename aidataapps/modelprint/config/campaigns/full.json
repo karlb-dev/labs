@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "full",
+  "seed": 20260822,
+  "groupLimit": 1650,
+  "renderedPromptLimit": 2500,
+  "profiles": ["muse-glimmer-30b", "gemma-4-31b", "olmo-3.1-32b-instruct", "qwen-3.8-27b"],
+  "decodeCells": ["det", "nat-0", "nat-1", "hv"]
+}

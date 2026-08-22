@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "dev",
+  "seed": 20260822,
+  "groupLimit": 200,
+  "renderedPromptLimit": 320,
+  "profiles": ["muse-glimmer-30b", "gemma-4-31b", "olmo-3.1-32b-instruct", "qwen-3.8-27b"],
+  "decodeCells": ["det"]
+}

@@ -1,0 +1,46 @@
+{
+  "core_text_count_for_cross_dedup": 1240,
+  "human_controls": 850,
+  "manifest_sha256": "dc38a471ebe48648ae47cd46589822d51135a7031aaec092635d1abf004aa63b",
+  "runtime_downloads": false,
+  "schema_version": 1,
+  "seed": "modelprint-prompt-bank-v2-20260822",
+  "sources": {
+    "dolly": {
+      "drops": {
+        "category_or_context": 4467,
+        "exact_duplicate": 154,
+        "live_or_attachment": 80,
+        "model_or_identity": 21,
+        "near_duplicate": 88,
+        "safety": 12,
+        "word_count": 331
+      },
+      "license": "CC-BY-SA-3.0",
+      "license_sha256": "3f941b3b89cf7b8370ceb83cc76d2120d471b58735d8ca60238a751a48d7f72f",
+      "raw_sha256": "2df9083338b4abd6bceb5635764dab5d833b393b55759dffb0959b6fcbf794ec",
+      "repository": "databricks/databricks-dolly-15k",
+      "revision": "bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a",
+      "selected": 550,
+      "source": "https://huggingface.co/datasets/databricks/databricks-dolly-15k/resolve/bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a/databricks-dolly-15k.jsonl"
+    },
+    "oasst1": {
+      "drops": {
+        "exact_duplicate": 15,
+        "language": 1,
+        "live_or_attachment": 115,
+        "model_or_identity": 58,
+        "near_duplicate": 8,
+        "safety": 20,
+        "word_count": 89
+      },
+      "license": "Apache-2.0",
+      "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "raw_sha256": "286a6e9a5a413b3272ae9c0b5a20d327983dea1c24342ae28cb244a6da65185c",
+      "repository": "OpenAssistant/oasst1",
+      "revision": "fdf72ae0827c1cda404aff25b6603abec9e3399b",
+      "selected": 300,
+      "source": "https://huggingface.co/datasets/OpenAssistant/oasst1/resolve/fdf72ae0827c1cda404aff25b6603abec9e3399b/2023-04-12_oasst_ready.messages.jsonl.gz"
+    }
+  }
+}

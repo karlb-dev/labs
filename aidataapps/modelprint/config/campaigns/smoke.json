@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "smoke",
+  "seed": 20260822,
+  "groupLimit": 32,
+  "renderedPromptLimit": 32,
+  "profiles": ["qwen-smoke", "qwen-3.8-27b"],
+  "decodeCells": ["det"]
+}

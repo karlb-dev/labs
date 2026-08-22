@@ -1,0 +1,11 @@
+# ModelPrint Experiment Log
+
+Append-only operator record.
+
+- 2026-08-22T22:34:23.229Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T222334Z; mode=ann_legacy; hash=47cb8194bee29f2a95512ec2bc3846b948f80fd35935e130f687fe48c9086cc2.
+
+- 2026-08-22T22:35:07.474Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T222334Z; mode=ann_legacy; hash=25304c872071ee92bb05758e6bafabb017edaa0bc48dfe7c340af0fd0a490b84.
+
+- 2026-08-22T22:35:23.850Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T222334Z; mode=ann_v3; hash=a86d065655be785fc6bbaf4ea1055af54afa19f18a6fec0c942f820682cfb355.
+
+- 2026-08-22T22:35:46.458Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T222334Z; mode=ann_legacy; hash=473947c1d9a2fe72466ea3ba21ff3891bcfe34cbe8c5cfb56a4c02d6f0cca4dd.

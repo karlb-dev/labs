@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "frozenBeforeTargetGeneration": true,
+  "conformalAlpha": 0.10,
+  "permutations": 200,
+  "bootstrapReplicates": 1000,
+  "selectiveAccuracyGate": 0.85,
+  "selectiveCoverageGate": 0.50,
+  "eceGate": 0.10,
+  "pairHardNegativeAurocLowerBoundGate": 0.70,
+  "annRecallAt10Gate": 0.95,
+  "annDecisionAgreementGate": 0.98,
+  "annClassDecisionAgreementGate": 0.95,
+  "exactRetrievalLatencyBudgetMs": 250,
+  "insufficientReferenceTokens": 16,
+  "nearDuplicateJaccard": 0.80,
+  "neighborDistanceTolerance": 0.0001
+}

@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "sourcePath": "aidataapps/rag/config/models.json",
+  "sourceCommit": "a11a433c82b28a85f572bdc41eb6d20e9534d267",
+  "sourceSha256": "79e6bdf6287b661cdbc7d10e57c43feb6dd0c5ba3874fb161a737264301edb1c",
+  "profiles": {
+    "qwen-smoke": {
+      "description": "Plumbing and OOD development control; never a target class.",
+      "family": "qwen",
+      "modelId": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "b79a0e62a051eebdd801742a4a70bbaac6b38747",
+      "vllmSourceTag": "vllm/vllm-openai:latest",
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 8192,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 64,
+      "chatTemplateKwargs": {
+        "enable_thinking": false
+      },
+      "campaignArgs": [
+        "--language-model-only",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "597b4a00618d8dcca2acc2c314bb091b2890343e8890baf911da4b58037ac561",
+      "imageId": "sha256:e0cfcfcb9b86e2c2d0d52a93689773f20f380cb8e050a24ce550c44f6f55c5eb",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967"
+      ],
+      "hf": {
+        "resolvedRevision": "b79a0e62a051eebdd801742a4a70bbaac6b38747",
+        "gated": false,
+        "weightBytes": 16089972329
+      },
+      "chatTemplateSha256": null,
+      "tokenizerConfigSha256": "4588ca7d860a14232be29ca278ce20385d7008e998b3ad7076b877b2d93548b6",
+      "generationConfig": {
+        "bos_token_id": 151643,
+        "do_sample": true,
+        "eos_token_id": [
+          151645,
+          151643
+        ],
+        "pad_token_id": 151643,
+        "temperature": 0.7,
+        "top_k": 20,
+        "top_p": 0.8,
+        "transformers_version": "4.55.0"
+      },
+      "generationConfigSha256": "d14e8aeebbe8d385c5d3bf2406a62805d500b73fdc0af306cf142e7d7dbe946c"
+    },
+    "muse-glimmer-30b": {
+      "description": "Muse Glimmer 30B served profile; final answer and reasoning are stored separately.",
+      "family": "muse",
+      "modelId": "meta-models/Muse-Glimmer-30B",
+      "revision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
+      "vllmSourceTag": "vllm/vllm-openai:muse-glimmer",
+      "vllmImage": "vllm/vllm-openai@sha256:413c8fbecb1204a218117c77a4ea4b3a211d5686ff99c31d82ba6dd0cec8c5a6",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 16384,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 32,
+      "chatTemplateKwargs": {
+        "reasoning_strength": "low"
+      },
+      "campaignArgs": [
+        "--language-model-only",
+        "--enable-auto-tool-choice",
+        "--tool-call-parser",
+        "muse_glimmer",
+        "--reasoning-parser",
+        "muse_glimmer",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "7c2ee76dce045896081c6d2a244f3323bc175abdebf23828f5f7a99692c1eeda",
+      "imageId": "sha256:e90b8320f680a6a7b8daff87ad08cdf063a68d869880e662fd6d2cebfef689dc",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:413c8fbecb1204a218117c77a4ea4b3a211d5686ff99c31d82ba6dd0cec8c5a6"
+      ],
+      "hf": {
+        "resolvedRevision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
+        "gated": false,
+        "weightBytes": 59553435272
+      },
+      "chatTemplateSha256": null,
+      "tokenizerConfigSha256": "92ba3a2b8f7bb27e480556d46f074d6d8c14afbfb90f16818929ed51a208ef12",
+      "generationConfig": {
+        "bos_token_id": 200000,
+        "eos_token_id": [
+          200001,
+          200008
+        ],
+        "pad_token_id": 200018,
+        "max_length": 131072,
+        "do_sample": true,
+        "temperature": 1,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "generationConfigSha256": "16f368abc350898ea17be8e7703bfde9e01283b4bc5cb2b46c8dfcf93bce6288"
+    },
+    "gemma-4-31b": {
+      "description": "Gemma 4 31B user-turn-only campaign profile.",
+      "family": "gemma",
+      "modelId": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "vllmSourceTag": "vllm/vllm-openai:v0.26.0",
+      "vllmImage": "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 16384,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 64,
+      "chatTemplateKwargs": {},
+      "campaignArgs": [
+        "--language-model-only",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "2bd5c4b52b8dc6f85e96fe5118a42784df331d78a1f5b061ada7bcd19f174408",
+      "imageId": "sha256:da9136512c307bc38bee3054b983787cd1d2e5f9fd68a9659154a97ade6faea2",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:ffb2d59b1c059a5bd8d781320c9f5189de8293693b7d95da54befddaa54abf52"
+      ],
+      "hf": {
+        "resolvedRevision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+        "gated": false,
+        "weightBytes": 62546338248
+      },
+      "chatTemplateSha256": null,
+      "tokenizerConfigSha256": "ab74601a85244efb8f0be3c75ddd901f75c8533bdb03f4e1800eaf6a2e41f5ac",
+      "generationConfig": {
+        "bos_token_id": 2,
+        "do_sample": true,
+        "eos_token_id": [
+          1,
+          106,
+          50
+        ],
+        "pad_token_id": 0,
+        "temperature": 1,
+        "top_k": 64,
+        "top_p": 0.95,
+        "transformers_version": "5.5.0.dev0"
+      },
+      "generationConfigSha256": "a6e28ac140e4da7ce41d3ff6778b21212164bf183b2f1ace02f112abba7098eb"
+    },
+    "olmo-3.1-32b-instruct": {
+      "description": "OLMo 3.1 32B non-thinking instruction profile.",
+      "family": "olmo",
+      "modelId": "allenai/Olmo-3.1-32B-Instruct",
+      "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "vllmSourceTag": "vllm/vllm-openai:latest",
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 16384,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 64,
+      "chatTemplateKwargs": {},
+      "campaignArgs": [
+        "--language-model-only",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "4d556287edabf2c48c4b1b2019482a63b8381c5c0375879a2abef0ed11093119",
+      "imageId": "sha256:e0cfcfcb9b86e2c2d0d52a93689773f20f380cb8e050a24ce550c44f6f55c5eb",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967"
+      ],
+      "hf": {
+        "resolvedRevision": "ac0587e4a7744a551c059d8cd17ba220bc940dae",
+        "gated": false,
+        "weightBytes": 64467127296
+      },
+      "chatTemplateSha256": "49a944c9814e130bd3cc80a2420c55ff22e24a4e4ba97009aa60000909b5eac3",
+      "tokenizerConfigSha256": "2c16ccade7c39ce4b9bc9cb3a0e8c9043b1df0036d87f672ab9e5d8555b23acd",
+      "generationConfig": {
+        "_from_model_config": true,
+        "do_sample": true,
+        "eos_token_id": 100257,
+        "pad_token_id": 100277,
+        "transformers_version": "4.57.1",
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "max_new_tokens": 32768
+      },
+      "generationConfigSha256": "7fc1aa2f6e31a459e12289e5b77cc9c5ddff7ec9ad17d73897d432b9e6152ecf"
+    },
+    "qwen-3.8-27b": {
+      "description": "Qwen 3.8 27B non-thinking served profile.",
+      "family": "qwen",
+      "modelId": "Qwen/Qwen3.8-27B",
+      "revision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+      "vllmSourceTag": "vllm/vllm-openai:latest",
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 16384,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 64,
+      "chatTemplateKwargs": {
+        "enable_thinking": false
+      },
+      "campaignArgs": [
+        "--language-model-only",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "8a1762027b1a9f4e422c4dedcf1c4f49aa4d862de9dfca3f7d5237a858c3c4c3",
+      "imageId": "sha256:e0cfcfcb9b86e2c2d0d52a93689773f20f380cb8e050a24ce550c44f6f55c5eb",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967"
+      ],
+      "hf": {
+        "resolvedRevision": "1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0",
+        "gated": false,
+        "weightBytes": 55563006776
+      },
+      "chatTemplateSha256": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+      "tokenizerConfigSha256": "aa8b51734069bba5ee17a6bc8dc856e1f46f1ff61dac7dadb88e761376f04244",
+      "generationConfig": {
+        "bos_token_id": 248044,
+        "do_sample": true,
+        "eos_token_id": [
+          248046,
+          248044
+        ],
+        "pad_token_id": 248044,
+        "temperature": 1,
+        "top_k": 20,
+        "top_p": 0.95
+      },
+      "generationConfigSha256": "7f3839093e832e8e81d93f4f23a931b2d1924b0869961f508fa60cd3e4afaab6"
+    },
+    "qwen-3.6-27b-pinned": {
+      "description": "Historical Qwen profile used only as an OOD test source.",
+      "family": "qwen",
+      "modelId": "Qwen/Qwen3.6-27B",
+      "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "vllmSourceTag": "vllm/vllm-openai:latest",
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "imageProvenance": "registry-pull",
+      "maxModelLen": 16384,
+      "gpuMemoryUtilization": 0.78,
+      "maxNumSeqs": 64,
+      "chatTemplateKwargs": {
+        "enable_thinking": false
+      },
+      "campaignArgs": [
+        "--language-model-only",
+        "--generation-config",
+        "vllm"
+      ],
+      "profileHash": "bf0b9ec4f767f695385c3dcd7499f23e2d89a5f16e24da88e3a31f1a74e18f42",
+      "imageId": "sha256:e0cfcfcb9b86e2c2d0d52a93689773f20f380cb8e050a24ce550c44f6f55c5eb",
+      "repoDigests": [
+        "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967"
+      ],
+      "hf": {
+        "resolvedRevision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+        "gated": false,
+        "weightBytes": 55563006400
+      },
+      "chatTemplateSha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "tokenizerConfigSha256": "2e70b2c4d2a90b7c3babee129dbba1e8c4636d9f46c8cbad6218d615b5737580",
+      "generationConfig": {
+        "bos_token_id": 248044,
+        "do_sample": true,
+        "eos_token_id": [
+          248046,
+          248044
+        ],
+        "pad_token_id": 248044,
+        "temperature": 1,
+        "top_k": 20,
+        "top_p": 0.95
+      },
+      "generationConfigSha256": "7f3839093e832e8e81d93f4f23a931b2d1924b0869961f508fa60cd3e4afaab6"
+    }
+  },
+  "embeddings": {
+    "qwen3-embedding-0.6b": {
+      "modelId": "Qwen/Qwen3-Embedding-0.6B",
+      "revision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+      "dimensions": 1024,
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "profileHash": "9f807266a0e62b034112b8676ab335e06ed4edb5324be1ca24e44660b5b88d30",
+      "hf": {
+        "resolvedRevision": "97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3",
+        "gated": false,
+        "weightBytes": 1191586416
+      },
+      "tokenizerConfigSha256": "cfb3c5645daecf068d2def30b641ae054b8957fbf75d19b3ff4850b51ea1bdda"
+    },
+    "bge-large-en-v1.5": {
+      "modelId": "BAAI/bge-large-en-v1.5",
+      "revision": "d4aa6901d3a41ba39fb536a557fa166f842b0e09",
+      "dimensions": 1024,
+      "vllmImage": "vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967",
+      "profileHash": "861588d82437bac64b22cfd376ffdda916d38ead8e44c82f328c2a7d759ecf66",
+      "hf": {
+        "resolvedRevision": "d4aa6901d3a41ba39fb536a557fa166f842b0e09",
+        "gated": false,
+        "weightBytes": 2681314965
+      },
+      "tokenizerConfigSha256": "829512c060732c56c33597b19f7b1c91d21f3e4ba2f886e9ed19e3bb4613081b"
+    }
+  },
+  "snapshotHash": "f9cf016dda212e3b055911c2ecab182e1e75bfb431e32a34af8ba17c32cdc899"
+}

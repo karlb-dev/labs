@@ -1,0 +1,37 @@
+{
+  "groupCount": 1662,
+  "variantCount": 3154,
+  "primaryVariants": 2653,
+  "robustnessVariants": 501,
+  "splits": {
+    "train": 980,
+    "calibration": 164,
+    "test_id": 218,
+    "test_source_holdout": 300
+  },
+  "duplicates": 0,
+  "nearDuplicates": 271,
+  "tiers": {
+    "smoke": {
+      "groups": 32,
+      "variants": 32,
+      "hash": "35f9249bc11eabcaecd74508b887ff86858715c6362ffebdadb753ea4c920c2d"
+    },
+    "dev": {
+      "groups": 200,
+      "variants": 320,
+      "hash": "44e2e0a4af19e7df43839648e2294ab2d1f48715b3f3a0d551c667984557d660"
+    },
+    "standard": {
+      "groups": 1000,
+      "variants": 1536,
+      "hash": "0d96a540af4a8eb39e91baeea9d02a4f0a6e85567d487fc935efff3653e941b7"
+    },
+    "full": {
+      "groups": 1650,
+      "variants": 2500,
+      "hash": "4ba629e4625956f922c0b37fada6f77639fabeba867d71288cfabca35d7567cc"
+    }
+  },
+  "bankHash": "0e1516c102742b4d6f42fd63e7d2732ceab1feda3fa2033ecb02651ec413aa39"
+}

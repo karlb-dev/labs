@@ -1,0 +1,14 @@
+{
+  "dolly": {
+    "license": "CC-BY-SA-3.0",
+    "repository": "databricks/databricks-dolly-15k",
+    "revision": "bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a",
+    "source": "https://huggingface.co/datasets/databricks/databricks-dolly-15k/resolve/bdd27f4d94b9c1f951818a7da7fd7aeea5dbff1a/databricks-dolly-15k.jsonl"
+  },
+  "oasst1": {
+    "license": "Apache-2.0",
+    "repository": "OpenAssistant/oasst1",
+    "revision": "fdf72ae0827c1cda404aff25b6603abec9e3399b",
+    "source": "https://huggingface.co/datasets/OpenAssistant/oasst1/resolve/fdf72ae0827c1cda404aff25b6603abec9e3399b/2023-04-12_oasst_ready.messages.jsonl.gz"
+  }
+}

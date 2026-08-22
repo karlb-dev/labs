@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "seed": 20260822,
+  "primaryTextViews": ["raw-final-v1", "name-masked-v1"],
+  "representations": [
+    "semantic1024-qwen-whole-v1",
+    "semantic1024-bge-whole-v1",
+    "style512-v1",
+    "prompt-residual-global1024-v1",
+    "prompt-residual-train1024-v1",
+    "prompt-centered-oracle1024-v1",
+    "fingerprint64-v1",
+    "likelihood-profile8-v1"
+  ],
+  "baselines": ["class-prior", "verbosity-only", "knn-vote", "medoid", "linear-probe", "phrase-log-odds", "hybrid-text", "bayes-likelihood"],
+  "primarySuite": "test_id",
+  "sourceHoldoutSuite": "test_source_holdout",
+  "familyHoldout": "leave-one-family-out",
+  "permutationNull": { "replicates": 200, "within": "prompt_group", "percentile": 0.95 },
+  "bootstrap": { "replicates": 1000, "unit": "prompt_group", "interval": 0.95 },
+  "calibration": { "fitSplit": "calibration", "method": "temperature-scaling", "adaptiveEceBins": 10, "equalWidthFigureBins": 15 },
+  "conformal": { "alpha": 0.1, "fitSplit": "calibration" },
+  "ood": {
+    "developmentSources": ["qwen-smoke", "transformed-controls"],
+    "testSources": ["qwen-3.6-27b-pinned", "human-controls", "mixed-source"]
+  },
+  "samePromptNeighborExclusion": true,
+  "labelsHiddenDuringClustering": true,
+  "headlinePredictionsUseSqlExact": true,
+  "annRequiresPlanEvidence": true
+}

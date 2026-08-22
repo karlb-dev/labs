@@ -1,0 +1,12 @@
+hdbscan==0.8.40
+matplotlib==3.10.5
+numpy==2.3.2
+pandas==2.3.1
+pyarrow==21.0.0
+pymssql==2.3.7
+scikit-learn==1.7.1
+scipy==1.16.1
+seaborn==0.13.2
+tokenizers==0.21.4
+transformers==4.55.2
+umap-learn==0.5.9.post2

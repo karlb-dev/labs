@@ -1,0 +1,12 @@
+.env
+.venv/
+dist/
+node_modules/
+__pycache__/
+*.pyc
+runs/*
+!runs/.gitkeep
+data/work/
+.current-run
+*.bak
+*.bacpac

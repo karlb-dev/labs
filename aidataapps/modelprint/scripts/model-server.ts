@@ -1,0 +1,72 @@
+import { spawnSync } from "node:child_process";
+import { existsSync, readFileSync, renameSync, writeFileSync, chmodSync } from "node:fs";
+import dotenv from "dotenv";
+import { hashJson } from "../src/hash.js";
+import { loadModelRegistry, resolveModelProfile } from "../src/models.js";
+import { valueAfter } from "../src/run.js";
+
+dotenv.config({ quiet: true });
+const project = process.env.COMPOSE_PROJECT_NAME ?? "aidataapps-modelprint";
+const containerName = `${project}-chat`;
+const nested = process.env.CONTAINER_RUNTIME_PROFILE === "colab-rootless";
+if (nested && !process.env.DOCKER_HOST) process.env.DOCKER_HOST = "unix:///run/user/1000/docker.sock";
+
+function docker(args: string[], quiet = false): string {
+  const result = spawnSync("docker", args, { encoding: "utf8", stdio: quiet ? "pipe" : ["inherit", "pipe", "pipe"] });
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`docker ${args[0] ?? ""} failed: ${(result.stderr || result.stdout).trim()}`);
+  return result.stdout.trim();
+}
+function hasContainer(): boolean { return spawnSync("docker", ["container", "inspect", containerName], { stdio: "ignore" }).status === 0; }
+function currentProfile(): string | null { return hasContainer() ? docker(["inspect", "--format", '{{index .Config.Labels "ai.labs.model-profile"}}', containerName], true) || null : null; }
+function removeContainer() { if (!hasContainer()) return; docker(nested ? ["kill", containerName] : ["stop", "--time", "30", containerName]); docker(["rm", containerName]); }
+function persistProfile(key: string) {
+  if (!existsSync(".env")) return;
+  const current = readFileSync(".env", "utf8");
+  const next = /^MODEL_PROFILE=/m.test(current) ? current.replace(/^MODEL_PROFILE=.*$/m, `MODEL_PROFILE=${key}`) : `${current.replace(/\n?$/, "\n")}MODEL_PROFILE=${key}\n`;
+  const temporary = `.env.model.${process.pid}.tmp`; writeFileSync(temporary, next, { mode: 0o600 }); chmodSync(temporary, 0o600); renameSync(temporary, ".env");
+}
+
+const command = process.argv[2] ?? "list";
+const registry = loadModelRegistry();
+if (command === "list") {
+  console.log("PROFILE\tFAMILY\tMODEL\tREVISION\tIMAGE");
+  for (const [key, profile] of Object.entries(registry.profiles)) console.log(`${key}\t${profile.family}\t${profile.modelId}\t${profile.revision.slice(0, 12)}\t${profile.vllmImage}`);
+} else if (command === "target-list") {
+  console.log(registry.targetProfiles.join("\n"));
+} else if (command === "status") {
+  console.log(hasContainer() ? docker(["inspect", "--format", "{{.State.Status}} profile={{index .Config.Labels \"ai.labs.model-profile\"}} image={{.Image}}", containerName], true) : "stopped");
+} else if (command === "stop") {
+  removeContainer();
+} else if (command === "evict") {
+  const key = valueAfter("--profile") ?? process.env.MODEL_PROFILE ?? registry.defaultProfile;
+  const profile = resolveModelProfile(key, registry);
+  if (currentProfile() === key) removeContainer();
+  const args = ["run", "--rm"];
+  if (nested) args.push("--pid", "host", "--network", "host", "--ipc", "host", "--cgroupns", "host", "--security-opt", "seccomp=unconfined", "--security-opt", "apparmor=unconfined", "--mount", "type=bind,src=/proc,dst=/proc,readonly", "--mount", "type=bind,src=/sys/fs/cgroup,dst=/sys/fs/cgroup,readonly");
+  args.push("--volume", `${process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache"}:/root/.cache/huggingface`, "--entrypoint", "hf", profile.vllmImage, "cache", "rm", `model/${profile.modelId}`, "--yes");
+  docker(args);
+} else if (command === "start") {
+  const key = valueAfter("--profile") ?? process.env.MODEL_PROFILE ?? registry.defaultProfile;
+  const profile = resolveModelProfile(key, registry);
+  if (hasContainer()) {
+    if (!process.argv.includes("--replace")) throw new Error(`${containerName} exists; pass --replace`);
+    removeContainer();
+  }
+  const port = process.env.CHAT_PORT ?? "8000";
+  const args = ["run", "--detach", "--name", containerName,
+    "--label", `ai.labs.model-profile=${profile.key}`,
+    "--label", `ai.labs.model-profile-hash=${hashJson(profile)}`];
+  if (nested) args.push("--device", "nvidia.com/gpu=all", "--pid", "host", "--network", "host", "--ipc", "host", "--cgroupns", "host", "--security-opt", "seccomp=unconfined", "--security-opt", "apparmor=unconfined", "--mount", "type=bind,src=/proc,dst=/proc,readonly", "--mount", "type=bind,src=/sys/fs/cgroup,dst=/sys/fs/cgroup,readonly", "--env", "LD_LIBRARY_PATH=/usr/lib64-nvidia:/usr/local/cuda/lib64:/usr/local/nvidia/lib64");
+  else args.push("--gpus", "all", "--ipc", "host", "--publish", `${port}:8000`);
+  args.push("--volume", `${process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache"}:/root/.cache/huggingface`,
+    "--volume", `${process.env.SHARED_VLLM_VOLUME ?? "aidataapps-rag-vllm-cache"}:/root/.cache/vllm`,
+    "--env", "VLLM_ENABLE_CUDA_COMPATIBILITY=1");
+  if (process.env.HF_TOKEN) args.push("--env", `HF_TOKEN=${process.env.HF_TOKEN}`);
+  args.push(profile.vllmImage, "--model", profile.modelId, "--revision", profile.revision, "--served-model-name", profile.key,
+    "--max-model-len", String(profile.maxModelLen), "--gpu-memory-utilization", String(profile.gpuMemoryUtilization),
+    "--max-num-seqs", String(profile.maxNumSeqs), ...(nested ? ["--port", port] : []), ...profile.campaignArgs);
+  const containerId = docker(args, true); persistProfile(key);
+  console.log(JSON.stringify({ containerId, containerName, profile: key, profileHash: hashJson(profile), modelId: profile.modelId,
+    revision: profile.revision, image: profile.vllmImage, endpoint: `http://127.0.0.1:${port}/v1` }, null, 2));
+} else throw new Error(`Unknown model command ${command}`);
