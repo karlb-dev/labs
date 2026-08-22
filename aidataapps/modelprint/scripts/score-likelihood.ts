@@ -19,6 +19,14 @@ const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-fre
 const config = loadConfig(); const rootUrl = config.inference.chatBaseUrl.replace(/\/v1$/, "");
 const concurrency = Number.parseInt(valueAfter("--concurrency") ?? "32", 10); const checkpointSize = Number.parseInt(valueAfter("--checkpoint-size") ?? "200", 10);
 const includeHv = process.argv.includes("--include-hv"); const limit = Number.parseInt(valueAfter("--limit") ?? "2147483647", 10);
+const includeRobustness = process.argv.includes("--include-robustness");
+const robustness = includeRobustness
+  ? await readFile(`${runDirectory}/manifests/robustness-freeze.json`, "utf8").then((value) => JSON.parse(value) as { campaignId: number }).catch(() => null)
+  : null;
+if (includeRobustness && !robustness) throw new Error("--include-robustness requires manifests/robustness-freeze.json");
+const campaignIds = [Number(freeze.campaignId), ...(robustness ? [Number(robustness.campaignId)] : [])];
+if (!campaignIds.every(Number.isSafeInteger)) throw new Error("Invalid campaign ID in likelihood manifests");
+const campaignSql = campaignIds.join(",");
 const rawPath = `${runDirectory}/raw/likelihood-${scorerKey}.jsonl`;
 const pool = await new sql.ConnectionPool({ server: config.database.server, port: config.database.port, user: config.database.user,
   password: config.database.password, database: config.database.database, options: { encrypt: false, trustServerCertificate: true }, requestTimeout: 900_000 }).connect();
@@ -73,11 +81,11 @@ async function mapConcurrent<T, R>(items: T[], count: number, fn: (item: T) => P
 try {
   const models = await fetch(`${rootUrl}/v1/models`).then((response) => response.json()) as { data?: Array<{ id?: string }> };
   if (!models.data?.some((row) => row.id === scorerKey)) throw new Error(`STOP_PORT: ${scorerKey} is not resident`);
-  const query = await pool.request().input("campaign", sql.BigInt, freeze.campaignId).input("scorer", sql.VarChar(80), scorerKey)
+  const query = await pool.request().input("scorer", sql.VarChar(80), scorerKey)
     .input("includeHv", sql.Bit, includeHv).input("limit", sql.Int, limit).query<ScoreJob>(`
       SELECT TOP (@limit) g.generation_id,v.rendered_text AS prompt,g.final_text,g.model_profile_id AS source_model,JSON_VALUE(d.config_json,'$.key') AS decode_key
       FROM dbo.generations g JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id
-      WHERE g.campaign_id=@campaign AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND
+      WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND
         ((NOT EXISTS(SELECT 1 FROM dbo.likelihood_scores l WHERE l.generation_id=g.generation_id AND l.scoring_model_profile_id=@scorer AND l.prompted=1)) OR
          (NOT EXISTS(SELECT 1 FROM dbo.likelihood_scores l WHERE l.generation_id=g.generation_id AND l.scoring_model_profile_id=@scorer AND l.prompted=0)))
       ORDER BY g.generation_id;`);
@@ -101,8 +109,8 @@ try {
     await writeFile(`${runDirectory}/checkpoints/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...checkpoint, hash: hashJson(checkpoint) }, null, 2)}\n`);
     console.log(JSON.stringify(checkpoint));
   }
-  const manifest = { schemaVersion: 1, scorer: scorerKey, campaignId: freeze.campaignId, selected: query.recordset.length, done, failures,
-    includeHv, rawPath, rawSha256: query.recordset.length ? await hashFile(rawPath) : null, finishedAt: new Date().toISOString() };
+  const manifest = { schemaVersion: 1, scorer: scorerKey, campaignIds, selected: query.recordset.length, done, failures,
+    includeHv, includeRobustness, rawPath, rawSha256: query.recordset.length ? await hashFile(rawPath) : null, finishedAt: new Date().toISOString() };
   await writeFile(`${runDirectory}/manifests/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...manifest, manifestHash: hashJson(manifest) }, null, 2)}\n`);
   console.log(JSON.stringify(manifest, null, 2)); if (failures) process.exitCode = 2;
 } finally { await pool.close(); }

@@ -10,10 +10,11 @@ export interface ExactNeighbor {
 }
 
 const searchSpaces = {
-  semantic1024: { table: "dbo.search_semantic_train", dimensions: 1024 },
-  style512: { table: "dbo.search_style_train", dimensions: 512 },
-  fingerprint64: { table: "dbo.search_fingerprint_train", dimensions: 64 },
-  likelihood8: { table: "dbo.search_likelihood_train", dimensions: 8 },
+  semantic1024: { table: "dbo.search_semantic_train", dimensions: 1024, discriminator: "embedding_profile_id", defaultSubspace: "qwen3-embedding-0.6b", viewColumn: "text_view_id" },
+  residual1024: { table: "dbo.search_residual_train", dimensions: 1024, discriminator: "representation_id", defaultSubspace: "residual-ridge-v1", viewColumn: null },
+  style512: { table: "dbo.search_style_train", dimensions: 512, discriminator: null, defaultSubspace: null, viewColumn: "text_view_id" },
+  fingerprint64: { table: "dbo.search_fingerprint_train", dimensions: 64, discriminator: null, defaultSubspace: null, viewColumn: null },
+  likelihood8: { table: "dbo.search_likelihood_train", dimensions: 8, discriminator: null, defaultSubspace: null, viewColumn: null },
 } as const;
 
 export class SqlServerRepository {
@@ -36,7 +37,7 @@ export class SqlServerRepository {
   async exactNeighbors(
     space: keyof typeof searchSpaces,
     embedding: number[],
-    options: { k: number; candidateK?: number; excludePromptGroupId?: string } = { k: 10 },
+    options: { k: number; candidateK?: number; excludePromptGroupId?: string; subspace?: string; textView?: string } = { k: 10 },
   ): Promise<ExactNeighbor[]> {
     const definition = searchSpaces[space];
     if (embedding.length !== definition.dimensions || !embedding.every(Number.isFinite)) {
@@ -49,6 +50,8 @@ export class SqlServerRepository {
       .input("k", sql.Int, k)
       .input("candidateK", sql.Int, candidateK)
       .input("excludePromptGroupId", sql.VarChar(120), options.excludePromptGroupId ?? null)
+      .input("subspace", sql.VarChar(80), options.subspace ?? definition.defaultSubspace)
+      .input("textView", sql.VarChar(80), options.textView ?? "raw-final-v1")
       .query<{
         vectorId: number; modelProfileId: string; promptGroupId: string; textArtifactId: number; distance: number;
       }>(`
@@ -61,7 +64,9 @@ export class SqlServerRepository {
             text_artifact_id AS textArtifactId,
             VECTOR_DISTANCE('cosine', embedding, CAST(@embedding AS VECTOR(${definition.dimensions}))) AS distance
           FROM ${definition.table}
-          WHERE @excludePromptGroupId IS NULL OR prompt_group_id <> @excludePromptGroupId
+          WHERE (@excludePromptGroupId IS NULL OR prompt_group_id <> @excludePromptGroupId)
+            AND ${definition.discriminator ? `${definition.discriminator}=@subspace` : "1=1"}
+            AND ${definition.viewColumn ? `${definition.viewColumn}=@textView` : "1=1"}
           ORDER BY distance, vector_id
         ),
         deduped AS
@@ -82,21 +87,21 @@ export class SqlServerRepository {
   async exactVote(
     space: keyof typeof searchSpaces,
     embedding: number[],
-    k: number,
-    tau: number,
-    excludePromptGroupId?: string,
+    options: { k: number; tau: number; excludePromptGroupId?: string; subspace?: string; textView?: string },
   ): Promise<Array<{ modelProfileId: string; voteShare: number; neighborCount: number; independentGroups: number; nearestDistance: number }>> {
     const definition = searchSpaces[space];
     if (embedding.length !== definition.dimensions || !embedding.every(Number.isFinite)) {
       throw new Error(`${space} requires a finite ${definition.dimensions}-dimensional vector`);
     }
-    const safeK = Math.max(1, Math.min(k, 100));
+    const safeK = Math.max(1, Math.min(options.k, 100));
     const result = await this.pool.request()
       .input("embedding", sql.NVarChar(sql.MAX), JSON.stringify(embedding))
       .input("k", sql.Int, safeK)
       .input("candidateK", sql.Int, Math.min(safeK * 10, 2000))
-      .input("tau", sql.Float, tau)
-      .input("excludePromptGroupId", sql.VarChar(120), excludePromptGroupId ?? null)
+      .input("tau", sql.Float, options.tau)
+      .input("excludePromptGroupId", sql.VarChar(120), options.excludePromptGroupId ?? null)
+      .input("subspace", sql.VarChar(80), options.subspace ?? definition.defaultSubspace)
+      .input("textView", sql.VarChar(80), options.textView ?? "raw-final-v1")
       .query<{
       modelProfileId: string; voteShare: number; neighborCount: number; independentGroups: number; nearestDistance: number;
     }>(`
@@ -109,7 +114,9 @@ export class SqlServerRepository {
           text_artifact_id,
           VECTOR_DISTANCE('cosine', embedding, CAST(@embedding AS VECTOR(${definition.dimensions}))) AS distance
         FROM ${definition.table}
-        WHERE @excludePromptGroupId IS NULL OR prompt_group_id <> @excludePromptGroupId
+        WHERE (@excludePromptGroupId IS NULL OR prompt_group_id <> @excludePromptGroupId)
+          AND ${definition.discriminator ? `${definition.discriminator}=@subspace` : "1=1"}
+          AND ${definition.viewColumn ? `${definition.viewColumn}=@textView` : "1=1"}
         ORDER BY distance, vector_id
       ),
       ranked AS

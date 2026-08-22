@@ -10,6 +10,10 @@ const stage = valueAfter("--stage") ?? "all";
 if (!new Set(["segments", "style", "embeddings", "all"]).has(stage)) throw new Error(`Unknown stage ${stage}`);
 const runDirectory = resolveRunDirectory();
 const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`, "utf8")) as { campaignId: number; campaignHash: string };
+const robustness = await readFile(`${runDirectory}/manifests/robustness-freeze.json`, "utf8").then((value) => JSON.parse(value) as { campaignId: number }).catch(() => null);
+const campaignIds = [Number(freeze.campaignId), ...(robustness ? [Number(robustness.campaignId)] : [])];
+if (!campaignIds.every(Number.isSafeInteger)) throw new Error("Invalid campaign ID in run manifests");
+const campaignSql = campaignIds.join(",");
 const config = loadConfig(); const runId = runDirectory.split("/").at(-1)!;
 const pool = await new sql.ConnectionPool({ server: config.database.server, port: config.database.port, user: config.database.user,
   password: config.database.password, database: config.database.database, options: { encrypt: false, trustServerCertificate: true }, requestTimeout: 900_000 }).connect();
@@ -39,10 +43,10 @@ function scalarStyleFeatures(text: string): Record<string, number> {
 }
 
 async function style() {
-  const result = await pool.request().input("campaign", sql.BigInt, freeze.campaignId).query<{ id: number; text: string }>(`
+  const result = await pool.request().query<{ id: number; text: string }>(`
     SELECT DISTINCT t.text_artifact_id AS id,t.artifact_text AS text FROM dbo.text_artifacts t
     JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id JOIN dbo.generations g ON g.generation_id=m.generation_id
-    WHERE g.campaign_id=@campaign AND NOT EXISTS (SELECT 1 FROM dbo.style_vectors s WHERE s.text_artifact_id=t.text_artifact_id AND s.representation_id='style512-v1');`);
+    WHERE g.campaign_id IN (${campaignSql}) AND NOT EXISTS (SELECT 1 FROM dbo.style_vectors s WHERE s.text_artifact_id=t.text_artifact_id AND s.representation_id='style512-v1');`);
   let done = 0;
   for (const rows of batch(result.recordset, 1000)) {
     const vectors = rows.map((row) => ({ id: row.id, vector: JSON.stringify(styleVector(row.text)), scalars: JSON.stringify(scalarStyleFeatures(row.text)) }));
@@ -67,9 +71,9 @@ async function embeddings() {
   let totalDone = 0;
   for (const selected of profiles) {
     const profile = registry.embeddings[selected.key]!; await gateway.ready(selected.baseUrl);
-    const prompts = await pool.request().input("campaign", sql.BigInt, freeze.campaignId).input("profile", sql.VarChar(80), selected.key).query<{ id: string; text: string }>(`
+    const prompts = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: string; text: string }>(`
       SELECT DISTINCT v.prompt_variant_id AS id,v.rendered_text AS text FROM dbo.generation_jobs j JOIN dbo.prompt_variants v ON v.prompt_variant_id=j.prompt_variant_id
-      WHERE j.campaign_id=@campaign AND NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=v.prompt_variant_id AND p.embedding_profile_id=@profile);`);
+      WHERE j.campaign_id IN (${campaignSql}) AND NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=v.prompt_variant_id AND p.embedding_profile_id=@profile);`);
     for (const rows of batch(prompts.recordset, 64)) {
       const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
       await insertJson(rows.map((row, index) => ({ id: row.id, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
@@ -78,9 +82,9 @@ async function embeddings() {
         WHERE NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=s.id AND p.embedding_profile_id='${selected.key}');`);
       totalDone += rows.length;
     }
-    const artifacts = await pool.request().input("campaign", sql.BigInt, freeze.campaignId).input("profile", sql.VarChar(80), selected.key).query<{ id: number; view: string; text: string }>(`
+    const artifacts = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: number; view: string; text: string }>(`
       SELECT DISTINCT t.text_artifact_id AS id,t.text_view_id AS view,t.artifact_text AS text FROM dbo.text_artifacts t JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id
-      JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id=@campaign AND NOT EXISTS
+      JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id IN (${campaignSql}) AND NOT EXISTS
       (SELECT 1 FROM dbo.semantic_vectors v WHERE v.text_artifact_id=t.text_artifact_id AND v.embedding_profile_id=@profile AND v.representation_id=CONCAT('whole-',t.text_view_id));`);
     let embedded = 0;
     for (const rows of batch(artifacts.recordset, 64)) {
@@ -98,7 +102,7 @@ async function embeddings() {
 }
 
 try {
-  const summary: Record<string, unknown> = { schemaVersion: 1, campaignId: freeze.campaignId, campaignHash: freeze.campaignHash, runId, startedAt: new Date().toISOString() };
+  const summary: Record<string, unknown> = { schemaVersion: 1, campaignIds, campaignHash: freeze.campaignHash, runId, startedAt: new Date().toISOString() };
   if (stage === "segments" || stage === "all") {
     const { execFileSync } = await import("node:child_process");
     summary.segments = JSON.parse(execFileSync("./scripts/python.sh", ["analysis/prepare_text.py", "--run", runDirectory], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }));

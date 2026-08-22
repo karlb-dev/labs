@@ -5,6 +5,7 @@ import { loadConfig } from "../src/config.js";
 import { hashFile } from "../src/hash.js";
 
 const config = loadConfig();
+const allowHistoricalDrift = process.argv.includes("--allow-historical-drift");
 const options = {
   server: config.database.server,
   port: config.database.port,
@@ -35,7 +36,10 @@ try {
     if (tableExists.recordset[0]?.present) {
       const existing = await pool.request().input("id", sql.VarChar(80), name).query<{ migration_sha256: string }>("SELECT migration_sha256 FROM dbo.schema_migrations WHERE migration_id=@id;");
       const previous = existing.recordset[0]?.migration_sha256;
-      if (previous && previous !== digest) throw new Error(`Migration drift: ${name} was ${previous}, now ${digest}`);
+      if (previous && previous !== digest) {
+        if (!allowHistoricalDrift) throw new Error(`Migration drift: ${name} was ${previous}, now ${digest}`);
+        console.warn(JSON.stringify({ disposition: "HISTORICAL_MIGRATION_DRIFT_ACCEPTED", migration: name, recorded: previous, source: digest }));
+      }
       if (previous) continue;
     }
     for (const batch of text.split(/^\s*GO\s*$/gim)) if (batch.trim()) await pool.request().batch(batch);

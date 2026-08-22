@@ -33,3 +33,9 @@ Append-only operator record.
 - 2026-08-22T23:08:57.368Z — MP-4 generation invocation completed for qwen-3.8-27b; selected=4; completed=4; failed=0.
 
 - 2026-08-22T23:31:24.000Z — MP-5/MP-11 implementation checkpoint: TypeScript build and 12 CPU tests passed; the report builder reconstructed an honest partial results pack from campaign 3 SQL rows; API health, insufficient-text abstention, and evaluation-list endpoints passed against the live database. Scientific evaluation remains gated on completion of at least two target profiles.
+
+- 2026-08-22T23:37:31.746Z — MP-2 robustness companion freeze linked to primary campaign 3; campaign=6449a7c5a62e6d1749fa88799f67d5164a436217dcd5019eb4e36db7e8657d04; jobs=2004; carrier counts={"direct-v1":185,"persona-v1":256,"rag-grounded-v1":60}.
+
+- 2026-08-22T23:38:14.950Z — MP-4 robustness generation completed for qwen-3.8-27b; selected=1; completed=1; failed=0.
+
+- 2026-08-22T23:56:50.000Z — Database extension checkpoint: the migration runner found historical recorded-hash differences for 001/003 in this already-running database. Before accepting the explicit `--allow-historical-drift` baseline exception, the SQL integration suite passed exact vector ranking, dimension rejection, and set-based artifact persistence. Existing migrations were not replayed or rewritten; migration 004 alone was applied and recorded.

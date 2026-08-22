@@ -12,6 +12,9 @@ args = parser.parse_args()
 run_dir = Path(args.run).resolve()
 freeze = json.loads((run_dir / "manifests/campaign-freeze.json").read_text())
 campaign_id = int(freeze["campaignId"])
+robustness_path = run_dir / "manifests/robustness-freeze.json"
+campaign_ids = [campaign_id] + ([int(json.loads(robustness_path.read_text())["campaignId"])] if robustness_path.exists() else [])
+campaign_placeholders = ",".join(["%s"] * len(campaign_ids))
 lab_dir = Path(__file__).resolve().parents[1]
 registry = json.loads((lab_dir / "data/manifests/model-registry-snapshot.json").read_text())
 ref = registry["embeddings"]["qwen3-embedding-0.6b"]
@@ -21,10 +24,10 @@ conn = pymssql.connect(server=os.getenv("SQLSERVER_HOST", "127.0.0.1"), port=int
                        user="sa", password=os.environ["MSSQL_SA_PASSWORD"], database=os.getenv("MSSQL_DATABASE", "ModelPrint"),
                        autocommit=False, login_timeout=60, timeout=3600)
 cursor = conn.cursor(as_dict=True)
-cursor.execute("""SELECT g.generation_id,g.final_text,g.reasoning_text,t.text_artifact_id,t.artifact_text
+cursor.execute(f"""SELECT g.generation_id,g.final_text,g.reasoning_text,t.text_artifact_id,t.artifact_text
 FROM dbo.generations g JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
 JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id
-WHERE g.campaign_id=%s AND t.text_view_id='raw-final-v1' ORDER BY g.generation_id""", (campaign_id,))
+WHERE g.campaign_id IN ({campaign_placeholders}) AND t.text_view_id='raw-final-v1' ORDER BY g.generation_id""", tuple(campaign_ids))
 rows = list(cursor)
 
 def band(count):
@@ -77,20 +80,20 @@ INSERT dbo.output_segments(text_artifact_id,segmenter_id,ordinal,char_start,char
 VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""", [(r[0],r[1],r[2],*r) for r in chunk])
 conn.commit()
 
-cursor.execute(""";WITH artifacts AS
+cursor.execute(f""";WITH artifacts AS
 (SELECT DISTINCT t.text_artifact_id,t.artifact_text FROM dbo.text_artifacts t JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id
- JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id=%s AND t.text_view_id='raw-final-v1')
+ JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id IN ({campaign_placeholders}) AND t.text_view_id='raw-final-v1')
 INSERT dbo.output_segments(text_artifact_id,segmenter_id,ordinal,char_start,char_end,token_start,token_end,segment_text,segment_sha256,is_primary_eligible)
 SELECT a.text_artifact_id,'sql-chunks-v1',CONVERT(int,c.chunk_order),CONVERT(int,c.chunk_offset),CONVERT(int,c.chunk_offset+c.chunk_length),NULL,NULL,c.chunk,
  LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',CONVERT(varbinary(max),c.chunk)),2)),CASE WHEN c.chunk_length>=64 THEN 1 ELSE 0 END
 FROM artifacts a CROSS APPLY AI_GENERATE_CHUNKS(SOURCE=a.artifact_text,CHUNK_TYPE=FIXED,CHUNK_SIZE=600,OVERLAP=100,ENABLE_CHUNK_SET_ID=1) c
-WHERE NOT EXISTS(SELECT 1 FROM dbo.output_segments s WHERE s.text_artifact_id=a.text_artifact_id AND s.segmenter_id='sql-chunks-v1' AND s.ordinal=CONVERT(int,c.chunk_order));""", (campaign_id,))
+WHERE NOT EXISTS(SELECT 1 FROM dbo.output_segments s WHERE s.text_artifact_id=a.text_artifact_id AND s.segmenter_id='sql-chunks-v1' AND s.ordinal=CONVERT(int,c.chunk_order));""", tuple(campaign_ids))
 conn.commit()
 
 df = pd.DataFrame(updates, columns=["reference_token_count","reasoning_token_count","length_band","generation_id"])
 table_path = run_dir / "tables/reference_token_counts.parquet"
 df.to_parquet(table_path, index=False)
-manifest = {"schemaVersion":1,"campaignId":campaign_id,"generations":len(rows),"uniqueArtifacts":len(unique_artifacts),"appSegments":len(segments),
+manifest = {"schemaVersion":1,"campaignIds":campaign_ids,"generations":len(rows),"uniqueArtifacts":len(unique_artifacts),"appSegments":len(segments),
             "lengthBands":df["length_band"].value_counts().to_dict(),"referenceTokenizer":{"model":ref["modelId"],"revision":ref["revision"]},
             "table":str(table_path),"sqlChunks":{"chunkSize":600,"overlap":100}}
 print(json.dumps(manifest))

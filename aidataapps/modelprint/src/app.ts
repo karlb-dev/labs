@@ -29,8 +29,10 @@ export async function buildApp(config: AppConfig) {
     if (words < 16) return { decision: "insufficient_text", claimScope: "closed-set-served-profile", actualSearchMode: "exact", reason: "fewer-than-16-whitespace-tokens", evidence: [] };
     const semantic = (await gateway.embed(config.inference.qwenEmbeddingBaseUrl, "Qwen/Qwen3-Embedding-0.6B", 1024, [text]))[0]!;
     const [semanticVote, styleVote, semanticNeighbors, styleNeighbors] = await Promise.all([
-      repository.exactVote("semantic1024", semantic, input.k, 0.10), repository.exactVote("style512", styleVector(text), input.k, 0.10),
-      repository.exactNeighbors("semantic1024", semantic, { k: Math.min(input.k, 10) }), repository.exactNeighbors("style512", styleVector(text), { k: Math.min(input.k, 10) }),
+      repository.exactVote("semantic1024", semantic, { k: input.k, tau: 0.10, textView: input.textView }),
+      repository.exactVote("style512", styleVector(text), { k: input.k, tau: 0.10, textView: input.textView }),
+      repository.exactNeighbors("semantic1024", semantic, { k: Math.min(input.k, 10), textView: input.textView }),
+      repository.exactNeighbors("style512", styleVector(text), { k: Math.min(input.k, 10), textView: input.textView }),
     ]);
     const hasCalibration = await repository.latestCalibration();
     return { decision: hasCalibration ? "ambiguous" : "ambiguous", calibrated: false,
