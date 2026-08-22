@@ -15,3 +15,7 @@ Append-only operator record.
 - 2026-08-22T22:53:16.729Z — MP-3 port gate PASS for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.
 
 - 2026-08-22T22:59:19.281Z — MP-3 port gate STOP_PORT for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.
+
+- 2026-08-22T23:00:32.124Z — MP-2 campaign freeze completed for modelprint-full-20260822T222334Z; campaign=4a2d5c24d84c6de519943cf84b505fa8315351c46be7ac02f8df419f44744e98; freeze=77ef3b03aaa0d34a98ee9807906cfc22e97a9c4b96e5036af2d5b29690d4bb55; jobs=40000.
+
+- 2026-08-22T23:00:40.939Z — MP-3 port gate PASS for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.
