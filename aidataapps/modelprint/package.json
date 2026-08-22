@@ -19,6 +19,7 @@
     "campaign:freeze": "node --import tsx scripts/campaign-freeze.ts",
     "port:gate": "node --import tsx scripts/port-gate.ts",
     "generate": "node --import tsx scripts/generate.ts",
+    "likelihood:score": "node --import tsx scripts/score-likelihood.ts",
     "segments:build": "node --import tsx scripts/build-features.ts --stage segments",
     "embeddings:build": "node --import tsx scripts/build-features.ts --stage embeddings",
     "style:build": "node --import tsx scripts/build-features.ts --stage style",

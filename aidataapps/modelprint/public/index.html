@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ModelPrint</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:1050px;margin:0 auto;padding:2rem;background:#0c111b;color:#edf2f7}h1{font-size:2.4rem;margin-bottom:.2rem}.sub{color:#9fb0c7}.grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.card{background:#151d2b;border:1px solid #2b3a50;border-radius:12px;padding:1.2rem;margin:1rem 0}textarea{box-sizing:border-box;width:100%;min-height:190px;background:#0b1220;color:#eef;border:1px solid #40516a;border-radius:8px;padding:.8rem}button{background:#69d3bd;color:#07110f;border:0;border-radius:8px;padding:.7rem 1rem;font-weight:700;cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#080d16;padding:1rem;border-radius:8px}.badge{display:inline-block;padding:.2rem .5rem;border-radius:99px;background:#26374e;color:#b9d7ff}@media(max-width:750px){.grid{grid-template-columns:1fr}}</style></head>
+<body><h1>ModelPrint</h1><p class="sub">Closed-set served-profile attribution with inspectable SQL evidence and honest abstention.</p>
+<div class="card"><span class="badge">Exact search</span> <span class="badge">Name-masked view</span><p>Paste model output. Until calibration passes, this interface exposes retrieval evidence but returns an ambiguous decision.</p>
+<textarea id="text" placeholder="Paste a generated answer…"></textarea><p><button id="identify">Inspect output</button></p><pre id="result">Ready.</pre></div>
+<div class="grid"><div class="card"><h2>Claim ceiling</h2><p>This app compares text with four exact, frozen local serving profiles. It does not prove authorship or identify arbitrary models.</p></div>
+<div class="card"><h2>Evidence</h2><p>Semantic and deterministic-style neighbors are kept separate. Vote shares are not presented as probabilities.</p></div></div>
+<script src="/app.js"></script></body></html>

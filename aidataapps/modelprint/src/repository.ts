@@ -145,5 +145,21 @@ export class SqlServerRepository {
   }
 
   async ready(): Promise<void> { await this.pool.request().query("SELECT 1 AS ready;"); }
+  async latestCalibration(): Promise<Record<string, unknown> | null> {
+    const result = await this.pool.request().query<Record<string, unknown>>("SELECT TOP (1) calibration_model_id,method,calibration_manifest_hash,created_at FROM dbo.calibration_models ORDER BY calibration_model_id DESC;");
+    return result.recordset[0] ?? null;
+  }
+  async evaluations(): Promise<Record<string, unknown>[]> {
+    const result = await this.pool.request().query<Record<string, unknown>>("SELECT prediction_run_id,run_id,suite,representation_id,method,created_at FROM dbo.prediction_runs ORDER BY prediction_run_id DESC;");
+    return result.recordset;
+  }
+  async evaluation(id: number): Promise<Record<string, unknown> | null> {
+    const result = await this.pool.request().input("id", sql.BigInt, id).query<Record<string, unknown>>(`
+      SELECT r.prediction_run_id,r.run_id,r.suite,r.representation_id,r.method,r.config_json,r.created_at,
+        COUNT(p.generation_id) AS prediction_count,SUM(CASE WHEN p.decision='attributed' THEN 1 ELSE 0 END) AS attributed_count
+      FROM dbo.prediction_runs r LEFT JOIN dbo.predictions p ON p.prediction_run_id=r.prediction_run_id
+      WHERE r.prediction_run_id=@id GROUP BY r.prediction_run_id,r.run_id,r.suite,r.representation_id,r.method,r.config_json,r.created_at;`);
+    return result.recordset[0] ?? null;
+  }
   async close(): Promise<void> { await this.pool.close(); }
 }

@@ -23,3 +23,13 @@ Append-only operator record.
 - 2026-08-22T23:05:22.567Z — MP-3 port gate PASS for qwen-3.8-27b; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-3.8-27b.json.
 
 - 2026-08-22T23:05:58.000Z — Four-row Qwen 3.8 persistence pilot for campaign 2 stopped after generation-row commit when reserved T-SQL alias `view` failed the text-artifact batch. Campaign 2 is excluded; no pilot row will enter analysis. Alias corrected and the fixed transaction passed exact-vector, dimension-rejection, and set-based artifact integration checks before replacement freeze.
+
+- 2026-08-22T23:07:54.545Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T230728Z; mode=ann_legacy; hash=fe4af6bd11469784e2d93db9ca0bbbcb4aa30dd30023786f69ec1a8632004d06.
+
+- 2026-08-22T23:08:01.810Z — MP-2 campaign freeze completed for modelprint-full-20260822T230728Z; campaign=52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9; freeze=5953272ae8b4edc3f091980d9e507aa8d911c56f8ca88eb91fe3d4a492366799; jobs=40000.
+
+- 2026-08-22T23:08:40.884Z — MP-3 port gate PASS for qwen-3.8-27b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-qwen-3.8-27b.json.
+
+- 2026-08-22T23:08:57.368Z — MP-4 generation invocation completed for qwen-3.8-27b; selected=4; completed=4; failed=0.
+
+- 2026-08-22T23:31:24.000Z — MP-5/MP-11 implementation checkpoint: TypeScript build and 12 CPU tests passed; the report builder reconstructed an honest partial results pack from campaign 3 SQL rows; API health, insufficient-text abstention, and evaluation-list endpoints passed against the live database. Scientific evaluation remains gated on completion of at least two target profiles.
