@@ -1,0 +1,26 @@
+[
+  {
+    "id": "answer-rain-cutout",
+    "query": "What should a technician inspect when a Comet S2 loses motor assistance after heavy rain?",
+    "expectedKind": "answer",
+    "requiredCitation": "comet-motor-rain-cutout"
+  },
+  {
+    "id": "answer-battery-storage",
+    "query": "How should a battery be prepared for three weeks of storage?",
+    "expectedKind": "answer",
+    "requiredCitation": "battery-storage-charge"
+  },
+  {
+    "id": "answer-telemetry-gap",
+    "query": "Does a twenty minute telemetry gap prove that a bike was stolen?",
+    "expectedKind": "answer",
+    "requiredCitation": "telemetry-gap-triage"
+  },
+  {
+    "id": "action-rain-inspection",
+    "query": "Create a high-priority work order for NB-104 to inspect its intermittent motor assistance loss after rain. Preserve the rider's symptom rather than claiming a confirmed diagnosis.",
+    "expectedKind": "action",
+    "requiredCitation": "triage-priority-levels"
+  }
+]

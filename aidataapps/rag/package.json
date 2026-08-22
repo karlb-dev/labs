@@ -1,0 +1,35 @@
+{
+  "name": "@labs/aidataapps-rag",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript RAG and action lab using SQL Server 2025 and local vLLM inference",
+  "type": "module",
+  "scripts": {
+    "benchmark": "node --import tsx scripts/benchmark.ts",
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run build && npm test",
+    "db:setup": "node --import tsx scripts/setup-database.ts",
+    "dev": "node --watch --import tsx src/server.ts",
+    "model": "node --import tsx scripts/model-server.ts",
+    "smoke": "node --import tsx scripts/smoke.ts",
+    "start": "node --import tsx src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "fastify": "^5.12.1",
+    "mssql": "^12.7.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,57 @@
+name: ${COMPOSE_PROJECT_NAME:-aidataapps-rag}
+
+services:
+  sqlserver:
+    image: ${SQLSERVER_IMAGE:-mcr.microsoft.com/mssql/server:2025-latest}
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}
+      MSSQL_MEMORY_LIMIT_MB: "4096"
+    ports:
+      - "${SQLSERVER_PORT:-1433}:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+    restart: unless-stopped
+
+  vllm-embedding:
+    image: ${VLLM_IMAGE:-vllm/vllm-openai:latest}
+    command:
+      - --model
+      - ${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - --served-model-name
+      - ${EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
+      - --runner
+      - pooling
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.10"
+      - --max-num-seqs
+      - "32"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    ports:
+      - "${EMBEDDING_PORT:-8001}:8000"
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
+      - vllm-cache:/root/.cache/vllm
+    gpus: all
+    ipc: host
+    restart: unless-stopped
+
+volumes:
+  huggingface-cache:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-rag}-huggingface-cache
+  sqlserver-data:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-rag}-sqlserver-data
+  vllm-cache:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-rag}-vllm-cache

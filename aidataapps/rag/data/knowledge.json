@@ -1,0 +1,126 @@
+[
+  {
+    "documentId": "comet-s2-service-manual",
+    "title": "Comet S2 Service Manual",
+    "sourceUri": "northstar://manuals/comet-s2/service",
+    "revision": "4.2",
+    "effectiveAt": "2026-03-01",
+    "chunks": [
+      {
+        "chunkId": "comet-motor-rain-cutout",
+        "heading": "Motor assistance cuts out after rain",
+        "content": "On Comet S2 bikes, intermittent motor assistance after heavy rain is most often caused by moisture at the lower frame harness connector. Remove the battery, wait two minutes, inspect connector J4 for water or green residue, dry it with low-pressure air, and apply approved dielectric grease before reseating it. Do not bypass the connector or energize a wet harness. If corrosion is visible or the symptom returns after drying, take the bike out of service and replace the harness."
+      },
+      {
+        "chunkId": "comet-motor-diagnostic-codes",
+        "heading": "Motor controller diagnostic codes",
+        "content": "Code E17 means the controller lost communication with the torque sensor for more than 500 milliseconds. Code E21 means phase-current protection opened. Record the code before cycling power. For E17, inspect the J4 harness and torque-sensor lead; for E21, do not repeat a loaded ride test until a technician has checked the motor cable and wheel rotation."
+      },
+      {
+        "chunkId": "comet-brake-adjustment",
+        "heading": "Brake inspection limits",
+        "content": "Replace Comet S2 disc pads when friction material is 0.8 mm or less. After pad or caliper work, torque both caliper bolts to 8 N m, bed the pads with ten controlled stops, and confirm that neither rotor drags. A brake lever that reaches the grip is an immediate out-of-service condition."
+      }
+    ]
+  },
+  {
+    "documentId": "cargo-c1-service-manual",
+    "title": "Cargo C1 Service Manual",
+    "sourceUri": "northstar://manuals/cargo-c1/service",
+    "revision": "3.7",
+    "effectiveAt": "2026-02-10",
+    "chunks": [
+      {
+        "chunkId": "cargo-battery-latch",
+        "heading": "Battery latch inspection",
+        "content": "A Cargo C1 battery that moves more than 2 mm vertically with the latch closed must not be used. Inspect the latch hook and receiver for cracks, replace damaged parts, and torque receiver fasteners to 6 N m. Tape, straps, or shims are not approved substitutes for the latch."
+      },
+      {
+        "chunkId": "cargo-load-limit",
+        "heading": "Cargo load limits",
+        "content": "The Cargo C1 rear platform carries at most 80 kg and the complete bicycle system carries at most 180 kg including rider. Loads must remain inside the rail outline and be secured at all four marked points. Handling complaints should be reproduced only with a safe test load below 25 kg."
+      }
+    ]
+  },
+  {
+    "documentId": "battery-safety-standard",
+    "title": "Fleet Battery Safety Standard",
+    "sourceUri": "northstar://policy/battery-safety",
+    "revision": "2026.5",
+    "effectiveAt": "2026-05-12",
+    "chunks": [
+      {
+        "chunkId": "battery-quarantine",
+        "heading": "Heat, swelling, impact, or water ingress",
+        "content": "Quarantine a battery immediately if it is swollen, cracked, unusually hot, hissing, leaking, or was submerged. Move people away, do not charge or open the pack, and follow the depot emergency plan. Mark the related bike out of service and create an urgent work order. Surface rain without enclosure damage is not submersion, but water inside the battery enclosure still requires quarantine."
+      },
+      {
+        "chunkId": "battery-storage-charge",
+        "heading": "Storage and charging",
+        "content": "For storage longer than fourteen days, leave packs at 40 to 60 percent charge in a dry area between 10 and 25 C. Charge only in the monitored battery room with an approved Northstar charger. Packs below 0 C must warm to room temperature before charging."
+      }
+    ]
+  },
+  {
+    "documentId": "fleet-triage-policy",
+    "title": "Fleet Service Triage Policy",
+    "sourceUri": "northstar://policy/service-triage",
+    "revision": "2026.8",
+    "effectiveAt": "2026-08-01",
+    "chunks": [
+      {
+        "chunkId": "triage-priority-levels",
+        "heading": "Work-order priority levels",
+        "content": "Use urgent priority for credible battery thermal risk, failed primary brakes, exposed conductors, or a wheel that may detach. Use high priority for intermittent drive loss, repeated controller faults, or safety equipment that is degraded but not in immediate failure. Use normal priority for routine repairs that can wait until the next depot cycle, and low priority for cosmetic work."
+      },
+      {
+        "chunkId": "triage-action-authorization",
+        "heading": "Creating work orders from assistant requests",
+        "content": "The service assistant may draft a work order from retrieved evidence. It may create the record only when the caller explicitly requests the action and the API request enables actions. The record must identify an existing asset tag, state the observed symptom without inventing a diagnosis, and include a priority supported by the triage policy."
+      },
+      {
+        "chunkId": "triage-out-of-service",
+        "heading": "Out-of-service decisions",
+        "content": "A bike is out of service when a manual or safety standard says it must not be ridden, when a primary safety system fails inspection, or when a technician cannot rule out a hazardous fault. A high-priority work order alone does not change asset status; that operational state change requires a technician or a separate authorized workflow."
+      }
+    ]
+  },
+  {
+    "documentId": "telemetry-operations-guide",
+    "title": "Fleet Telemetry Operations Guide",
+    "sourceUri": "northstar://operations/telemetry",
+    "revision": "2.4",
+    "effectiveAt": "2026-06-20",
+    "chunks": [
+      {
+        "chunkId": "telemetry-gap-triage",
+        "heading": "Missing telemetry",
+        "content": "A gap shorter than fifteen minutes can result from normal cellular handoff. For a gap longer than fifteen minutes, compare the bike's last location with known underground parking zones, then check gateway heartbeat and battery voltage. Do not infer theft from a telemetry gap alone. Open a normal-priority communications work order only after the bike is back in depot or repeated gaps occur on three rides."
+      },
+      {
+        "chunkId": "telemetry-clock-drift",
+        "heading": "Sensor clock drift",
+        "content": "Telemetry timestamps drifting by more than ninety seconds per day indicate that the gateway clock has not synchronized. Confirm network time access, reboot the gateway once, and replace it if drift returns within 24 hours. Preserve the original event timestamps in any exported diagnostic bundle."
+      }
+    ]
+  },
+  {
+    "documentId": "rider-report-handbook",
+    "title": "Rider Report Interpretation Handbook",
+    "sourceUri": "northstar://operations/rider-reports",
+    "revision": "1.9",
+    "effectiveAt": "2026-04-15",
+    "chunks": [
+      {
+        "chunkId": "report-fact-vs-diagnosis",
+        "heading": "Separate observation from diagnosis",
+        "content": "Record what the rider observed, including weather, speed, load, warning code, and whether the fault cleared. Treat phrases such as 'bad controller' or 'dead battery' as unverified diagnoses unless a technician confirmed them. Retrieval answers may list likely checks, but work orders should preserve the original symptom."
+      },
+      {
+        "chunkId": "report-reproduction-safety",
+        "heading": "Safe reproduction",
+        "content": "Do not reproduce a reported fault by riding when the report mentions brake loss, steering looseness, battery heat, smoke, exposed wiring, or wheel instability. For other intermittent faults, start with a stand test and the manual's inspection sequence before considering a controlled ride test."
+      }
+    ]
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "assetTag": "NB-101",
+    "model": "Northstar Comet S2",
+    "depot": "Harbor",
+    "status": "active",
+    "odometerKm": 4821,
+    "lastServiceAt": "2026-07-18T09:00:00Z",
+    "notes": "Front brake pads replaced at last service."
+  },
+  {
+    "assetTag": "NB-104",
+    "model": "Northstar Comet S2",
+    "depot": "Harbor",
+    "status": "inspection_due",
+    "odometerKm": 6310,
+    "lastServiceAt": "2026-05-29T14:30:00Z",
+    "notes": "Rider report: intermittent motor assistance after heavy rain."
+  },
+  {
+    "assetTag": "NB-118",
+    "model": "Northstar Comet S2",
+    "depot": "Uptown",
+    "status": "active",
+    "odometerKm": 2177,
+    "lastServiceAt": "2026-08-02T11:15:00Z",
+    "notes": null
+  },
+  {
+    "assetTag": "NB-203",
+    "model": "Northstar Cargo C1",
+    "depot": "Market",
+    "status": "out_of_service",
+    "odometerKm": 8844,
+    "lastServiceAt": "2026-06-14T08:45:00Z",
+    "notes": "Awaiting replacement battery latch."
+  },
+  {
+    "assetTag": "NB-207",
+    "model": "Northstar Cargo C1",
+    "depot": "Market",
+    "status": "active",
+    "odometerKm": 3980,
+    "lastServiceAt": "2026-07-27T16:20:00Z",
+    "notes": "Firmware 4.8 installed."
+  }
+]

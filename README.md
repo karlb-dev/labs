@@ -9,6 +9,7 @@ own directory with its own code, notes, and run instructions.
 
 | Lab | Title |
 | --- | --- |
+| [aidataapps](aidataapps/) | AI Data Apps (TypeScript, SQL Server, and local inference) |
 | [collective_communication](collective_communication/) | Collective Communications for TPU |
 | [interpretability](interpretability/) | Mechanistic Interpretability Labs |
 | [jspaces](interpretability/jspaces/) | J-space campaign (phases, sidelines, paper analysis) |
