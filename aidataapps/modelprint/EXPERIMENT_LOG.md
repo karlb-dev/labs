@@ -11,3 +11,7 @@ Append-only operator record.
 - 2026-08-22T22:35:46.458Z — MP-0 SQL capability doctor completed for modelprint-full-20260822T222334Z; mode=ann_legacy; hash=473947c1d9a2fe72466ea3ba21ff3891bcfe34cbe8c5cfb56a4c02d6f0cca4dd.
 
 - 2026-08-22T22:45:07.038Z — MP-2 campaign freeze completed for modelprint-full-20260822T222334Z; campaign=8a04067836e2878c0ed1a3d5b6815a58b364f6cf006093dba00660b292de3716; freeze=ed17a0764ce693b341c5f1e8a4b09b0896a1191088f509ed5f79019709d3b0d6; jobs=40000.
+
+- 2026-08-22T22:53:16.729Z — MP-3 port gate PASS for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.
+
+- 2026-08-22T22:59:19.281Z — MP-3 port gate STOP_PORT for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.

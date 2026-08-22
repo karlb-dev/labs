@@ -18,7 +18,7 @@ describe("frozen generation contract", () => {
         "frequency_penalty", "key", "max_tokens", "min_p", "n", "presence_penalty",
         "repetition_penalty", "seed", "stop", "temperature", "top_k", "top_p",
       ]);
-      expect(cell).toMatchObject({ top_k: -1, min_p: 0, repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, n: 1, stop: [] });
+      expect(cell).toMatchObject({ top_k: 0, min_p: 0, repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, n: 1, stop: [] });
     }
   });
 

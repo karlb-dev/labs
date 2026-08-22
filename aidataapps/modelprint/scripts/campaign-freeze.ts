@@ -70,6 +70,8 @@ const governedFiles = [
   "config/evaluation-plan.json", relative(LAB_ROOT, absoluteConfigPath), "data/manifests/model-registry-snapshot.json",
   "data/manifests/prompt-sources.json", "data/manifests/prompt-bank.json", `data/manifests/tier-${campaign.name}.json`,
   "data/audits/SUMMARY.json", "requirements.lock", "package-lock.json",
+  "src/types.ts", "src/inference.ts", "src/prompt-bank.ts", "src/style.ts", "src/attribution.ts",
+  "scripts/campaign-freeze.ts", "scripts/port-gate.ts", "scripts/generate.ts",
 ];
 const fileHashes = Object.fromEntries(await Promise.all(governedFiles.map(async (path) => [path, await hashFile(`${LAB_ROOT}/${path}`)])));
 const capabilityFileHash = await hashFile(capabilityPath);
@@ -97,7 +99,8 @@ const selectedVariants = tier.variantIds.map((id) => variantMap.get(id)!);
 const tokenBudgets = [...new Set(selectedVariants.map((row) => row.maxTokens))].sort((a, b) => a - b);
 const decodeConfigs = campaign.decodeCells.flatMap((cell) => tokenBudgets.map((maxTokens) => {
   const config = decodeCell(cell, maxTokens);
-  return { id: `${cell}-${maxTokens}`, hash: hashJson(config), config };
+  const hash = hashJson(config);
+  return { id: `${cell}-${maxTokens}-${hash.slice(0, 8)}`, hash, config };
 }));
 const decodeMap = new Map(decodeConfigs.map((row) => [`${row.config.key}:${row.config.max_tokens}`, row]));
 
@@ -175,6 +178,8 @@ try {
         INSERT dbo.campaigns(campaign_name,tier,campaign_hash,governing_spec_hash,governing_addendum_hash,status,config_json)
         OUTPUT inserted.campaign_id VALUES(@name,@tier,@hash,@spec,@addendum,'frozen',@config);`);
     campaignId = inserted.recordset[0]!.campaign_id;
+    await pool.request().input("name", sql.VarChar(100), campaign.name).input("campaignId", sql.BigInt, campaignId)
+      .query("UPDATE dbo.campaigns SET status='stopped' WHERE campaign_name=@name AND campaign_id<>@campaignId AND status IN ('building','frozen');");
   }
   await pool.request().input("campaignId", sql.BigInt, campaignId).input("freezeHash", sql.Char(64), freezeHash)
     .input("manifest", sql.NVarChar(sql.MAX), JSON.stringify(freeze)).input("gitCommit", sql.Char(40), execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", cwd: LAB_ROOT }).trim())

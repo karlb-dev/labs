@@ -21,6 +21,28 @@ interface EmbeddingResponse {
   data?: Array<{ index?: number; embedding?: number[] }>;
 }
 
+export function buildChatRequest(profile: ModelProfile, messages: ChatMessage[], decode: DecodeConfig): Record<string, unknown> {
+  if (messages.length !== 1 || messages[0]?.role !== "user") {
+    throw new Error("Primary ModelPrint generations require exactly one user message");
+  }
+  return {
+    model: profile.key,
+    messages,
+    temperature: decode.temperature,
+    top_p: decode.top_p,
+    top_k: decode.top_k,
+    min_p: decode.min_p,
+    repetition_penalty: decode.repetition_penalty,
+    presence_penalty: decode.presence_penalty,
+    frequency_penalty: decode.frequency_penalty,
+    seed: decode.seed,
+    max_tokens: decode.max_tokens,
+    n: decode.n,
+    stop: decode.stop,
+    chat_template_kwargs: profile.chatTemplateKwargs,
+  };
+}
+
 export class ExternalServiceError extends Error {
   constructor(message: string, readonly status?: number, readonly detail?: string) {
     super(message);
@@ -37,25 +59,7 @@ export class VllmGateway {
     messages: ChatMessage[],
     decode: DecodeConfig,
   ): Promise<GenerationResult> {
-    if (messages.length !== 1 || messages[0]?.role !== "user") {
-      throw new Error("Primary ModelPrint generations require exactly one user message");
-    }
-    const request: Record<string, unknown> = {
-      model: profile.key,
-      messages,
-      temperature: decode.temperature,
-      top_p: decode.top_p,
-      top_k: decode.top_k,
-      min_p: decode.min_p,
-      repetition_penalty: decode.repetition_penalty,
-      presence_penalty: decode.presence_penalty,
-      frequency_penalty: decode.frequency_penalty,
-      seed: decode.seed,
-      max_tokens: decode.max_tokens,
-      n: decode.n,
-      stop: decode.stop,
-      chat_template_kwargs: profile.chatTemplateKwargs,
-    };
+    const request = buildChatRequest(profile, messages, decode);
     const started = performance.now();
     const { body, status } = await this.post<ChatResponse>(`${baseUrl}/chat/completions`, request);
     const choice = body.choices?.[0];

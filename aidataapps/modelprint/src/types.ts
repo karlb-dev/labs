@@ -44,7 +44,10 @@ export const decodeCell = (
   return {
     key,
     ...cells[key],
-    top_k: -1,
+    // vLLM 0.27.x uses 0 as the effective disabled value. Earlier API
+    // examples accepted -1 but normalized it to 0, which fails the campaign's
+    // request-versus-effective-parameters equality gate.
+    top_k: 0,
     min_p: 0,
     repetition_penalty: 1,
     presence_penalty: 0,
