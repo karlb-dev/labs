@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { chmodSync, existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import dotenv from "dotenv";
 import { loadModelRegistry, resolveModelProfile } from "../src/models.js";
 
@@ -6,6 +7,10 @@ dotenv.config({ quiet: true });
 
 const project = process.env.COMPOSE_PROJECT_NAME ?? "aidataapps-rag";
 const containerName = `${project}-chat`;
+const nestedColab = process.env.CONTAINER_RUNTIME_PROFILE === "colab-rootless";
+if (nestedColab && !process.env.DOCKER_HOST) {
+  process.env.DOCKER_HOST = "unix:///run/user/1000/docker.sock";
+}
 
 function docker(args: string[], options: { quiet?: boolean } = {}): string {
   const result = spawnSync("docker", args, {
@@ -28,15 +33,50 @@ function hasContainer(): boolean {
   return result.status === 0;
 }
 
+function currentContainerProfile(): string | null {
+  if (!hasContainer()) return null;
+  return (
+    docker(
+      [
+        "inspect",
+        "--format",
+        '{{index .Config.Labels "ai.labs.model-profile"}}',
+        containerName,
+      ],
+      { quiet: true },
+    ) || null
+  );
+}
+
 function removeContainer(): void {
   if (!hasContainer()) return;
-  docker(["stop", "--time", "20", containerName]);
+  if (nestedColab) {
+    // A vLLM worker in Colab's shared PID namespace can be slow to acknowledge
+    // Docker's graceful stop. This container is stateless, so terminate it
+    // directly instead of blocking profile switches indefinitely.
+    docker(["kill", containerName]);
+  } else {
+    docker(["stop", "--time", "20", containerName]);
+  }
   docker(["rm", containerName]);
 }
 
 function valueAfter(flag: string): string | undefined {
   const index = process.argv.indexOf(flag);
   return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
+function persistModelProfile(profileKey: string): void {
+  const envPath = ".env";
+  if (!existsSync(envPath)) return;
+  const current = readFileSync(envPath, "utf8");
+  const next = /^MODEL_PROFILE=/m.test(current)
+    ? current.replace(/^MODEL_PROFILE=.*$/m, `MODEL_PROFILE=${profileKey}`)
+    : `${current.replace(/\n?$/, "\n")}MODEL_PROFILE=${profileKey}\n`;
+  const temporaryPath = `.env.model-profile.${process.pid}.tmp`;
+  writeFileSync(temporaryPath, next, { encoding: "utf8", mode: 0o600 });
+  chmodSync(temporaryPath, 0o600);
+  renameSync(temporaryPath, envPath);
 }
 
 const command = process.argv[2] ?? "list";
@@ -69,6 +109,45 @@ if (command === "list") {
   }
 } else if (command === "stop") {
   removeContainer();
+} else if (command === "evict") {
+  const profileKey = valueAfter("--profile") ?? process.env.MODEL_PROFILE ?? registry.defaultProfile;
+  const profile = resolveModelProfile(profileKey, registry);
+  if (currentContainerProfile() === profile.key) {
+    removeContainer();
+  }
+  const args = ["run", "--rm"];
+  if (nestedColab) {
+    args.push(
+      "--pid",
+      "host",
+      "--network",
+      "host",
+      "--ipc",
+      "host",
+      "--cgroupns",
+      "host",
+      "--security-opt",
+      "seccomp=unconfined",
+      "--security-opt",
+      "apparmor=unconfined",
+      "--mount",
+      "type=bind,src=/proc,dst=/proc,readonly",
+      "--mount",
+      "type=bind,src=/sys/fs/cgroup,dst=/sys/fs/cgroup,readonly",
+    );
+  }
+  args.push(
+    "--volume",
+    `${project}-huggingface-cache:/root/.cache/huggingface`,
+    "--entrypoint",
+    "hf",
+    profile.vllmImage,
+    "cache",
+    "rm",
+    `model/${profile.modelId}`,
+    "--yes",
+  );
+  docker(args);
 } else if (command === "start") {
   const profileKey = valueAfter("--profile") ?? process.env.MODEL_PROFILE ?? registry.defaultProfile;
   const replace = process.argv.includes("--replace");
@@ -90,19 +169,41 @@ if (command === "list") {
     containerName,
     "--label",
     `ai.labs.model-profile=${profile.key}`,
-    "--gpus",
-    "all",
-    "--ipc",
-    "host",
-    "--publish",
-    `${port}:8000`,
+  ];
+  if (nestedColab) {
+    args.push(
+      "--device",
+      "nvidia.com/gpu=all",
+      "--pid",
+      "host",
+      "--network",
+      "host",
+      "--ipc",
+      "host",
+      "--cgroupns",
+      "host",
+      "--security-opt",
+      "seccomp=unconfined",
+      "--security-opt",
+      "apparmor=unconfined",
+      "--mount",
+      "type=bind,src=/proc,dst=/proc,readonly",
+      "--mount",
+      "type=bind,src=/sys/fs/cgroup,dst=/sys/fs/cgroup,readonly",
+      "--env",
+      "LD_LIBRARY_PATH=/usr/lib64-nvidia:/usr/local/cuda/lib64:/usr/local/nvidia/lib64",
+    );
+  } else {
+    args.push("--gpus", "all", "--ipc", "host", "--publish", `${port}:8000`);
+  }
+  args.push(
     "--volume",
     `${project}-huggingface-cache:/root/.cache/huggingface`,
     "--volume",
     `${project}-vllm-cache:/root/.cache/vllm`,
     "--env",
     "VLLM_ENABLE_CUDA_COMPATIBILITY=1",
-  ];
+  );
   if (process.env.HF_TOKEN) {
     args.push("--env", `HF_TOKEN=${process.env.HF_TOKEN}`);
   }
@@ -120,9 +221,11 @@ if (command === "list") {
     String(profile.gpuMemoryUtilization),
     "--max-num-seqs",
     "8",
+    ...(nestedColab ? ["--port", port] : []),
     ...profile.vllmArgs,
   );
   const id = docker(args, { quiet: true });
+  persistModelProfile(profile.key);
   console.log(
     JSON.stringify(
       {
@@ -140,6 +243,6 @@ if (command === "list") {
   );
 } else {
   throw new Error(
-    `Unknown command ${JSON.stringify(command)}. Use list, benchmark-list, start, stop, or status.`,
+    `Unknown command ${JSON.stringify(command)}. Use list, benchmark-list, start, stop, evict, or status.`,
   );
 }

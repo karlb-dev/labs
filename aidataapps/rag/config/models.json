@@ -24,13 +24,16 @@
       "description": "Muse Glimmer 30B text/multimodal agent model used by the jspace_muse sideline.",
       "family": "muse",
       "modelId": "meta-models/Muse-Glimmer-30B",
-      "revision": "97c77dff50b2797bcc558fa2d909761dbc575c59",
+      "revision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
       "vllmImage": "vllm/vllm-openai:muse-glimmer",
       "maxModelLen": 16384,
       "gpuMemoryUtilization": 0.8,
       "systemRole": true,
-      "chatTemplateKwargs": {},
+      "chatTemplateKwargs": {
+        "reasoning_strength": "low"
+      },
       "vllmArgs": [
+        "--language-model-only",
         "--enable-auto-tool-choice",
         "--tool-call-parser",
         "muse_glimmer",
@@ -45,12 +48,14 @@
       "family": "gemma",
       "modelId": "google/gemma-4-31B-it",
       "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
-      "vllmImage": "vllm/vllm-openai:latest",
+      "vllmImage": "vllm/vllm-openai:v0.26.0",
       "maxModelLen": 16384,
       "gpuMemoryUtilization": 0.8,
       "systemRole": false,
       "chatTemplateKwargs": {},
-      "vllmArgs": []
+      "vllmArgs": [
+        "--language-model-only"
+      ]
     },
     "olmo-3.1-32b-instruct": {
       "description": "OLMo 3.1 32B non-thinking instruction model used as the repo's large-model spine.",
@@ -76,7 +81,9 @@
       "chatTemplateKwargs": {
         "enable_thinking": false
       },
-      "vllmArgs": []
+      "vllmArgs": [
+        "--language-model-only"
+      ]
     },
     "qwen-3.6-27b-pinned": {
       "description": "Historical Qwen profile pinned by the preference labs; retained for result replay.",

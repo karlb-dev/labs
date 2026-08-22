@@ -44,6 +44,12 @@ if (!Number.isInteger(repeats) || repeats < 1 || repeats > 20) {
 process.env.MODEL_PROFILE = profile;
 
 const config = loadConfig();
+if (
+  process.env.CONTAINER_RUNTIME_PROFILE === "colab-rootless" &&
+  !process.env.DOCKER_HOST
+) {
+  process.env.DOCKER_HOST = "unix:///run/user/1000/docker.sock";
+}
 const cases = casesSchema.parse(
   JSON.parse(
     await readFile(new URL("../data/benchmark-cases.json", import.meta.url), "utf8"),

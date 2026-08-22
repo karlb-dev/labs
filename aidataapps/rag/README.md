@@ -49,6 +49,27 @@ The SQL image is Microsoft's official
 The GPU services use the official
 [`vllm/vllm-openai`](https://docs.vllm.ai/en/stable/deployment/docker/) images.
 
+### Codex on a Colab VM
+
+Colab runs the notebook process inside an outer container, so a rootful Docker
+daemon cannot create its usual network and cgroup namespaces there. The host
+bootstrap installs Docker CE and NVIDIA Container Toolkit, starts a rootless
+daemon, generates an NVIDIA CDI device specification, and configures the lab's
+nested-container Compose override:
+
+```bash
+cd /content/labs/aidataapps/rag
+sudo ./scripts/colab-host-init.sh
+./scripts/env-init.sh
+```
+
+The generated `.env` should contain
+`CONTAINER_RUNTIME_PROFILE=colab-rootless`. Lab scripts then select
+`unix:///run/user/1000/docker.sock` and `compose.colab.yaml` automatically.
+The override uses host PID/network/IPC/cgroup namespaces and CDI device
+`nvidia.com/gpu=all`; those settings are specific to this nested Colab runtime.
+On an ordinary Docker host, leave the runtime profile empty.
+
 ## Quick Start
 
 The environment initializer creates `.env` with a generated SQL password,
@@ -117,7 +138,7 @@ the recorded configuration.
 | --- | --- | --- |
 | `qwen-smoke` | `Qwen/Qwen3-4B-Instruct-2507` | cheap end-to-end plumbing |
 | `muse-glimmer-30b` | `meta-models/Muse-Glimmer-30B` | 30B agentic/multimodal comparison; dedicated Muse parsers |
-| `gemma-4-31b` | `google/gemma-4-31B-it` | 31B comparison; system instructions folded into the user turn |
+| `gemma-4-31b` | `google/gemma-4-31B-it` | 31B comparison; vLLM 0.26.0 compatibility pin; system instructions folded into the user turn |
 | `olmo-3.1-32b-instruct` | `allenai/Olmo-3.1-32B-Instruct` | repo-aligned 32B instruction spine |
 | `qwen-3.8-27b` | `Qwen/Qwen3.8-27B` | current 27B Qwen comparison cell |
 | `qwen-3.6-27b-pinned` | `Qwen/Qwen3.6-27B` | historical repo-pin replay |
@@ -129,6 +150,7 @@ npm run model -- list
 npm run model -- start --profile qwen-3.8-27b --replace
 npm run model -- status
 npm run model -- stop
+npm run model -- evict --profile gemma-4-31b  # remove only this model's weights
 ```
 
 Only one chat profile is resident at a time. The embedding service stays
@@ -155,6 +177,11 @@ Run the default serious-model matrix sequentially:
 ```bash
 ./scripts/benchmark-matrix.sh
 ```
+
+On the Colab runtime, the matrix automatically evicts each completed model's
+Hugging Face weights before loading the next profile and leaves the final model
+resident. Pass `--keep-model-cache` only when the VM has enough disk for every
+cell at once.
 
 Or choose a subset:
 
@@ -208,10 +235,13 @@ possibility into a confirmed diagnosis.
 ```text
 aidataapps/rag/
   config/models.json          # pinned model registry and benchmark matrix
+  compose.colab.yaml          # nested rootless Docker/Colab override
   data/                       # fictional source corpus, assets, fixed eval cases
   db/schema.sql               # SQL Server 2025 tables and VECTOR(1024)
+  scripts/colab-host-init.sh  # Docker CE, rootless daemon, and NVIDIA CDI bootstrap
   scripts/env-init.sh         # host-to-working-stack initializer
   scripts/model-server.ts     # one-at-a-time vLLM profile manager
+  scripts/runtime-env.sh      # runtime profile and Docker endpoint selection
   scripts/setup-database.ts   # create, embed, seed, verify
   scripts/benchmark.ts        # artifact-writing API benchmark
   src/agent.ts                # retrieval, structured plan, action gate

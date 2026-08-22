@@ -25,6 +25,17 @@ while (($#)); do
   esac
 done
 
+if [[ ! -f .env ]]; then
+  generated_password="RagLab!$(openssl rand -hex 18)"
+  sed "s/replace-with-a-generated-strong-password/$generated_password/" .env.example >.env
+  chmod 600 .env
+  echo "Created .env with a generated SQL Server password."
+fi
+
+# shellcheck disable=SC1091
+source "$script_dir/runtime-env.sh"
+export MODEL_PROFILE="$model_profile"
+
 for command_name in docker curl npm openssl nvidia-smi; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "Missing prerequisite: $command_name" >&2
@@ -37,19 +48,6 @@ if ! nvidia-smi >/dev/null; then
   echo "NVIDIA driver is not ready; local vLLM cannot start." >&2
   exit 1
 fi
-
-if [[ ! -f .env ]]; then
-  generated_password="RagLab!$(openssl rand -hex 18)"
-  sed "s/replace-with-a-generated-strong-password/$generated_password/" .env.example >.env
-  chmod 600 .env
-  echo "Created .env with a generated SQL Server password."
-fi
-
-set -a
-# shellcheck disable=SC1091
-source .env
-set +a
-export MODEL_PROFILE="$model_profile"
 
 npm ci
 docker compose config --quiet
@@ -80,15 +78,6 @@ done
 curl --fail --silent "${EMBEDDING_BASE_URL%/v1}/health" >/dev/null
 
 npm run model -- start --profile "$MODEL_PROFILE" --replace
-profile_env_tmp="$(mktemp ./.env.tmp.XXXXXX)"
-awk -v profile="$MODEL_PROFILE" '
-  BEGIN { replaced = 0 }
-  /^MODEL_PROFILE=/ { print "MODEL_PROFILE=" profile; replaced = 1; next }
-  { print }
-  END { if (!replaced) print "MODEL_PROFILE=" profile }
-' .env >"$profile_env_tmp"
-chmod 600 "$profile_env_tmp"
-mv "$profile_env_tmp" .env
 echo "Waiting for $MODEL_PROFILE (the first model download can take several minutes)..."
 for _ in $(seq 1 900); do
   if curl --fail --silent "${CHAT_BASE_URL%/v1}/health" >/dev/null; then
