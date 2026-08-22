@@ -139,19 +139,19 @@ async function persist(outcomes: Awaited<ReturnType<typeof runJob>>[]) {
     const artifactRows = successes.flatMap((row) => {
       const normalized = normalizeText(row.finalText); const masked = maskNames(normalized);
       return [
-        { jobKey: row.jobKey, view: "raw-final-v1", hash: sha256(normalized), text: normalized },
-        { jobKey: row.jobKey, view: "name-masked-v1", hash: sha256(masked), text: masked },
+        { jobKey: row.jobKey, textView: "raw-final-v1", hash: sha256(normalized), text: normalized },
+        { jobKey: row.jobKey, textView: "name-masked-v1", hash: sha256(masked), text: masked },
       ];
     });
     await executeJson(artifactRows, `
       INSERT dbo.text_artifacts(text_view_id,normalized_sha256,artifact_text)
-      SELECT s.view,s.hash,MIN(s.text) FROM OPENJSON(@rows) WITH (view varchar(80) '$.view', hash char(64) '$.hash', text nvarchar(max) '$.text') s
-      WHERE NOT EXISTS (SELECT 1 FROM dbo.text_artifacts t WHERE t.text_view_id=s.view AND t.normalized_sha256=s.hash)
-      GROUP BY s.view,s.hash;
+      SELECT s.text_view,s.hash,MIN(s.text) FROM OPENJSON(@rows) WITH (text_view varchar(80) '$.textView', hash char(64) '$.hash', text nvarchar(max) '$.text') s
+      WHERE NOT EXISTS (SELECT 1 FROM dbo.text_artifacts t WHERE t.text_view_id=s.text_view AND t.normalized_sha256=s.hash)
+      GROUP BY s.text_view,s.hash;
       INSERT dbo.generation_text_artifacts(generation_id,text_artifact_id)
-      SELECT DISTINCT g.generation_id,t.text_artifact_id FROM OPENJSON(@rows) WITH (jobKey char(64) '$.jobKey', view varchar(80) '$.view', hash char(64) '$.hash') s
+      SELECT DISTINCT g.generation_id,t.text_artifact_id FROM OPENJSON(@rows) WITH (jobKey char(64) '$.jobKey', text_view varchar(80) '$.textView', hash char(64) '$.hash') s
       JOIN dbo.generation_jobs j ON j.job_key=s.jobKey JOIN dbo.generations g ON g.generation_job_id=j.generation_job_id
-      JOIN dbo.text_artifacts t ON t.text_view_id=s.view AND t.normalized_sha256=s.hash
+      JOIN dbo.text_artifacts t ON t.text_view_id=s.text_view AND t.normalized_sha256=s.hash
       WHERE NOT EXISTS (SELECT 1 FROM dbo.generation_text_artifacts m WHERE m.generation_id=g.generation_id AND m.text_artifact_id=t.text_artifact_id);`);
   }
   if (failedKeys.length) await executeJson(failedKeys, `UPDATE j SET status='failed' FROM dbo.generation_jobs j JOIN OPENJSON(@rows) WITH (jobKey char(64) '$.jobKey') s ON s.jobKey=j.job_key;`);

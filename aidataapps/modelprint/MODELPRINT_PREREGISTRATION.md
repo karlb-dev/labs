@@ -6,6 +6,10 @@ Status: frozen before loading any scientific target model. The addendum in `docs
 
 The first non-target `qwen-smoke` port gate on 2026-08-22 observed that pinned vLLM 0.27.1 accepts wire value `top_k=-1` but records the effective `SamplingParams` value as `top_k=0`. Because the protocol requires requested and effective values to agree, the campaign now sends the version's explicit disabled value `0`. The original MP-2 freeze is superseded; no scientific target had been loaded and no target output existed when this adjustment was made. The replacement freeze hashes the request builder, decode constructor, port gate, and generation driver in addition to data/config inputs.
 
+## Execution amendment 2 — set-based persistence pilot
+
+After freeze v2, four Qwen 3.8 rows were used as a plumbing pilot. Requests and generation rows succeeded, but the artifact batch failed because `view` was a reserved T-SQL alias. Campaign 2 and all four pilot generations are excluded from scientific analysis. The alias was changed to `text_view`, the set-based path was integration-tested, and a replacement campaign with new job keys was frozen before the full target run. No prompt, model, decode, metric, threshold, or data-role setting changed.
+
 ## Scope and unit of identity
 
 The primary task is four-class, closed-set attribution among the exact served profiles listed in `config/models.json`. The label includes repository revision, tokenizer/chat template, parser policy, digest-pinned vLLM image, engine arguments, single-user-turn carrier policy, and explicit decode configuration. Claims do not generalize automatically to a model family, another quantization, another revision, hosted APIs, human text, or unseen models.

@@ -179,7 +179,7 @@ try {
         OUTPUT inserted.campaign_id VALUES(@name,@tier,@hash,@spec,@addendum,'frozen',@config);`);
     campaignId = inserted.recordset[0]!.campaign_id;
     await pool.request().input("name", sql.VarChar(100), campaign.name).input("campaignId", sql.BigInt, campaignId)
-      .query("UPDATE dbo.campaigns SET status='stopped' WHERE campaign_name=@name AND campaign_id<>@campaignId AND status IN ('building','frozen');");
+      .query("UPDATE dbo.campaigns SET status='stopped' WHERE campaign_name=@name AND campaign_id<>@campaignId AND status IN ('building','frozen','running');");
   }
   await pool.request().input("campaignId", sql.BigInt, campaignId).input("freezeHash", sql.Char(64), freezeHash)
     .input("manifest", sql.NVarChar(sql.MAX), JSON.stringify(freeze)).input("gitCommit", sql.Char(40), execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", cwd: LAB_ROOT }).trim())

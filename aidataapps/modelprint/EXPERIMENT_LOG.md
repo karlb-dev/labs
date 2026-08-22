@@ -19,3 +19,7 @@ Append-only operator record.
 - 2026-08-22T23:00:32.124Z — MP-2 campaign freeze completed for modelprint-full-20260822T222334Z; campaign=4a2d5c24d84c6de519943cf84b505fa8315351c46be7ac02f8df419f44744e98; freeze=77ef3b03aaa0d34a98ee9807906cfc22e97a9c4b96e5036af2d5b29690d4bb55; jobs=40000.
 
 - 2026-08-22T23:00:40.939Z — MP-3 port gate PASS for qwen-smoke; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-smoke.json.
+
+- 2026-08-22T23:05:22.567Z — MP-3 port gate PASS for qwen-3.8-27b; artifact=runs/modelprint-full-20260822T222334Z/environment/port-gate-qwen-3.8-27b.json.
+
+- 2026-08-22T23:05:58.000Z — Four-row Qwen 3.8 persistence pilot for campaign 2 stopped after generation-row commit when reserved T-SQL alias `view` failed the text-artifact batch. Campaign 2 is excluded; no pilot row will enter analysis. Alias corrected and the fixed transaction passed exact-vector, dimension-rejection, and set-based artifact integration checks before replacement freeze.
