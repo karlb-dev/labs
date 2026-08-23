@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import sql from "mssql";
 import { buildInitialAgentMessages } from "../src/agent-loop.js";
 import {
+  effectiveGpuMemoryUtilization,
   fatalChatServiceLogSignatures,
   terminalChatContainerFailure,
   type ChatContainerState,
@@ -254,6 +255,11 @@ async function inspectService(): Promise<Record<string, unknown>> {
   assertCommand(value.Config.Cmd, "--revision", profile.revision);
   assertCommand(value.Config.Cmd, "--served-model-name", profile.modelId);
   assertCommand(value.Config.Cmd, "--max-num-seqs", process.env.LOGWARDEN_CHAT_MAX_NUM_SEQS ?? "64");
+  const effectiveGpuMemory = Number(process.env.LOGWARDEN_CHAT_GPU_MEMORY_UTILIZATION ?? profile.gpuMemoryUtilization);
+  assertCommand(value.Config.Cmd, "--gpu-memory-utilization", String(effectiveGpuMemory));
+  const configuredOverride = process.env.LOGWARDEN_CHAT_GPU_MEMORY_UTILIZATION === undefined ? null : effectiveGpuMemory;
+  if (value.Config.Labels["ai.labs.gpu-memory-utilization"] !== String(effectiveGpuMemoryUtilization(profile, configuredOverride)))
+    throw new Error("Chat container GPU-memory label does not match the effective runtime setting");
   if (!value.Config.Cmd.includes("--generation-config") || !value.Config.Cmd.includes("vllm")) throw new Error("Chat service omitted --generation-config vllm");
   return {
     containerId: value.Id,

@@ -18,6 +18,9 @@ if (nested && !process.env.DOCKER_HOST) process.env.DOCKER_HOST = "unix:///run/u
 const configuredUrlPort = new URL(process.env.CHAT_BASE_URL ?? "http://127.0.0.1:8010/v1").port;
 const port = Number(process.env.CHAT_PORT ?? (configuredUrlPort === "" ? "8010" : configuredUrlPort));
 const maxNumSeqs = Number(process.env.LOGWARDEN_CHAT_MAX_NUM_SEQS ?? "64");
+const gpuMemoryUtilizationOverride = process.env.LOGWARDEN_CHAT_GPU_MEMORY_UTILIZATION === undefined
+  ? null
+  : Number(process.env.LOGWARDEN_CHAT_GPU_MEMORY_UTILIZATION);
 const containerName = process.env.CHAT_CONTAINER_NAME ?? chatContainerName(project);
 const runtime: ChatRuntimeIdentity = {
   project,
@@ -27,6 +30,7 @@ const runtime: ChatRuntimeIdentity = {
   hfVolume: process.env.LOGWARDEN_HF_VOLUME ?? `${project}-huggingface-cache`,
   vllmVolume: process.env.LOGWARDEN_VLLM_VOLUME ?? `${project}-vllm-cache`,
   maxNumSeqs,
+  gpuMemoryUtilizationOverride,
   batchInvariant: process.env.VLLM_BATCH_INVARIANT === "1" || selectedKey === "muse-glimmer-30b",
 };
 

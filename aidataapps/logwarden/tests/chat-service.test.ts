@@ -17,6 +17,7 @@ describe("pinned chat service command", () => {
     hfVolume: "aidataapps-logwarden-huggingface-cache",
     vllmVolume: "aidataapps-logwarden-vllm-cache",
     maxNumSeqs: 64,
+    gpuMemoryUtilizationOverride: null,
     batchInvariant: false,
   };
 
@@ -40,6 +41,16 @@ describe("pinned chat service command", () => {
     expect(args).toContain("host");
     expect(args).not.toContain("--publish");
     expect(args).toContain(profile.vllmImage);
+  });
+
+  it("labels and applies a runtime-only GPU memory override without changing the model profile", () => {
+    const overridden = { ...runtime, gpuMemoryUtilizationOverride: 0.79 };
+    const serverArgs = chatServerArguments(profile, overridden);
+    expect(serverArgs[serverArgs.indexOf("--gpu-memory-utilization") + 1]).toBe("0.79");
+    expect(chatDockerRunArguments(profile, overridden, "a".repeat(64), false))
+      .toContain("ai.labs.gpu-memory-utilization=0.79");
+    expect(() => chatServerArguments(profile, { ...runtime, gpuMemoryUtilizationOverride: 1 }))
+      .toThrow(/GPU memory utilization/);
   });
 
   it("distinguishes a slow startup from a terminal container", () => {

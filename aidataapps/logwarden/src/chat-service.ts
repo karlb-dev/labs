@@ -8,6 +8,7 @@ export interface ChatRuntimeIdentity {
   hfVolume: string;
   vllmVolume: string;
   maxNumSeqs: number;
+  gpuMemoryUtilizationOverride: number | null;
   batchInvariant: boolean;
 }
 
@@ -58,13 +59,14 @@ export function chatServerArguments(profile: ModelProfile, runtime: ChatRuntimeI
     throw new Error("Invalid chat service port");
   if (!Number.isSafeInteger(runtime.maxNumSeqs) || runtime.maxNumSeqs < 1)
     throw new Error("Invalid max-num-seqs override");
+  const gpuMemoryUtilization = effectiveGpuMemoryUtilization(profile, runtime.gpuMemoryUtilizationOverride);
   return [
     "--model", profile.modelId,
     "--revision", profile.revision,
     "--tokenizer-revision", profile.revision,
     "--served-model-name", profile.modelId,
     "--max-model-len", String(profile.maxModelLen),
-    "--gpu-memory-utilization", String(profile.gpuMemoryUtilization),
+    "--gpu-memory-utilization", String(gpuMemoryUtilization),
     "--max-num-seqs", String(runtime.maxNumSeqs),
     "--enable-log-requests",
     ...(runtime.nested ? ["--port", String(runtime.port)] : []),
@@ -78,6 +80,7 @@ export function chatDockerRunArguments(
   profileHash: string,
   hasHfToken: boolean,
 ): string[] {
+  const gpuMemoryUtilization = effectiveGpuMemoryUtilization(profile, runtime.gpuMemoryUtilizationOverride);
   const args = [
     "run", "--detach", "--name", runtime.containerName,
     "--label", "ai.labs.lab=logwarden",
@@ -85,6 +88,7 @@ export function chatDockerRunArguments(
     "--label", `ai.labs.model-profile=${profile.key}`,
     "--label", `ai.labs.model-profile-hash=${profileHash}`,
     "--label", `ai.labs.max-num-seqs=${runtime.maxNumSeqs}`,
+    "--label", `ai.labs.gpu-memory-utilization=${gpuMemoryUtilization}`,
   ];
   if (runtime.nested) {
     args.push(
@@ -113,4 +117,10 @@ export function chatDockerRunArguments(
   if (hasHfToken) args.push("--env", "HF_TOKEN");
   args.push(profile.vllmImage, ...chatServerArguments(profile, runtime));
   return args;
+}
+
+export function effectiveGpuMemoryUtilization(profile: ModelProfile, override: number | null): number {
+  const value = override ?? profile.gpuMemoryUtilization;
+  if (!Number.isFinite(value) || value <= 0 || value >= 1) throw new Error("Invalid GPU memory utilization override");
+  return value;
 }

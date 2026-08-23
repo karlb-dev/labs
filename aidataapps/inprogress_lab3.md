@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 15:56 UTC
+Last manually updated: 2026-08-23 16:12 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -133,9 +133,18 @@ and its effect on the evidence ceiling must be recorded append-only in
   local/Drive/SQL-staging copies while preserving the frozen boundary, Muse
   boundary, two newest rolling checkpoints, and two recovery bundles. Receipt:
   `ba8843aa7f452b553d14772d334372da2c38641940a158749d3f586bea76eb24`.
-  Next: commit/push this retention boundary, relaunch the bounded watchdog,
-  stop/evict Muse, evict obsolete Qwen-smoke cache, and start the frozen Gemma
-  profile. Do not relaunch completed Muse jobs.
+  Muse is stopped and its reproducible cache plus obsolete qwen-smoke cache
+  were evicted; all evidence remains retained. Gemma's exact 58.25 GiB pinned
+  checkpoint downloaded and loaded, but its first formal cold port gate stopped
+  before HTTP/model requests: a 16K request needs 13.76 GiB KV while the frozen
+  0.78 resource cap exposed 13.22 GiB. STOP_PORT receipt:
+  `103e7dabd7506d125a60dcd8e5fa4e323072d97539669105c7d425d08c9b6133`.
+  A runtime-only 0.79 GPU-memory override is implemented and tested without
+  changing the frozen model/profile hash, context, prompts, decode, or weights;
+  its +1-point resource difference must be disclosed in performance results.
+  Next: commit/push the override, restart Gemma from settled cache, run two
+  formal gates, then begin calibration replay. Do not relaunch completed Muse
+  jobs or the retained failed Gemma cold gate.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
@@ -412,17 +421,17 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay or sampler is active; Muse is
-  checkpointed and awaits service stop/cache eviction before Gemma startup.
+- Long-running scientific process: no replay is active; Gemma is between its
+  retained failed cold gate and the 0.79 settled-cache retry.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Telemetry: Muse sampler epoch
-  `26eda471-0ceb-476f-be48-6304e7ed6c4b` stopped cleanly after full ingestion
-  and PASS reconciliation; the next sampler begins with Gemma residency
-- Watchdog: intentionally stopped during the retention transaction and must be
-  relaunched after the retention commit; the updated supervisor prunes only
-  hash-verified redundant copies and keeps frozen/pinned boundaries plus two
-  rolling database and Git recovery points
+- Telemetry: continuous `gemma-4-31b-residency` whole-system sampler is retained
+  in exec session `65883` (node PID 595355), epoch
+  `bde528a1-bb5c-4b66-91b5-ac19591487dd`; it includes download, load, compile,
+  the cold failure, retry, gates, and subsequent inference
+- Watchdog: recurring bounded 20-minute backup/Git-bundle/push/run-mirror
+  supervisor is retained in exec session `11505` (bash PID 589796); its first
+  complete bounded cycle passed and temporary SQL staging cleanup was verified
 - SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
   full disposable restore, physical CHECKDB, and teardown; frozen checkpoint
   hash `20a468ccbb80f5ada685f74beade3a0919655fc5c8bfe914f539514aa6e9fd06`
