@@ -995,3 +995,5 @@ place and receive a later disposition.
   arm hashes now match the registry. Impact: no prediction or score was changed;
   the database checkpoint must be regenerated because the audited identity and
   evidence rows were added after the prior restore test.
+
+- 2026-08-23T11:10:44.648Z — Standard campaign frozen as e105cfdd5af5345464853406c8d707018232f3326c909ca476970fb7137cbcf6 at Git 98d70dca82db1d9879f9f05227af59a2b7127ee4; 600 packets, control subset 225e6f1d88aefe64cf7d07139155cab8d32e337770004acd22f361f23986ed8a, DB checkpoint 20a468ccbb80f5ada685f74beade3a0919655fc5c8bfe914f539514aa6e9fd06.
