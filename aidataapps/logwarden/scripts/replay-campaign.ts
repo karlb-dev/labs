@@ -11,6 +11,7 @@ import { resolveEmbeddingProfile, resolveModelProfile } from "../src/models.js";
 import { connect } from "../src/repository.js";
 import {
   buildReplayCells,
+  expectedReplayEpisodeCount,
   inferenceDecode,
   parseReplayArms,
   parseReplayRoles,
@@ -371,7 +372,7 @@ async function loadEpisodes(): Promise<ReplayEpisode[]> {
       expectedRunbooks,
     });
   }
-  const expected = roles.reduce((sum, role) => sum + Number(campaignRoleCounts[role] ?? 0), 0);
+  const expected = expectedReplayEpisodeCount(roles);
   if (profileKey !== "qwen-smoke" && controlId === null && selected.length !== expected) throw new Error(`Target replay selected ${selected.length}/${expected} frozen episodes`);
   if (profileKey === "qwen-smoke" && selected.length !== 60) throw new Error(`qwen-smoke requires all 60 dev episodes, found ${selected.length}`);
   const controlExpected = controlId === "batching-sequential-v1" ? 48 : 96;
@@ -438,10 +439,6 @@ async function assertControlSources(episodes: ReplayEpisode[]): Promise<void> {
   if (Number(row.primary_count) !== episodes.length) throw new Error(`Control ${controlId} requires ${episodes.length} completed primary A-tools source predictions`);
   if (controlId === "shuffled-runbooks-v1" && Number(row.shuffled_count) !== episodes.length) throw new Error("Shuffled control source rows are incomplete");
 }
-
-const campaignRoleCounts: Partial<Record<ReplayRole, number>> = {
-  dev: 60, calibration: 60, test_id: 300, test_variant_holdout: 120, test_unknown: 60,
-};
 
 async function ensureJobs(campaign: CampaignRow, cells: ReplayCell[]): Promise<JobIdentity[]> {
   const jobs: JobIdentity[] = [];

@@ -851,6 +851,13 @@ place and receive a later disposition.
   repair set remain unchanged. Impact: pre-freeze prompt clarification exposed
   by a synthetic canary; the failed raw output remains retained and cannot enter
   scores.
+- 2026-08-23T10:14:00Z — The first qwen-smoke replay invocation stopped before
+  job creation or model transport because its top-level execution reached a
+  role-count constant declared later in the module's temporal dead zone. The
+  five frozen standard-role cardinalities now live in the pure replay module,
+  and a unit test asserts 120 dev+calibration and 480 protected test episodes.
+  Impact: orchestration initialization only; zero jobs, agent runs, predictions,
+  or model requests were created by the failed invocation.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 
@@ -861,3 +868,5 @@ place and receive a later disposition.
 - 2026-08-23T10:10:30.952Z — B1 B1-rules-v1 produced 60 dev predictions at {"dev":{"episodes":60,"resolved":60,"coverage":1}}; receipt 85571222d2ee54f65e34f5ea44030065120eeadb5becfae33857022d325ca8bf.
 
 - 2026-08-23T10:10:50.780Z — Derived 600 predictions for B0-majority-no-action-v1,B2-lexical-v1,B2-vector-v1,B2-hybrid-v1,B3-oracle-packet-v1 over dev,calibration; receipt 4569707de9cfceda7a628b00d55e2684054466ebc9aa7668256b773a222903d1.
+
+- 2026-08-23T10:13:28.807Z — Scored 60 primary dev predictions for qwen-smoke across B1-rules-v1; receipt 21c0e8a35e752aa2522eced5c6733cca25ad56b085eb81713601eb8e681bad8c.

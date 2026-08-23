@@ -14,6 +14,18 @@ export const replayRoles = [
 
 export type ReplayRole = typeof replayRoles[number];
 
+export const standardCampaignRoleCounts: Readonly<Partial<Record<ReplayRole, number>>> = {
+  dev: 60,
+  calibration: 60,
+  test_id: 300,
+  test_variant_holdout: 120,
+  test_unknown: 60,
+};
+
+export function expectedReplayEpisodeCount(roles: readonly ReplayRole[]): number {
+  return roles.reduce((sum, role) => sum + Number(standardCampaignRoleCounts[role] ?? 0), 0);
+}
+
 export interface ReplayEpisode {
   episodeId: string;
   splitRole: ReplayRole;

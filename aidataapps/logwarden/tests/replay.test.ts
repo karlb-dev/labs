@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildReplayCells,
+  expectedReplayEpisodeCount,
   inferenceDecode,
   parseReplayArms,
   parseReplayRoles,
@@ -25,6 +26,11 @@ describe("replay campaign identities", () => {
     expect(parseReplayRoles("dev,dev,calibration")).toEqual(["dev", "calibration"]);
     expect(parseReplayArms("A-direct,A-tools")).toEqual(["A-direct", "A-tools"]);
     expect(() => parseReplayArms("A-router")).toThrow();
+  });
+
+  it("freezes the standard role cardinalities before replay starts", () => {
+    expect(expectedReplayEpisodeCount(["dev", "calibration"])).toBe(120);
+    expect(expectedReplayEpisodeCount(["test_id", "test_variant_holdout", "test_unknown"])).toBe(480);
   });
 
   it("removes the application-only transport marker from vLLM decode", () => {
