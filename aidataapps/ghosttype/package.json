@@ -24,7 +24,7 @@
     "simulate:single-user": "node --import tsx scripts/run-single-user.ts",
     "load:run": "node --import tsx scripts/run-load.ts",
     "doctor": "node --import tsx scripts/doctor.ts",
-    "reports": "./scripts/python.sh analysis/build_reports.py",
+    "reports": "node --import tsx scripts/build-reports.ts",
     "evaluate:quality": "./scripts/python.sh analysis/evaluate_quality.py",
     "db:backup": "./scripts/export-database.sh backup",
     "db:bacpac": "./scripts/export-database.sh bacpac",
