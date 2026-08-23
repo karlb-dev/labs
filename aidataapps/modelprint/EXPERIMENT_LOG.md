@@ -39,3 +39,5 @@ Append-only operator record.
 - 2026-08-22T23:38:14.950Z — MP-4 robustness generation completed for qwen-3.8-27b; selected=1; completed=1; failed=0.
 
 - 2026-08-22T23:56:50.000Z — Database extension checkpoint: the migration runner found historical recorded-hash differences for 001/003 in this already-running database. Before accepting the explicit `--allow-historical-drift` baseline exception, the SQL integration suite passed exact vector ranking, dimension rejection, and set-based artifact persistence. Existing migrations were not replayed or rewritten; migration 004 alone was applied and recorded.
+
+- 2026-08-22T23:59:54.000Z — MP-5 pre-registered implementation adjustment: SQL Server 2025 CU8 rejected `AI_GENERATE_CHUNKS OVERLAP=100` because the function accepts a 0–50 percentage. The SQL-native comparator was changed to 20 percent overlap (approximately the intended 100/600 character ratio). Reference-token updates and app-side segments from the stopped attempt are idempotent; no generation data changed.

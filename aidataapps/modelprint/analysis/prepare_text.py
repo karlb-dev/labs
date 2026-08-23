@@ -86,7 +86,7 @@ cursor.execute(f""";WITH artifacts AS
 INSERT dbo.output_segments(text_artifact_id,segmenter_id,ordinal,char_start,char_end,token_start,token_end,segment_text,segment_sha256,is_primary_eligible)
 SELECT a.text_artifact_id,'sql-chunks-v1',CONVERT(int,c.chunk_order),CONVERT(int,c.chunk_offset),CONVERT(int,c.chunk_offset+c.chunk_length),NULL,NULL,c.chunk,
  LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',CONVERT(varbinary(max),c.chunk)),2)),CASE WHEN c.chunk_length>=64 THEN 1 ELSE 0 END
-FROM artifacts a CROSS APPLY AI_GENERATE_CHUNKS(SOURCE=a.artifact_text,CHUNK_TYPE=FIXED,CHUNK_SIZE=600,OVERLAP=100,ENABLE_CHUNK_SET_ID=1) c
+FROM artifacts a CROSS APPLY AI_GENERATE_CHUNKS(SOURCE=a.artifact_text,CHUNK_TYPE=FIXED,CHUNK_SIZE=600,OVERLAP=20,ENABLE_CHUNK_SET_ID=1) c
 WHERE NOT EXISTS(SELECT 1 FROM dbo.output_segments s WHERE s.text_artifact_id=a.text_artifact_id AND s.segmenter_id='sql-chunks-v1' AND s.ordinal=CONVERT(int,c.chunk_order));""", tuple(campaign_ids))
 conn.commit()
 
@@ -95,6 +95,6 @@ table_path = run_dir / "tables/reference_token_counts.parquet"
 df.to_parquet(table_path, index=False)
 manifest = {"schemaVersion":1,"campaignIds":campaign_ids,"generations":len(rows),"uniqueArtifacts":len(unique_artifacts),"appSegments":len(segments),
             "lengthBands":df["length_band"].value_counts().to_dict(),"referenceTokenizer":{"model":ref["modelId"],"revision":ref["revision"]},
-            "table":str(table_path),"sqlChunks":{"chunkSize":600,"overlap":100}}
+            "table":str(table_path),"sqlChunks":{"chunkSize":600,"overlapPercent":20}}
 print(json.dumps(manifest))
 conn.close()
