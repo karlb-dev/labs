@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 11:49 UTC
+Last manually updated: 2026-08-23 12:41 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -58,22 +58,41 @@ and its effect on the evidence ceiling must be recorded append-only in
   `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
   The cold failure and one log-classifier false positive remain retained and
   are disclosed in `EXPERIMENT_LOG.md`; neither produced scientific rows.
-- Instrumentation is active before the long replay: whole-residency sampler
+- Instrumentation remains active across the residency: whole-residency sampler
   PID 398833 (phase `muse-glimmer-30b-residency`, epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b`), recurring checkpoint watchdog PID
   398586, Qwen embedding EngineCore on port 8011, SQL Server on port 1434, and
   the rootless Docker daemon supervised in retained exec cell 64558.
-- Current source is clean, tested at 37 files / 129 tests, and pushed through
-  `7b0b6e6`. Foundry/Mac/report support is merged; Linux Foundry validation
+- Muse calibration primary replay passed all integrity gates: 180 terminal
+  cells, 166 decisions, 14 retained end-to-end failures, 319/319 successful
+  stop-finished HTTP requests, zero service error/length/preemption outcomes,
+  139 tool calls, zero retained leases, and zero open/unlinked spans. Receipt:
+  `8a6cb7cba39bec1cc934b2aa2721ec1d783f636b3577b62c0fe057f07c51f982`.
+  The 40-minute inference window reflects three effective workers, not 16,
+  because 13 workers retired on transient empty `READPAST` claims. This affects
+  calibration throughput comparability only; inputs, outputs, and quality rows
+  are intact. The defect and impact are append-only in `EXPERIMENT_LOG.md`.
+- Before opening test predictions, source was hardened with selected-queue
+  availability probes, bounded/instrumented deterministic claim backoff, and
+  replay-sized SQL pools. The real gate reproduced three transient empties and
+  recovered all of them, yielding 16 distinct claims for 16 workers in 189.12
+  ms; all 8 SQL integration cases and 38 files / 134 unit tests passed. SQL
+  receipt:
+  `0cb7233598d78ccb665d0df8cc06934741ee48eab70e82099b55da2b335eba73`;
+  durable commit `1c471f6`.
+- Current source is clean and pushed through `1c471f6`.
+  Foundry/Mac/report support is merged; Linux Foundry validation
   remains deferred until the four governed GPU profiles finish.
-- Next scientific command is the Muse calibration-only primary replay. After
-  it completes: derive `A-router` for calibration, score the four inference
-  arms, fit and hash-lock Muse calibration, then open all protected test roles.
+- Next scientific boundary is to derive `A-router` for Muse calibration, score
+  the four inference arms, fit and hash-lock Muse calibration, and only then
+  open every frozen protected test role in one replay.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
 source scripts/runtime-env.sh
-npm run campaign:replay -- --profile muse-glimmer-30b --roles calibration --arms A-direct,A-rag,A-tools --workers 16
+npm run campaign:derive -- --roles calibration --arms A-router --profiles muse-glimmer-30b
+npm run campaign:score -- --roles calibration --profiles muse-glimmer-30b --arms A-direct,A-rag,A-tools,A-router
+npm run campaign:calibrate -- --profile muse-glimmer-30b
 ```
 
 ## Historical setup context (superseded where conflicting)
