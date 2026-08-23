@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 09:15 UTC
+Last manually updated: 2026-08-23 11:49 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -30,7 +30,53 @@ adjustments are allowed when required to reach completion, but every adjustment
 and its effect on the evidence ceiling must be recorded append-only in
 `EXPERIMENT_LOG.md`.
 
-## Current state
+## Current resumption state (authoritative)
+
+- Active run: `logwarden-smoke-20260823T031714Z`.
+- The standard campaign is frozen and target inference is authorized. Freeze
+  hash: `e105cfdd5af5345464853406c8d707018232f3326c909ca476970fb7137cbcf6`;
+  receipt:
+  `1819a96b69cb90c73c450aa2da5376bf6ab565c3d20f9293192746e5fc4e60df`;
+  packet set:
+  `98796f59549b3e529fef5c7363b7294c917ea098b4d4a24742626b5c5d179835`;
+  frozen control subset:
+  `225e6f1d88aefe64cf7d07139155cab8d32e337770004acd22f361f23986ed8a`.
+- Qwen smoke, power, final pre-freeze telemetry reconciliation, retrieval
+  evaluation, search freeze, database restore test, run archive, and Drive
+  mirror all passed. The global pre-freeze reconciliation receipt is
+  `2a5f0a4e39bb2831eec506067de3186ab2eb1aeb2965e322161b69f5fb0287c8`.
+- `muse-glimmer-30b` is the active governed residency. Exact container
+  `9602d24544f974bdf1d0287136d7bb9c8a3da1dec67aa33dabf25d10bb3e9a40`
+  is running on port 8010 with the frozen image, model, revision, profile hash,
+  16K context, max-num-seqs 64, and batch-invariant kernels. The first cold
+  cache startup stopped before HTTP/model requests in the same tokenizer race
+  retained by Lab 2; the settled-cache service passed two formal nine-call
+  gates with zero length/error/preemption outcomes and exact repeated output.
+  PASS receipts:
+  `4fd5df4af5c5fe6a3d73cfa759bb2de372e59e027687ad144b88f15952a6ad56`
+  and
+  `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
+  The cold failure and one log-classifier false positive remain retained and
+  are disclosed in `EXPERIMENT_LOG.md`; neither produced scientific rows.
+- Instrumentation is active before the long replay: whole-residency sampler
+  PID 398833 (phase `muse-glimmer-30b-residency`, epoch
+  `26eda471-0ceb-476f-be48-6304e7ed6c4b`), recurring checkpoint watchdog PID
+  398586, Qwen embedding EngineCore on port 8011, SQL Server on port 1434, and
+  the rootless Docker daemon supervised in retained exec cell 64558.
+- Current source is clean, tested at 37 files / 129 tests, and pushed through
+  `7b0b6e6`. Foundry/Mac/report support is merged; Linux Foundry validation
+  remains deferred until the four governed GPU profiles finish.
+- Next scientific command is the Muse calibration-only primary replay. After
+  it completes: derive `A-router` for calibration, score the four inference
+  arms, fit and hash-lock Muse calibration, then open all protected test roles.
+
+```bash
+cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
+source scripts/runtime-env.sh
+npm run campaign:replay -- --profile muse-glimmer-30b --roles calibration --arms A-direct,A-rag,A-tools --workers 16
+```
+
+## Historical setup context (superseded where conflicting)
 
 - Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
   agent-observability, least-privilege tools, real eight-family injectors,
@@ -299,28 +345,27 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: `standard-v1` injector retained in Codex
-  exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; latest
-  check was 483/600 executed with zero injector errors; the latest observed XE
-  loss counters remain zero
+- Long-running scientific process: the Muse calibration replay is the next
+  command shown below; if it is already running, inspect the selected Muse
+  calibration jobs and worker journals before launching another invocation.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Telemetry: continuous `standard-capture` whole-system sampler retained in
-  exec session `46061` (node PID 227530), epoch
-  `6cd96b0d-7555-446c-aeb6-bc813a0231d1`; before-capture receipt
-  `b7ad8cdbb1bd28d70e835057f1c807a26cd54acee56bc02cc53aa41026acc740`
+- Telemetry: continuous `muse-glimmer-30b-residency` whole-system sampler
+  retained in exec session `16290` (node PID 398833), epoch
+  `26eda471-0ceb-476f-be48-6304e7ed6c4b`
 - Watchdog: recurring 20-minute backup/Git bundle/push/run-mirror supervisor is
-  retained in exec session `92148` (bash PID 226872); its launch checkpoint
-  committed and pushed cleanly
+  retained in exec session `51092` (bash PID 398586); it backs up and mirrors
+  while source is clean and records a recovery patch without auto-committing
+  when source is dirty
 - SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
-  full disposable restore, physical CHECKDB, and teardown; latest restore-test
-  receipt `20a92098906ac63588ce951ce15e21d3ec932ca10f4d81beb504cffbfc4a9a18`
+  full disposable restore, physical CHECKDB, and teardown; frozen checkpoint
+  hash `20a468ccbb80f5ada685f74beade3a0919655fc5c8bfe914f539514aa6e9fd06`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `764c9c3` (frozen Tier 1 inference
-  controls, separate scoring, and primary/control comparison ledger); launch
-  watchdog checkpoint: `89b42ff`
+- Last durable implementation checkpoint: `7b0b6e6` (Muse startup evidence,
+  crash-aware readiness, explicit fatal-log classification, and two passing
+  warm gates)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -343,15 +388,13 @@ nvidia-smi
 ```
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
-SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is to let the resumable `standard-v1` capture finish under the
-recurring watchdog and telemetry sampler, then drain/verify, build and audit
-packets, apply migrations 031 and 032, run held-out retrieval, empirically calibrate the
-power receipt with qwen-smoke dev pairs, and freeze. Retrieval evaluation is
-resumable and persists five evaluator-only modes per packet; the search freeze
-proves complete embeddings/full-text/evaluation inventories. Do not load a
-target chat model until the campaign freeze authorizes it and the separate
-real-service observability gate can run.
+SQL job/work-item state, current Muse port-gate receipt, and Drive checkpoint
+before launching anything. The campaign is frozen and Muse is authorized. If
+no Muse calibration replay is active, run the exact calibration command in the
+authoritative state section. Do not open any Muse test role until calibration
+predictions are derived/scored and `campaign:calibrate --profile
+muse-glimmer-30b` writes a PASS receipt. Do not start another chat model while
+the Muse container is resident.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
