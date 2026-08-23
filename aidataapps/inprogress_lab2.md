@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- recovery-state milestone: `0718613`; use `git rev-parse HEAD` for the live tip
+- probe-checkpoint milestone: `620b813`; use `git rev-parse HEAD` for the live tip
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -78,7 +78,9 @@ Active jobs to adopt and never duplicate:
   `--resume-completed`; first representation is fully checkpointed, and the
   restart retains all 200 eligible-family permutations plus 1,000 bootstraps
 - exact retrieval: session `62732`, PID 802811, six workers
-- exact chunk retrieval: session `81077`, PID 802867, six workers
+- exact chunk retrieval: session `38173`, PID 882882, six workers; restarted
+  with stable generation/segment composite query identities after run 5 rolled
+  back with zero accepted neighbors
 - checkpoint watchdog: session `16623`, PID 545189
 
 The exact evaluators now bind scans to `MAXDOP 1`; their SQL grants are healthy.
