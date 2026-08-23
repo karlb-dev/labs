@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "baselineId": "B1-rules-v1",
+  "authoredAtUtc": "2026-08-23T08:05:00.000Z",
+  "authoringProvenance": {
+    "sources": [
+      "docs/SPEC.md#15.1",
+      "docs/SPEC_ADDENDUM.md#E-3",
+      "config/runbooks/primary-v1.json",
+      "SQL Server documented engine event and error semantics"
+    ],
+    "packetInspection": "No standard packet or captured standard message was inspected before authoring.",
+    "temporalDeviation": "Authored after standard injection began but before packet construction, test scoring, or target inference.",
+    "impact": "The literal pre-capture authorship requirement was missed. Rules remain outcome-blind, but B1 claims must disclose this deviation and cannot claim a perfectly preregistered capture-time baseline."
+  },
+  "rules": [
+    {
+      "ruleId": "deadlock-graph",
+      "priority": 10,
+      "condition": { "eventNamesAny": ["xml_deadlock_report"] },
+      "prediction": { "incidentClass": "deadlock", "severity": "high", "action": "run_tsg", "confidence": 0.99, "abstain": false },
+      "sourceReferences": ["TSG-DLK-01"]
+    },
+    {
+      "ruleId": "deadlock-victim-1205",
+      "priority": 20,
+      "condition": { "errorNumbersAny": [1205] },
+      "prediction": { "incidentClass": "deadlock", "severity": "high", "action": "run_tsg", "confidence": 0.98, "abstain": false },
+      "sourceReferences": ["TSG-DLK-01"]
+    },
+    {
+      "ruleId": "blocked-process",
+      "priority": 30,
+      "condition": { "eventNamesAny": ["blocked_process_report"] },
+      "prediction": { "incidentClass": "blocking", "severity": "medium", "action": "run_tsg", "confidence": 0.97, "abstain": false },
+      "sourceReferences": ["TSG-BLK-01"]
+    },
+    {
+      "ruleId": "transaction-log-full-9002",
+      "priority": 40,
+      "condition": { "errorNumbersAny": [9002] },
+      "prediction": { "incidentClass": "transaction_log_full", "severity": "high", "action": "run_tsg", "confidence": 0.99, "abstain": false },
+      "sourceReferences": ["TSG-LOG-01"]
+    },
+    {
+      "ruleId": "authentication-failure",
+      "priority": 50,
+      "condition": { "errorNumbersAny": [18456, 4064] },
+      "prediction": { "incidentClass": "authentication_failure", "severity": "high", "action": "run_tsg", "confidence": 0.98, "abstain": false },
+      "sourceReferences": ["TSG-AUT-01"]
+    },
+    {
+      "ruleId": "integrity-engine-signal",
+      "priority": 60,
+      "condition": { "errorNumbersAny": [823, 824, 825] },
+      "prediction": { "incidentClass": "integrity_signal", "severity": "critical", "action": "escalate_to_human", "confidence": 0.99, "abstain": false },
+      "sourceReferences": ["TSG-INT-01"]
+    },
+    {
+      "ruleId": "integrity-lab-message",
+      "priority": 70,
+      "condition": {
+        "errorNumbersAny": [50000],
+        "minimumSeverity": 16,
+        "messageRegexAny": ["\\bintegrity\\b", "\\bconsistency(?: check)?\\b", "\\bpage verification\\b", "\\bstorage integrity\\b"]
+      },
+      "prediction": { "incidentClass": "integrity_signal", "severity": "high", "action": "run_tsg", "confidence": 0.95, "abstain": false },
+      "sourceReferences": ["TSG-INT-01"]
+    },
+    {
+      "ruleId": "backup-restore-failure",
+      "priority": 80,
+      "condition": { "errorNumbersAny": [3013, 3201, 3241, 3257, 3634] },
+      "prediction": { "incidentClass": "backup_restore_failure", "severity": "high", "action": "run_tsg", "confidence": 0.98, "abstain": false },
+      "sourceReferences": ["TSG-BAK-01"]
+    },
+    {
+      "ruleId": "query-resource-engine-error",
+      "priority": 90,
+      "condition": { "errorNumbersAny": [701, 8645, 8651, 8628] },
+      "prediction": { "incidentClass": "query_resource_pressure", "severity": "high", "action": "run_tsg", "confidence": 0.96, "abstain": false },
+      "sourceReferences": ["TSG-QRY-01"]
+    },
+    {
+      "ruleId": "schema-data-high",
+      "priority": 100,
+      "condition": { "errorNumbersAny": [2601, 2627] },
+      "prediction": { "incidentClass": "schema_data_error", "severity": "high", "action": "run_tsg", "confidence": 0.99, "abstain": false },
+      "sourceReferences": ["TSG-DAT-01"]
+    },
+    {
+      "ruleId": "schema-data-contract",
+      "priority": 110,
+      "condition": { "errorNumbersAny": [208, 245, 515, 547, 2628, 8152, 8134] },
+      "prediction": { "incidentClass": "schema_data_error", "severity": "medium", "action": "run_tsg", "confidence": 0.98, "abstain": false },
+      "sourceReferences": ["TSG-DAT-01"]
+    },
+    {
+      "ruleId": "ambiguous-lab-message",
+      "priority": 120,
+      "condition": {
+        "errorNumbersAny": [50000],
+        "maximumSeverity": 11,
+        "messageRegexAny": ["\\bmay require review\\b", "\\bevidence is incomplete\\b", "\\bsignals disagree\\b", "\\bclassification is uncertain\\b", "\\bunsupported signature\\b"]
+      },
+      "prediction": { "incidentClass": "unknown_ambiguous", "severity": "low", "action": "escalate_to_human", "confidence": 0.9, "abstain": true },
+      "sourceReferences": ["TSG-UNK-01"]
+    },
+    {
+      "ruleId": "successful-completion-no-engine-error",
+      "priority": 130,
+      "condition": { "eventNamesAny": ["rpc_completed", "sql_batch_completed"], "requireNoErrorNumber": true },
+      "prediction": { "incidentClass": "benign_noise", "severity": "info", "action": "no_action", "confidence": 0.8, "abstain": false },
+      "sourceReferences": ["TSG-NOI-01"]
+    }
+  ],
+  "defaultPrediction": {
+    "incidentClass": "unknown_ambiguous",
+    "severity": "low",
+    "action": "escalate_to_human",
+    "confidence": 0,
+    "abstain": true
+  }
+}

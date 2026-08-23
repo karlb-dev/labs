@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "policy-v1",
+  "packetVersion": "incident-packet-v1",
+  "decodeConfigId": "primary-json-v3",
+  "arms": [
+    {
+      "armId": "A-direct",
+      "kind": "agent",
+      "modelRequired": true,
+      "allowedTools": [],
+      "retrievalMode": "none",
+      "correlationMode": "frozen_packet",
+      "execution": "inference"
+    },
+    {
+      "armId": "A-rag",
+      "kind": "agent",
+      "modelRequired": true,
+      "allowedTools": ["runbook_search"],
+      "retrievalMode": "hybrid_rrf",
+      "correlationMode": "frozen_packet",
+      "execution": "inference"
+    },
+    {
+      "armId": "A-tools",
+      "kind": "agent",
+      "modelRequired": true,
+      "allowedTools": [
+        "get_active_transactions",
+        "get_backup_history",
+        "get_blocking_snapshot",
+        "get_deadlock_graph",
+        "get_log_space",
+        "get_recent_incident_counts",
+        "runbook_search"
+      ],
+      "retrievalMode": "hybrid_rrf",
+      "correlationMode": "frozen_packet",
+      "execution": "inference"
+    },
+    {
+      "armId": "A-router",
+      "kind": "derived",
+      "modelRequired": true,
+      "allowedTools": [
+        "get_active_transactions",
+        "get_backup_history",
+        "get_blocking_snapshot",
+        "get_deadlock_graph",
+        "get_log_space",
+        "get_recent_incident_counts",
+        "runbook_search"
+      ],
+      "retrievalMode": "hybrid_rrf",
+      "correlationMode": "frozen_packet",
+      "execution": "derive_B1_else_A-tools"
+    },
+    {
+      "armId": "B0-majority-no-action-v1",
+      "kind": "baseline",
+      "modelRequired": false,
+      "allowedTools": [],
+      "retrievalMode": "none",
+      "correlationMode": "frozen_packet",
+      "execution": "derived"
+    },
+    {
+      "armId": "B1-rules-v1",
+      "kind": "baseline",
+      "modelRequired": false,
+      "allowedTools": [],
+      "retrievalMode": "none",
+      "correlationMode": "frozen_packet",
+      "execution": "config/baselines/rules-v1.json"
+    },
+    {
+      "armId": "B2-lexical-v1",
+      "kind": "baseline",
+      "modelRequired": false,
+      "allowedTools": ["runbook_search"],
+      "retrievalMode": "lexical_fulltext",
+      "correlationMode": "frozen_packet",
+      "execution": "derived"
+    },
+    {
+      "armId": "B2-vector-v1",
+      "kind": "baseline",
+      "modelRequired": false,
+      "allowedTools": ["runbook_search"],
+      "retrievalMode": "vector_exact",
+      "correlationMode": "frozen_packet",
+      "execution": "derived"
+    },
+    {
+      "armId": "B2-hybrid-v1",
+      "kind": "baseline",
+      "modelRequired": false,
+      "allowedTools": ["runbook_search"],
+      "retrievalMode": "hybrid_rrf",
+      "correlationMode": "frozen_packet",
+      "execution": "derived"
+    },
+    {
+      "armId": "B3-oracle-packet-v1",
+      "kind": "evaluator",
+      "modelRequired": false,
+      "allowedTools": [],
+      "retrievalMode": "oracle_runbook",
+      "correlationMode": "frozen_packet",
+      "execution": "evaluator_only"
+    }
+  ]
+}

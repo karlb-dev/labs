@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "logwarden-standard-v1",
+  "tier": "standard",
+  "scenarioCatalog": "config/scenarios/standard-v1.json",
+  "runbookCorpus": "config/runbooks/primary-v1.json",
+  "agentArms": "config/agent-arms.json",
+  "decodeConfigs": "config/decode.json",
+  "rulesBaseline": "config/baselines/rules-v1.json",
+  "embeddingProfile": "qwen3-embedding-0.6b",
+  "targetProfiles": [
+    "muse-glimmer-30b",
+    "gemma-4-31b",
+    "olmo-3.1-32b-instruct",
+    "qwen-3.8-27b"
+  ],
+  "qualityRoles": ["calibration", "test_id", "test_variant_holdout", "test_unknown"],
+  "mandatoryInferenceArms": ["A-direct", "A-tools"],
+  "retrievalArm": {
+    "armId": "A-rag",
+    "eligibility": "expected_runbooks_nonempty"
+  },
+  "derivedArms": ["A-router"],
+  "baselines": [
+    "B0-majority-no-action-v1",
+    "B1-rules-v1",
+    "B2-lexical-v1",
+    "B2-vector-v1",
+    "B2-hybrid-v1",
+    "B3-oracle-packet-v1"
+  ],
+  "workerCount": 16,
+  "oneResidentChatModel": true,
+  "agentBudget": {
+    "maxModelTurns": 4,
+    "maxToolCalls": 4,
+    "maxSameToolCalls": 2,
+    "maxToolResultChars": 4000,
+    "maxTotalToolResultChars": 12000,
+    "maxWallTimeSeconds": 180
+  },
+  "controls": {
+    "subsetEpisodes": 96,
+    "roles": ["test_id", "test_unknown"],
+    "selection": "hash-stratified-family-regime-v1",
+    "inferenceArm": "A-tools"
+  },
+  "statistics": {
+    "unit": "episode",
+    "resamplingGroup": "scenario_group_id",
+    "paired": true,
+    "bootstrapReplicates": 10000,
+    "permutationReplicates": 1000,
+    "alpha": 0.05,
+    "multipleComparison": "Holm",
+    "primaryHypothesisFamilySize": 10,
+    "powerTarget": 0.8,
+    "powerEffectAbsolute": 0.1,
+    "powerBaseAccuracy": 0.8
+  },
+  "safety": {
+    "liveRemediation": false,
+    "writeTools": false,
+    "confirmedViolationTolerance": 0
+  }
+}
