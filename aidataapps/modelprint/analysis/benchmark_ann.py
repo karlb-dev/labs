@@ -120,7 +120,7 @@ def persist_neighbors(search_run, query_id, rows):
 summary={"schemaVersion":1,"runId":run_id,"campaignId":campaign,"queryTarget":args.queries,"k":ks,"oversamplingMultipliers":[1,2,5,10],"spaces":{}}
 table_rows=[]
 try:
-  cursor.execute("ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES=ON");conn.commit()
+  conn.autocommit(True);cursor.execute("ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES=ON");conn.autocommit(False)
   for representation,space in spaces.items():
     source_count=int(pd.read_sql(f"SELECT COUNT(*) count FROM {space['source']}",conn).iloc[0]["count"])
     if source_count<100: summary["spaces"][representation]={"disposition":"NOT_RUN_INSUFFICIENT_CORPUS","achievedMaximum":source_count};continue

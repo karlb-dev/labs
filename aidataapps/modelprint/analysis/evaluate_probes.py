@@ -123,7 +123,8 @@ def reliability_bins(truth,prob,bins=15):
   return output
 def conformal_q(prob,truth,alpha=.1):
   score=1-prob[np.arange(len(truth)),truth];level=min(1,math.ceil((len(score)+1)*(1-alpha))/len(score));return float(np.quantile(score,level,method="higher"))
-def pipeline(alpha,seed):return make_pipeline(StandardScaler(),SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True))
+def classifier(alpha,seed):return SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True)
+def pipeline(alpha,seed):return make_pipeline(StandardScaler(),classifier(alpha,seed))
 def choose_alpha(X,y,mask,groups):
   indices=np.flatnonzero(mask);splitter=GroupKFold(n_splits=3);best=None
   for alpha in [1e-5,1e-4,1e-3]:
@@ -183,10 +184,12 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
   else:
     alpha,cv_scores=choose_alpha(X,y,fit_mask,groups);model=pipeline(alpha,SEED);model.fit(X[fit_mask],y[fit_mask]);temperature=fit_temp(model.decision_function(X[cal_mask]),y[cal_mask])
     cal_prob=softmax(model.decision_function(X[cal_mask]),temperature);q=conformal_q(cal_prob,y[cal_mask])
+    null_scaler=StandardScaler();null_train=null_scaler.fit_transform(X[fit_mask]);null_cal=null_scaler.transform(X[cal_mask])
+    null_suites={suite:null_scaler.transform(X[mask]) for suite,mask in active_suites.items()}
     def one_null(index):
       with threadpool_limits(limits=1):
-        rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[fit_mask],shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(X[cal_mask]),shuffled[cal_mask])
-        return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(X[mask]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
+        rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=classifier(alpha,SEED+index+1);candidate.fit(null_train,shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(null_cal),shuffled[cal_mask])
+        return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(null_suites[suite]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
     null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
   rep={"alpha":alpha,"groupedCvMacroF1":cv_scores,"temperature":temperature,"conformalQ90":q,"suites":{},"lofo":{}}
   for suite,mask in active_suites.items():
@@ -214,22 +217,27 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
     out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];lofo_predictions.append(out)
   if lofo_metrics:
     eligible=[value for value in lofo_metrics.values() if value["rows"]>=100] or list(lofo_metrics.values());macro=[value["macroF1"] for value in eligible]
-    def one_lofo_null(index):
-      with threadpool_limits(limits=1):
-        rng=np.random.default_rng(SEED+7000000+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);scores=[];eligible_scores=[]
-        for family,family_train,family_cal,family_test,row_count in lofo_specs:
-          candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[family_train],shuffled[family_train]);temp=fit_temp(candidate.decision_function(X[family_cal]),shuffled[family_cal])
-          value=f1_score(shuffled[family_test],softmax(candidate.decision_function(X[family_test]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0)
-          scores.append(value)
-          if row_count>=100:eligible_scores.append(value)
-        selected_scores=eligible_scores or scores;return {"mean":float(np.mean(selected_scores)),"minimum":float(np.min(selected_scores))}
     if resume_ready:
       resumed_lofo=pd.read_csv(lofo_null_path)
       if len(resumed_lofo)!=args.permutations or not {"mean","minimum"}.issubset(resumed_lofo.columns):raise SystemExit(f"Incomplete LOFO null checkpoint for {name}")
       mean_null=resumed_lofo["mean"].tolist();minimum_null=resumed_lofo["minimum"].tolist()
     else:
-      lofo_null=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_lofo_null)(index) for index in range(args.permutations)) if args.permutations else []
-      mean_null=[row["mean"] for row in lofo_null];minimum_null=[row["minimum"] for row in lofo_null]
+      shuffled_nulls=[]
+      for index in range(args.permutations):
+        rng=np.random.default_rng(SEED+7000000+rep_index*100003+index);shuffled_nulls.append(permute_labels(y,groups,rng))
+      family_nulls=[]
+      for family,family_train,family_cal,family_test,row_count in lofo_specs:
+        family_scaler=StandardScaler();family_train_x=family_scaler.fit_transform(X[family_train]);family_cal_x=family_scaler.transform(X[family_cal]);family_test_x=family_scaler.transform(X[family_test])
+        def one_family_null(index):
+          with threadpool_limits(limits=1):
+            shuffled=shuffled_nulls[index];candidate=classifier(alpha,SEED+index+1);candidate.fit(family_train_x,shuffled[family_train]);temp=fit_temp(candidate.decision_function(family_cal_x),shuffled[family_cal])
+            return f1_score(shuffled[family_test],softmax(candidate.decision_function(family_test_x),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0)
+        values=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_family_null)(index) for index in range(args.permutations)) if args.permutations else []
+        family_nulls.append((row_count,values))
+      mean_null=[];minimum_null=[]
+      for index in range(args.permutations):
+        scores=[values[index] for _,values in family_nulls];eligible_scores=[values[index] for row_count,values in family_nulls if row_count>=100];selected_scores=eligible_scores or scores
+        mean_null.append(float(np.mean(selected_scores)));minimum_null.append(float(np.min(selected_scores)))
     lowest=min(eligible,key=lambda value:value["macroF1"])
     rep["lofo"]={"families":lofo_metrics,
       "mean":{"macroF1":float(np.mean(macro)),"macroF1Ci95":[float(np.mean([v["macroF1Ci95"][0] for v in eligible])),float(np.mean([v["macroF1Ci95"][1] for v in eligible]))],"families":len(eligible),"permutationNull":{"mean":float(np.mean(mean_null)),"p95":float(np.quantile(mean_null,.95))}},
