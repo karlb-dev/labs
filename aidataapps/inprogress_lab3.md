@@ -63,12 +63,16 @@ Observed at `2026-08-23T02:40:15Z` from the launch shell:
 - Python: `3.13.15`
 - GitHub SSH read/write authentication: passed (`git ls-remote` and branch
   push)
-- Docker: not installed on this fresh VM
-- GPU/service ownership: no vLLM, EngineCore, generator, watchdog, Docker
-  daemon, or Lab 2 service process was present
+- Docker: Engine 29.7.2, Compose 5.5.0, rootless `fuse-overlayfs`
+- NVIDIA Container Toolkit: 1.20.0; generated CDI spec
+- GPU/service ownership: Lab 3 rootless Docker daemon active; no vLLM,
+  EngineCore, generator, watchdog, or Lab 2 service process is present
+- SQL Server: 2025 RTM-CU8 `17.0.4075.5`, healthy on reserved port 1434;
+  exact FTS package `17.0.4075.5-1`, `IsFullTextInstalled=1`; derived image
+  `sha256:eb4ee252ae0ff6a18b5b40e05eea283e251ee69fbe8926e28def6d0adb43f95f`
 
-A real CUDA allocation/synchronization hard gate and Docker/runtime version
-capture remain required before any model-scale work.
+The real CUDA allocation/synchronization hard gate passed. Container-level CUDA
+and model port gates remain required before model-scale work.
 
 ## Planned isolated resources
 
@@ -88,10 +92,12 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 ## Active processes and checkpoints
 
 - Long-running scientific process: none
+- Infrastructure process: rootless Docker is supervised by retained Codex exec
+  cell `64558`; detached children are reaped in this environment
 - Watchdog: not yet implemented or running
 - SQL backup: none
 - Active run ID: none
-- Last durable Git checkpoint: branch creation at base commit `88ea443`
+- Last durable Git checkpoint: `4571495` (`Scaffold LogWarden state of record`)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, implement and launch one
@@ -115,7 +121,9 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next command
-at this checkpoint is the bounded LW-0 intake/scaffold work, not a model run.
+at this checkpoint is to commit the verified runtime adaptation, then run
+`npm run run:init -- --campaign smoke`. If `docker info` fails, rerun
+`./scripts/colab-host-init.sh` or launch the rootless daemon in a retained cell.
 
 ## Completion rule currently in force
 

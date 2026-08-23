@@ -45,3 +45,30 @@ place and receive a later disposition.
   instrumentation-only pre-data change and does not affect episode assignment,
   prompts, arm definitions, labels, or primary outcomes; it adds storage and
   measured overhead that the development gate will quantify.
+- 2026-08-23T03:04:48Z — Installed Docker Engine 29.7.2, Compose 5.5.0,
+  NVIDIA Container Toolkit 1.20.0, and rootless runtime prerequisites. The
+  CUDA hard gate had already passed before installation. Under the Codex PTY,
+  a `nohup`-detached rootless daemon was reaped when its launching command
+  exited, so this session supervises `dockerd-rootless.sh` in a retained
+  foreground execution cell. This is an environment-lifecycle adaptation only;
+  it does not change container images, ports, data, or scientific factors.
+- 2026-08-23T03:16:32Z — The pinned SQL Server base image did not include the
+  SQL Server 2025 apt repository, and nested rootless BuildKit cannot mount a
+  fresh `/proc` for Dockerfile `RUN`. Added the official Ubuntu 24.04 SQL 2025
+  repository to the canonical Dockerfile. For this Colab profile, installed
+  the package in a live host-namespace build container and committed it while
+  running, restoring the base user/entrypoint/CMD. Engine label
+  `17.0.4075.5` and package `mssql-server-fts=17.0.4075.5-1` match exactly.
+  Derived image ID is
+  `sha256:eb4ee252ae0ff6a18b5b40e05eea283e251ee69fbe8926e28def6d0adb43f95f`;
+  SQL runtime probes returned product `17.0.4075.5` and full-text installed
+  `1`. Impact: build mechanism only; full-text capability is retained rather
+  than falling back to BM25.
+- 2026-08-23T03:16:32Z — A local diagnostic process listing exposed the
+  generated SA password before any migrations, principals, workload, or
+  scientific data existed. Rotated the SA, lab, and agent credentials; removed
+  host-side password command arguments; recreated SQL with the preserved empty
+  data volume; and revalidated login/full-text health. Nested rootless Docker
+  could not complete the old SQL process stop, so the already-idle pre-schema
+  process required an exact host PID kill after its grace period. Impact: no
+  evidence or results; credentials remain ignored and are not mirrored.

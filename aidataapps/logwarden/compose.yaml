@@ -7,6 +7,7 @@ services:
       dockerfile: docker/mssql-fts/Dockerfile
       args:
         SQLSERVER_BASE_IMAGE: ${SQLSERVER_BASE_IMAGE:-mcr.microsoft.com/mssql/server@sha256:4bab24f36c1ecd48e85f7d37df26e6bf301641d84c3fe652f9a0dcc947d512e1}
+        MSSQL_FTS_PACKAGE_VERSION: ${MSSQL_FTS_PACKAGE_VERSION:-17.0.4075.5-1}
     image: ${SQLSERVER_FTS_IMAGE:-aidataapps-logwarden-mssql-fts:cu8}
     labels:
       ai.labs.lab: logwarden

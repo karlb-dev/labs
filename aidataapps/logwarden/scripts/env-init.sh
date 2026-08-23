@@ -39,16 +39,20 @@ nvidia-smi >/dev/null
 npm ci
 docker compose config --quiet
 if ((skip_build == 0)); then
-  docker compose build --pull sqlserver
+  if [[ "${CONTAINER_RUNTIME_PROFILE:-}" == "colab-rootless" ]]; then
+    "$script_dir/build-mssql-fts-colab.sh"
+  else
+    docker compose build --pull sqlserver
+  fi
 fi
 docker compose up --detach sqlserver
 
 echo "Waiting for isolated SQL Server 2025 on port ${SQLSERVER_PORT}..."
 ready=0
 for _ in $(seq 1 120); do
-  if timeout 15s docker compose exec -T sqlserver /opt/mssql-tools18/bin/sqlcmd \
-    -S "localhost,${SQLSERVER_INTERNAL_PORT}" -U sa -P "$MSSQL_SA_PASSWORD" \
-    -C -Q "SELECT 1" -b -o /dev/null 2>/dev/null; then
+  if timeout 15s docker compose exec -T sqlserver /bin/bash -lc \
+    'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -S "localhost,$MSSQL_TCP_PORT" -U sa -C -Q "SELECT 1" -b -o /dev/null' \
+    2>/dev/null; then
     ready=1
     break
   fi
@@ -58,9 +62,8 @@ if ((ready == 0)); then
   echo "SQL Server did not become ready; inspect docker compose logs sqlserver." >&2
   exit 3
 fi
-timeout 30s docker compose exec -T sqlserver /opt/mssql-tools18/bin/sqlcmd \
-  -S "localhost,${SQLSERVER_INTERNAL_PORT}" -U sa -P "$MSSQL_SA_PASSWORD" -C \
-  -Q "SELECT @@VERSION AS version, FULLTEXTSERVICEPROPERTY('IsFullTextInstalled') AS fulltext_installed" -W
+timeout 30s docker compose exec -T sqlserver /bin/bash -lc \
+  'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -S "localhost,$MSSQL_TCP_PORT" -U sa -C -Q "SELECT @@VERSION AS version, FULLTEXTSERVICEPROPERTY('"'"'IsFullTextInstalled'"'"') AS fulltext_installed" -W -b'
 
 if ((with_embedding == 1)); then
   docker compose --profile embedding pull embedding-qwen
