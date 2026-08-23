@@ -324,3 +324,4 @@ obj/
 CMakeCache.txt
 CMakeFiles/
 cmake-build-*/
+aidataapps/ghosttype/backups/
