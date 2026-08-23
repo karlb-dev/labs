@@ -31,6 +31,10 @@ const macProfileSchema = z.object({
   // orchestration and sends servedModelId as the model parameter.
   baseUrl: z.string().url().optional(),
   servedModelId: z.string().optional(),
+  // Speculative-decoding drafter served alongside the model (e.g. the DFlash
+  // block-diffusion drafter Muse Glimmer ships with). Configured on the
+  // serving process, recorded here so results disclose it.
+  draftModel: z.string().optional(),
 });
 
 const macEmbeddingSchema = z.object({

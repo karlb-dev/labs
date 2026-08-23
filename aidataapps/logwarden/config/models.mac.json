@@ -102,7 +102,8 @@
       "maxTokensOverride": 1400
     },
     "muse-glimmer-30b-mlx": {
-      "description": "Muse Glimmer 30B via mlx-vlm server (mlx-community 4-bit); the platform-native serving of the same base model as the Foundry ONNX bundle. Requires mlx-vlm (image-text model type), not mlx-lm.",
+      "description": "Muse Glimmer 30B via mlx-vlm server (mlx-community 4-bit) with the official DFlash block-diffusion drafter for speculative decoding; the platform-native serving of the same base model as the Foundry ONNX bundle. Requires mlx-vlm (image-text model type), not mlx-lm.",
+      "draftModel": "meta-models/Muse-Glimmer-30B-assistant",
       "family": "muse",
       "foundryAlias": "mlx-community/Muse-Glimmer-30B-4bit",
       "foundryVariantId": "",

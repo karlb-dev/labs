@@ -165,13 +165,13 @@ async function chat(variantId: string, messages: Array<{ role: string; content: 
     const latencyMs = Date.now() - startedAt;
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
     const body = await response.json() as {
-      choices?: Array<{ message?: { content?: string; reasoning?: string } }>;
+      choices?: Array<{ message?: { content?: string; reasoning?: string; reasoning_content?: string } }>;
       usage?: { completion_tokens?: number; prompt_tokens?: number };
     };
     const message = body.choices?.[0]?.message;
     return {
       raw: message?.content ?? "",
-      reasoning: message?.reasoning ?? "",
+      reasoning: message?.reasoning ?? message?.reasoning_content ?? "",
       latencyMs,
       completionTokens: body.usage?.completion_tokens ?? 0,
       promptTokens: body.usage?.prompt_tokens ?? 0,

@@ -739,3 +739,18 @@ place and receive a later disposition.
   healthy at 131/600 executed, zero failed/unclean, and zero XE loss counters;
   all 24 test files/77 tests and TypeScript build pass. Durable implementation
   commit: `91c5e7d`.
+- 2026-08-23T09:55:00.000Z — Enabled the speculative decoding Muse Glimmer
+  ships with: mlx-vlm upgraded 0.6.12 → 0.6.15, which natively supports the
+  official DFlash block-diffusion drafter (meta-models/
+  Muse-Glimmer-30B-assistant, model_type muse_glimmer_assistant, 5 layers,
+  16-token blocks; 5.1 GB) via --draft-model. The speculated serving decodes
+  36.9 tok/s effective (23.9 s/episode) versus 22.6 (38.4 s) plain and 16.4
+  (52.1 s) for the Foundry ONNX bundle — +63% from speculation, 2.2× the
+  ONNX serving — with decisions identical across all three Muse servings
+  (verification is lossless at temperature 0), including the same two
+  severity judgment calls. 0.6.15 also splits Muse's reasoning channel into
+  message.reasoning_content, which the harness now reads (legal
+  reasoning_field repair). The plain-MLX run is retained as
+  muse-glimmer-30b-mlx-nospec-ablation; the headline muse-glimmer-30b-mlx
+  row now carries the drafter, disclosed in the registry (draftModel field)
+  and report. This is Muse's practical speed ceiling on this stack.
