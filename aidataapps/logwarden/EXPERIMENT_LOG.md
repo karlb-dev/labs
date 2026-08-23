@@ -522,3 +522,20 @@ place and receive a later disposition.
   gate journal records were hash-validated and inserted into SQL. The full
   suite now passes 17 files and 57 tests. This gate authorizes the bounded
   Qwen corpus embedding build, not a long chat-model campaign.
+
+- 2026-08-23T06:32:00.000Z — Mac-plane revalidation of the merged mainline
+  (through 171c393): 44/44 tests, migrations through 025 + server 007 (XE v3)
+  applied, doctor PASS, SQL integration 8/8, tool-security gate PASS. Ran the
+  governed injector flow end to end on the emulated instance (10-episode
+  smoke schedule injector-gate-v2): all injectors succeeded with verified
+  cleanup; capture verification initially failed 2 episodes whose evidence
+  expects sql_batch_completed while the Node driver ships the tokenized
+  payload as sp_executesql (rpc_completed) — capture-verify now treats
+  batch/rpc completion as one client-batch evidence family (full-token match
+  unchanged), and verification passes 10/10. Scenario-injector gate PASS
+  (34 checks) after registering the standard-v1 scenario manifest on the
+  building campaign. Runbook corpus built on the mac (60 runbooks, 484
+  chunks, Foundry embeddings, full-text populated); runbook lexical gate
+  PASS (11 cases). The scenario-catalog gate still fails here only on
+  full-campaign schedule state (600 episodes across all roles); that is
+  Colab campaign-prep, not a mac defect.
