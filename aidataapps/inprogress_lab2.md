@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 12:20 UTC
+Last manually updated: 2026-08-23 12:59 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline before this update: `c5a96cf` (run `git rev-parse HEAD`
+- latest pushed baseline before this update: `f174081` (run `git rev-parse HEAD`
   because later watchdog-safe milestone commits may supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
@@ -163,15 +163,21 @@ The prior-scorer cross-likelihood fill rotation is also complete:
   are evicted; only embedding ports 8001 and 8002 remain on the GPU
 
 Feature construction is active. The 42,004-generation reference-token/segment
-transaction and 81,176 style/scalar artifacts are complete. BGE completed
-2,937 prompt plus 81,176 whole-output embeddings at 12:16:56 UTC. Qwen prompt
-and 81,176 whole-output embeddings are complete; an idempotent Qwen-only pass
-is filling the 520,083 eligible segment vectors. It resumed with 435,219 rows
-missing after a SQL-native chunk ending in a split UTF-16 surrogate was
-isolated and handled by a logged U+FFFD input repair. Run
-`npm run features:audit` only after that process exits successfully. Controls,
-derived features, evaluations, reports, BACPAC, archive, mirror, and the final
-reproducibility run remain.
+transaction, 81,176 style/scalar artifacts, both prompt spaces, and both
+81,176-row whole-output spaces are complete. The Qwen-only process is filling
+520,083 eligible segment vectors; at this update it has about 235,000 total
+persisted (150,528 in the current 435,219-row resume). Split UTF-16 surrogate
+boundaries from SQL-native chunks are repaired only at embedding input with a
+logged U+FFFD policy. Run `npm run features:audit` after the process exits.
+
+Controls (2,612 items), residual/likelihood derived features, phrase features,
+SQL geometry, and pairwise evaluation are complete and mirrored. SQL geometry
+shows prompt dominance for Qwen semantic (model-over-prompt neighbor win rate
+0.0383) and strong model alignment for style/fingerprint (0.9857/0.9791).
+Pairwise hard-subset AUROC is 0.5653, disposition `NO_SUPPORTED_SIGNAL`. Full
+200-permutation probes and clustering are active concurrently. Search freeze,
+retrieval/chunks, OOD, ANN, reports, BACPAC, archive, and final reproduction
+remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
