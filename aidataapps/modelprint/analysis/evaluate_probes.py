@@ -20,6 +20,7 @@ from threadpoolctl import threadpool_limits
 SEED=20260822
 parser=argparse.ArgumentParser();parser.add_argument("--run");parser.add_argument("--tier",default="full",choices=["smoke","dev","standard","full"])
 parser.add_argument("--permutations",type=int,default=200);parser.add_argument("--bootstrap",type=int,default=1000);parser.add_argument("--jobs",type=int,default=12)
+parser.add_argument("--resume-completed",action="store_true",help="Reuse a representation only when its fitted model and complete null tables exist")
 parser.add_argument("--representations",help="Comma-separated IDs; default all available");args=parser.parse_args()
 lab=Path(__file__).resolve().parents[1];run=Path(args.run or lab/(lab/".current-run").read_text().strip()).resolve()
 freeze=json.loads((run/"manifests/campaign-freeze.json").read_text());primary=int(freeze["campaignId"]);models=freeze["campaign"]["profiles"];run_id=run.name
@@ -160,18 +161,33 @@ def permute_labels(y,groups,rng):
 
 y=base.label.to_numpy();groups=base.prompt_group_id.to_numpy();results={"schemaVersion":2,"runId":run_id,"campaignIds":campaign_ids,"campaignHash":freeze["campaignHash"],
  "tier":args.tier,"models":models,"rows":len(base),"dataRoles":{"train":int(train.sum()),"calibration":int(cal.sum()),**{key:int(mask.sum()) for key,mask in suite_masks.items()}},
- "classifier":"standardized-sgd-multinomial-logistic","permutations":args.permutations,"bootstrap":args.bootstrap,"representations":{}}
+ "classifier":"standardized-sgd-multinomial-logistic","permutations":args.permutations,"bootstrap":args.bootstrap,
+ "execution":{"jobs":args.jobs,"resumeCompleted":args.resume_completed,"resumedRepresentations":[]},"representations":{}}
 prediction_frames=[];cursor=conn.cursor();artifact_paths=[]
 for rep_index,(name,(X,available)) in enumerate(representations.items()):
   fit_mask=train&available;cal_mask=cal&available
   if len(set(y[fit_mask]))<len(models) or len(set(y[cal_mask]))<len(models):continue
-  alpha,cv_scores=choose_alpha(X,y,fit_mask,groups);model=pipeline(alpha,SEED);model.fit(X[fit_mask],y[fit_mask]);temperature=fit_temp(model.decision_function(X[cal_mask]),y[cal_mask])
-  cal_prob=softmax(model.decision_function(X[cal_mask]),temperature);q=conformal_q(cal_prob,y[cal_mask]);active_suites={key:(mask&available) for key,mask in suite_masks.items() if (mask&available).sum()}
-  def one_null(index):
-    with threadpool_limits(limits=1):
-      rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[fit_mask],shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(X[cal_mask]),shuffled[cal_mask])
-      return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(X[mask]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
-  null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
+  active_suites={key:(mask&available) for key,mask in suite_masks.items() if (mask&available).sum()};model_path=run/f"manifests/probe-{name}.pkl"
+  suite_null_paths={suite:run/f"tables/permutation-probe-{name}-{suite}.csv" for suite in active_suites};lofo_null_path=run/f"tables/permutation-probe-{name}-lofo.csv"
+  resume_ready=bool(args.resume_completed and model_path.exists() and lofo_null_path.exists() and all(path.exists() for path in suite_null_paths.values()))
+  if resume_ready:
+    results["execution"]["resumedRepresentations"].append(name)
+    model_info=pickle.loads(model_path.read_bytes())
+    if model_info.get("models")!=models:raise SystemExit(f"Resume model labels drift for {name}")
+    model=model_info["pipeline"];alpha=float(model_info["alpha"]);temperature=float(model_info["temperature"]);q=float(model_info["conformalQ"])
+    selected_alpha,cv_scores=choose_alpha(X,y,fit_mask,groups)
+    if selected_alpha!=alpha:raise SystemExit(f"Resume alpha drift for {name}: {selected_alpha} != {alpha}")
+    null_columns={suite:pd.read_csv(path)["value"].tolist() for suite,path in suite_null_paths.items()}
+    if any(len(values)!=args.permutations for values in null_columns.values()):raise SystemExit(f"Incomplete suite null checkpoint for {name}")
+    null_rows=[{suite:null_columns[suite][index] for suite in active_suites} for index in range(args.permutations)]
+  else:
+    alpha,cv_scores=choose_alpha(X,y,fit_mask,groups);model=pipeline(alpha,SEED);model.fit(X[fit_mask],y[fit_mask]);temperature=fit_temp(model.decision_function(X[cal_mask]),y[cal_mask])
+    cal_prob=softmax(model.decision_function(X[cal_mask]),temperature);q=conformal_q(cal_prob,y[cal_mask])
+    def one_null(index):
+      with threadpool_limits(limits=1):
+        rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[fit_mask],shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(X[cal_mask]),shuffled[cal_mask])
+        return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(X[mask]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
+    null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
   rep={"alpha":alpha,"groupedCvMacroF1":cv_scores,"temperature":temperature,"conformalQ90":q,"suites":{},"lofo":{}}
   for suite,mask in active_suites.items():
     frame=base.loc[mask].reset_index(drop=True);logits=model.decision_function(X[mask]);raw_prob=softmax(logits);prob=softmax(logits,temperature);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+rep_index),q)
@@ -207,16 +223,21 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
           scores.append(value)
           if row_count>=100:eligible_scores.append(value)
         selected_scores=eligible_scores or scores;return {"mean":float(np.mean(selected_scores)),"minimum":float(np.min(selected_scores))}
-    lofo_null=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_lofo_null)(index) for index in range(args.permutations)) if args.permutations else []
-    mean_null=[row["mean"] for row in lofo_null];minimum_null=[row["minimum"] for row in lofo_null]
+    if resume_ready:
+      resumed_lofo=pd.read_csv(lofo_null_path)
+      if len(resumed_lofo)!=args.permutations or not {"mean","minimum"}.issubset(resumed_lofo.columns):raise SystemExit(f"Incomplete LOFO null checkpoint for {name}")
+      mean_null=resumed_lofo["mean"].tolist();minimum_null=resumed_lofo["minimum"].tolist()
+    else:
+      lofo_null=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_lofo_null)(index) for index in range(args.permutations)) if args.permutations else []
+      mean_null=[row["mean"] for row in lofo_null];minimum_null=[row["minimum"] for row in lofo_null]
     lowest=min(eligible,key=lambda value:value["macroF1"])
     rep["lofo"]={"families":lofo_metrics,
       "mean":{"macroF1":float(np.mean(macro)),"macroF1Ci95":[float(np.mean([v["macroF1Ci95"][0] for v in eligible])),float(np.mean([v["macroF1Ci95"][1] for v in eligible]))],"families":len(eligible),"permutationNull":{"mean":float(np.mean(mean_null)),"p95":float(np.quantile(mean_null,.95))}},
       "minimum":{"macroF1":float(np.min(macro)),"macroF1Ci95":lowest["macroF1Ci95"],"families":len(eligible),"permutationNull":{"mean":float(np.mean(minimum_null)),"p95":float(np.quantile(minimum_null,.95))}}}
-    pd.DataFrame({"mean":mean_null,"minimum":minimum_null}).to_csv(run/f"tables/permutation-probe-{name}-lofo.csv",index=False)
+    pd.DataFrame({"mean":mean_null,"minimum":minimum_null}).to_csv(lofo_null_path,index=False)
     prediction_frames.extend(lofo_predictions)
   results["representations"][name]=rep
-  model_path=run/f"manifests/probe-{name}.pkl";model_path.write_bytes(pickle.dumps({"pipeline":model,"temperature":temperature,"conformalQ":q,"models":models,"alpha":alpha}));artifact_paths.append(str(model_path))
+  model_path.write_bytes(pickle.dumps({"pipeline":model,"temperature":temperature,"conformalQ":q,"models":models,"alpha":alpha}));artifact_paths.append(str(model_path))
 
 predictions=pd.concat(prediction_frames,ignore_index=True) if prediction_frames else pd.DataFrame();predictions.to_parquet(run/"tables/predictions.parquet",index=False);predictions.to_csv(run/"tables/predictions.csv",index=False)
 cursor.execute("INSERT dbo.attribution_models(run_id,model_kind,training_manifest_hash,artifact_json) VALUES(%s,'sgd-multinomial-probes',%s,%s); SELECT SCOPE_IDENTITY()",
