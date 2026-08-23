@@ -30,8 +30,8 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 | GT-3 ScriptDom parse oracle | DONE — 479 pass / 8 package-defect findings / 101 n_a; parser pinned 170.191.0; recompose-v1 frozen |
 | GT-2 catalog contexts (from package catalogs) | DONE — 14 snapshots, 520 objects, 2,440 columns, 0 unparsed; 566/566 must-refs resolve |
 | GT-5 deterministic baselines | DONE — B0–B4 scored in eval.row_scores; H1 floor: max 4/487 exact |
-| GT-7 replay runner + extraction | NEXT |
-| Port gates (4 MLX profiles) | pending |
+| GT-7 replay runner + extraction | DONE — runner live; E4B full pass IN PROGRESS (background) |
+| Port gates (4 MLX profiles) | ready (scripts/port-gate.ts) — run AFTER E4B pass (canaries would evict the resident model) |
 | Mac quality campaign (4 profiles × eligible rows) | pending — the long stage; resumable per request |
 | Scoring + reports + repro | pending |
 
@@ -40,9 +40,16 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 ```bash
 cd /Users/karl/repos/labs/aidataapps/ghosttype
 export PATH=$HOME/.nvm/versions/node/v22.22.1/bin:$PATH
-# next build step is agent work (GT-7 replay runner scripts/run-quality.ts:
-# raw-text transport, candidate-extract-v1, per-request resume rows in
-# completion.requests). Baselines/oracles/catalog re-runs are idempotent.
+# 1. ensure servers: cd ~/repos/foundary && ./chat_hosts.sh start
+# 2. resume/continue the current model pass (skips done rows automatically):
+npm run quality:run -- --profile gemma-4-e4b-mlx --arm M1-packaged --campaign cpu-dev
+# 3. after E4B completes: npm run port:gate           (all 5 profiles)
+# 4. then per target profile (each resumable, run sequentially):
+#    npm run quality:run -- --profile qwen-3.8-27b-mlx  --arm M1-packaged --campaign mac-quality
+#    npm run quality:run -- --profile gemma-4-26b-a4b-mlx --arm M1-packaged --campaign mac-quality
+#    npm run quality:run -- --profile olmo-3.1-32b-mlx  --arm M1-packaged --campaign mac-quality
+#    npm run quality:run -- --profile muse-glimmer-30b-mlx --arm M1-packaged --campaign mac-quality
+# 5. anytime: npm run metrics:compute  (idempotent aggregate + claims)
 ```
 
 ## Notes

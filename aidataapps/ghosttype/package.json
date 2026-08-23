@@ -29,7 +29,8 @@
     "db:backup": "./scripts/export-database.sh backup",
     "db:bacpac": "./scripts/export-database.sh bacpac",
     "run:archive": "node --import tsx scripts/archive-run.ts",
-    "repro": "./repro.sh"
+    "repro": "./repro.sh",
+    "metrics:compute": "node --import tsx scripts/compute-metrics.ts"
   },
   "engines": {
     "node": ">=20.19"
