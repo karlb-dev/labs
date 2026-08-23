@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 12:59 UTC
+Last manually updated: 2026-08-23 13:08 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,8 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline before this update: `f174081` (run `git rev-parse HEAD`
-  because later watchdog-safe milestone commits may supersede this prose)
+- latest pushed milestone: `78ae375`
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -164,20 +163,25 @@ The prior-scorer cross-likelihood fill rotation is also complete:
 
 Feature construction is active. The 42,004-generation reference-token/segment
 transaction, 81,176 style/scalar artifacts, both prompt spaces, and both
-81,176-row whole-output spaces are complete. The Qwen-only process is filling
-520,083 eligible segment vectors; at this update it has about 235,000 total
-persisted (150,528 in the current 435,219-row resume). Split UTF-16 surrogate
-boundaries from SQL-native chunks are repaired only at embedding input with a
-logged U+FFFD policy. Run `npm run features:audit` after the process exits.
+81,176-row whole-output spaces are complete. After 248,832 of 520,083 eligible
+Qwen segment vectors had persisted, the idempotent resume selected the 271,251
+SQL-missing rows and raised only the HTTP batch size from 64 to 256. Adopt
+managed session `78572` / PID 597700. Split UTF-16 surrogate boundaries from
+SQL-native chunks are repaired only at embedding input with a logged U+FFFD
+policy. Run `npm run features:audit` after the process exits.
 
 Controls (2,612 items), residual/likelihood derived features, phrase features,
 SQL geometry, and pairwise evaluation are complete and mirrored. SQL geometry
 shows prompt dominance for Qwen semantic (model-over-prompt neighbor win rate
 0.0383) and strong model alignment for style/fingerprint (0.9857/0.9791).
-Pairwise hard-subset AUROC is 0.5653, disposition `NO_SUPPORTED_SIGNAL`. Full
-200-permutation probes and clustering are active concurrently. Search freeze,
-retrieval/chunks, OOD, ANN, reports, BACPAC, archive, and final reproduction
-remain.
+Pairwise hard-subset AUROC is 0.5653, disposition `NO_SUPPORTED_SIGNAL`.
+Clustering is complete across 15 representation/method combinations: 13 are
+`CLUSTER_VISUAL_ONLY`; prompt-centered HDBSCAN and fingerprint64 k-means are the
+two implementation-classified model-aligned cases. Full 200-permutation probes
+and LOFO rotations are active in session `81458` / PID 565820 with 32 workers;
+the scientific settings remain 200 permutations, 1,000 bootstraps, and the
+same data, seeds, splits, and models. Search freeze, retrieval/chunks, OOD, ANN,
+reports, BACPAC, archive, and final reproduction remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -247,7 +251,7 @@ feature audit is not complete, resume idempotently with:
 
 ```bash
 node --import tsx scripts/build-features.ts --stage embeddings \
-  --embedding-profile qwen3-embedding-0.6b
+  --embedding-profile qwen3-embedding-0.6b --embedding-batch-size 256
 ```
 
 After it exits zero, run `npm run features:audit`. The audit must report
@@ -324,16 +328,9 @@ The active embedding pass replaces the first command below. After it exits
 zero and `npm run features:audit` reports `COMPLETE`, continue with:
 
 ```bash
-npm run controls:build
-npm run derived:build
-npm run phrases:build
 npm run search:freeze
-npm run evaluate:probes
 npm run evaluate:retrieval
 npm run evaluate:chunks
-npm run evaluate:geometry
-npm run evaluate:pairs
-npm run evaluate:clusters
 npm run evaluate:ood
 npm run ann:benchmark
 npm run reports
