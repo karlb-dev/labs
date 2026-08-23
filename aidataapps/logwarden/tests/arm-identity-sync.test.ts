@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   assertAuditableNonModelMetadataDrift,
@@ -42,5 +43,11 @@ describe("pre-freeze arm identity synchronization", () => {
     const noRetrieval = { ...base, armId: "B0-majority-no-action-v1", retrievalMode: "none" as const };
     expect(() => assertAuditableNonModelMetadataDrift(noRetrieval, { ...noRetrieval, toolRegistrySha256: "e".repeat(64) }))
       .toThrow(/execution-relevant drift/);
+  });
+
+  it("scopes prediction guards through their owning campaign jobs", () => {
+    const source = readFileSync(new URL("../scripts/sync-prefreeze-arm-identities.ts", import.meta.url), "utf8");
+    expect(source).not.toContain("prediction.campaign_id");
+    expect(source.match(/INNER JOIN control\.jobs job ON job\.job_id=prediction\.job_id/g)).toHaveLength(3);
   });
 });

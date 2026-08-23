@@ -966,3 +966,11 @@ place and receive a later disposition.
   holds 6,042 MiB. Impact: operational teardown occurred after all Qwen
   requests, receipts, power evidence, sampler shutdown, journal ingestion, and
   reconciliation; no scientific evidence was lost or rerun.
+- 2026-08-23T11:07:46Z — The first pre-freeze baseline-identity
+  synchronization invocation stopped during its read-only inventory query
+  because it scoped predictions by a nonexistent direct `campaign_id` column.
+  Campaign ownership is carried by each prediction's job, so both inventory
+  guards now join `control.jobs` and constrain that owning campaign. Impact:
+  the failure occurred before archive creation, identity updates, evidence
+  insertion, or freeze mutation; all database and scientific rows remained
+  unchanged.

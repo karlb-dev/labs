@@ -85,11 +85,11 @@ try {
         SUM(CASE WHEN retrieval.prediction_id IS NULL THEN 0 ELSE 1 END) retrieval_score_count
       FROM eval.predictions prediction
       INNER JOIN selected ON selected.agent_arm_id=prediction.agent_arm_id
+      INNER JOIN control.jobs job ON job.job_id=prediction.job_id AND job.campaign_id=@campaign
       INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=prediction.episode_id
       LEFT JOIN eval.decision_scores score ON score.prediction_id=prediction.prediction_id
       LEFT JOIN (SELECT DISTINCT prediction_id FROM eval.tool_scores) tool ON tool.prediction_id=prediction.prediction_id
       LEFT JOIN (SELECT DISTINCT prediction_id FROM eval.retrieval_scores) retrieval ON retrieval.prediction_id=prediction.prediction_id
-      WHERE prediction.campaign_id=@campaign
       GROUP BY prediction.agent_arm_id,truth.split_role
       ORDER BY prediction.agent_arm_id,truth.split_role;
     `);
@@ -113,11 +113,13 @@ try {
       WITH selected AS (SELECT CONVERT(varchar(80),value) agent_arm_id FROM OPENJSON(@arms)),
       targets AS (SELECT CONVERT(varchar(80),value) model_profile_id FROM OPENJSON(@targets))
       SELECT
-        (SELECT COUNT(*) FROM eval.predictions prediction INNER JOIN selected ON selected.agent_arm_id=prediction.agent_arm_id
+        (SELECT COUNT(*) FROM eval.predictions prediction INNER JOIN control.jobs job ON job.job_id=prediction.job_id
+          INNER JOIN selected ON selected.agent_arm_id=prediction.agent_arm_id
           INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=prediction.episode_id
-          WHERE prediction.campaign_id=@campaign AND truth.split_role LIKE 'test[_]%') protected_predictions,
-        (SELECT COUNT(*) FROM eval.predictions prediction INNER JOIN targets ON targets.model_profile_id=prediction.model_profile_id
-          WHERE prediction.campaign_id=@campaign) target_predictions,
+          WHERE job.campaign_id=@campaign AND truth.split_role LIKE 'test[_]%') protected_predictions,
+        (SELECT COUNT(*) FROM eval.predictions prediction INNER JOIN control.jobs job ON job.job_id=prediction.job_id
+          INNER JOIN targets ON targets.model_profile_id=prediction.model_profile_id
+          WHERE job.campaign_id=@campaign) target_predictions,
         (SELECT COUNT(*) FROM telemetry.model_service_samples sample INNER JOIN targets ON targets.model_profile_id=sample.model_profile_id) target_samples,
         (SELECT COUNT(*) FROM control.jobs job INNER JOIN selected ON selected.agent_arm_id=job.agent_arm_id
           WHERE job.campaign_id=@campaign AND job.status NOT IN ('completed','failed','stopped')) active_jobs,
