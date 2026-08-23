@@ -54,8 +54,14 @@ function parseModelReply(raw: string): ParsedReply {
   const thinkStripped = text.replace(/^<think>[\s\S]*?<\/think>\s*/u, "");
   if (thinkStripped !== text) { text = thinkStripped.trim(); repairs.push("think_strip"); }
 
-  // Muse visible-variant channel markers: keep only the final channel's message.
-  if (text.includes("<|channel|>")) {
+  // Muse visible-variant channels: reasoning arrives as ` to=self<|message|>…`
+  // and the answer as `<|start|>assistant to=user<|message|>…`; keep only the
+  // last user-directed message. (Also accept the `<|channel|>final` framing.)
+  if (text.includes("to=user<|message|>")) {
+    const finals = [...text.matchAll(/to=user<\|message\|>([\s\S]*?)(?:<\|eom\|>|<\|end\|>|<\|return\|>|<\|start\|>|$)/gu)];
+    const last = finals.at(-1)?.[1];
+    if (last !== undefined) { text = last.trim(); repairs.push("channel_strip"); }
+  } else if (text.includes("<|channel|>")) {
     const finals = [...text.matchAll(/<\|channel\|>final<\|message\|>([\s\S]*?)(?:<\|eom\|>|<\|end\|>|<\|return\|>|$)/gu)];
     const last = finals.at(-1)?.[1];
     if (last !== undefined) { text = last.trim(); repairs.push("channel_strip"); }
@@ -140,12 +146,14 @@ const episodeFileSchema = z.object({
   })),
 });
 
+let endpointBase = openAiBaseUrl;
+
 async function chat(variantId: string, messages: Array<{ role: string; content: string }>, maxTokens: number, temperature: number) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 600_000);
   const startedAt = Date.now();
   try {
-    const response = await fetch(`${openAiBaseUrl}/chat/completions`, {
+    const response = await fetch(`${endpointBase}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ model: variantId, messages, max_tokens: maxTokens, temperature }),
@@ -176,29 +184,43 @@ const episodeFile = episodeFileSchema.parse(
   JSON.parse(readFileSync(valueAfter("--episodes") ?? `${LAB_ROOT}/config/mac-eval-episodes.json`, "utf8")),
 );
 const runDirectory = resolveRunDirectory();
-const { temperature, maxTokens, maxModelTurns } = episodeFile.decodeConfig;
+const { temperature, maxModelTurns } = episodeFile.decodeConfig;
+const maxTokens = profile.maxTokensOverride ?? episodeFile.decodeConfig.maxTokens;
 const promptPrefix = profile.promptPrefix ?? "";
 
-const defaultCache = cacheLocation();
+const externalEndpoint = profile.baseUrl !== undefined;
+const defaultCache = externalEndpoint ? "" : cacheLocation();
 let cacheSwitched = false;
-if (profile.cacheDir && profile.cacheDir !== defaultCache) {
+if (!externalEndpoint && profile.cacheDir && profile.cacheDir !== defaultCache) {
   console.log(`Switching Foundry cache to ${profile.cacheDir}`);
   setCacheLocation(profile.cacheDir);
   cacheSwitched = true;
 }
 
 try {
-  if (cacheSwitched) await restartServer();
-  else await ensureServer();
+  let loadTimeMs = 0;
+  let variantId: string;
+  if (externalEndpoint) {
+    // e.g. mlx_lm.server for models the Foundry catalog lacks. The server is
+    // managed outside this script; verify it answers before spending episodes.
+    endpointBase = profile.baseUrl!.replace(/\/$/, "");
+    variantId = profile.servedModelId ?? profile.foundryAlias;
+    const probe = await fetch(`${endpointBase}/models`).catch(() => null);
+    if (!probe?.ok) throw new Error(`No OpenAI-compatible server at ${endpointBase}; start it first.`);
+    console.log(`Using external endpoint ${endpointBase} for ${variantId}; running ${episodeFile.episodes.length} episodes`);
+  } else {
+    if (cacheSwitched) await restartServer();
+    else await ensureServer();
 
-  // One resident chat model at a time, mirroring the lab's residency rule.
-  for (const [key, other] of Object.entries(registry.profiles)) {
-    if (key !== profileKey && !other.cacheDir) unloadModel(other.foundryAlias);
+    // One resident chat model at a time, mirroring the lab's residency rule.
+    for (const [key, other] of Object.entries(registry.profiles)) {
+      if (key !== profileKey && !other.cacheDir && !other.baseUrl) unloadModel(other.foundryAlias);
+    }
+    if (!profile.cacheDir) foundry(["model", "download", profile.foundryAlias]);
+    loadTimeMs = loadModelTimed(profile.foundryAlias);
+    variantId = resolveVariantId(profile.foundryAlias, profile.foundryVariantId);
+    console.log(`Loaded ${variantId} in ${(loadTimeMs / 1000).toFixed(1)}s; running ${episodeFile.episodes.length} episodes`);
   }
-  if (!profile.cacheDir) foundry(["model", "download", profile.foundryAlias]);
-  const loadTimeMs = loadModelTimed(profile.foundryAlias);
-  const variantId = resolveVariantId(profile.foundryAlias, profile.foundryVariantId);
-  console.log(`Loaded ${variantId} in ${(loadTimeMs / 1000).toFixed(1)}s; running ${episodeFile.episodes.length} episodes`);
 
   const rows: Array<Record<string, unknown>> = [];
   for (const episode of episodeFile.episodes) {
@@ -291,6 +313,7 @@ try {
     profileKey,
     variantId,
     promptPrefix,
+    decode: { temperature, maxTokens, maxTokensOverridden: profile.maxTokensOverride !== undefined },
     executionProvider: profile.executionProvider,
     fileSizeMb: profile.fileSizeMb,
     loadTimeMs,
@@ -317,7 +340,7 @@ try {
   console.log(JSON.stringify(summary.metrics, null, 2));
   console.log(`Rows: tables/mac-eval/${profileKey}.jsonl; summary: metrics/mac-eval-${profileKey}.json`);
 
-  unloadModel(profile.foundryAlias);
+  if (!externalEndpoint) unloadModel(profile.foundryAlias);
 } finally {
   if (cacheSwitched) {
     setCacheLocation(defaultCache);

@@ -22,6 +22,15 @@ const macProfileSchema = z.object({
   // (e.g. the Muse Glimmer ONNX bundle). The harness switches the daemon's
   // cache to this directory for the residency and restores it afterwards.
   cacheDir: z.string().optional(),
+  // Per-profile decode override in the sense of SPEC_ADDENDUM A-8: reasoning
+  // tokens count toward the budget, so a reasoning-channel model may need a
+  // larger max_tokens. Always disclosed in eval summaries.
+  maxTokensOverride: z.number().int().positive().optional(),
+  // External OpenAI-compatible endpoint (e.g. mlx_lm.server for models the
+  // Foundry catalog lacks). When set, the harness performs no Foundry
+  // orchestration and sends servedModelId as the model parameter.
+  baseUrl: z.string().url().optional(),
+  servedModelId: z.string().optional(),
 });
 
 const macEmbeddingSchema = z.object({

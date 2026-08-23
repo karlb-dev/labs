@@ -191,3 +191,21 @@ place and receive a later disposition.
   Deviations recorded in docs/MAC_PROFILE.md; base compose.yaml gpus stanza
   rewritten to long-form list syntax for older compose validators (semantics
   unchanged). Mac-plane evidence is never comparable to the frozen campaign.
+
+- 2026-08-23T05:35:00.000Z — Mac-plane model bench completed over the frozen
+  16-episode mac-eval-v1 set (npm run mac:eval; rows and metrics in run
+  logwarden-smoke-20260823T041027Z). Six models, three runtimes, all
+  disclosed: Foundry ONNX (qwen2.5-0.5b, qwen3-4b, qwen3-8b, olmo-3-7b),
+  the Muse Glimmer 30B INT4 bundle via custom cache, and Gemma 4 E4B
+  (mlx-community OptiQ 4-bit) via mlx_lm.server after the Foundry catalog
+  proved to carry no Gemma. Headlines: Muse 87.5% exact-triple with 100%
+  class and 100% action at 16.4 tok/s under the §A-8 max-tokens override
+  (512-token budget ablation retained: 3/16 decisions); Gemma 4 E4B 75%
+  triple with 100% first-pass contract at 71.1 tok/s but dismissed the
+  unknown-signal abstention episode; qwen3-8b 50%, olmo-3-7b 37.5% (100%
+  first-pass), qwen3-4b 25%, qwen2.5-0.5b unusable. Transport findings for
+  the runtime: Qwen3 /no_think must ride every user turn; Muse needs
+  final-channel (to=user) extraction; catalog models over-escalate against
+  the action rubric. Gemma 4 12B blocked: all MLX conversions declare
+  gemma4_unified, unsupported by mlx-lm 0.31.3. Mac-plane development
+  evidence only; never comparable to the frozen campaign.

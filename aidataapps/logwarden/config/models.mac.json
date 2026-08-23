@@ -61,7 +61,32 @@
       "contextLength": 8192,
       "fileSizeMb": 19570,
       "role": "agent",
-      "cacheDir": "/Users/karl/repos/foundary/gdrive/mac_bundle/model"
+      "cacheDir": "/Users/karl/repos/foundary/gdrive/mac_bundle/model",
+      "maxTokensOverride": 1400
+    },
+    "gemma-4-12b-mlx": {
+      "description": "Gemma 4 12B IT (OptiQ 4-bit) via mlx_lm.server. BLOCKED 2026-08-22: every available 12B conversion declares model_type gemma4_unified, which mlx-lm 0.31.3 does not support yet; retest on mlx-lm updates.",
+      "family": "gemma",
+      "foundryAlias": "mlx-community/gemma-4-12B-it-OptiQ-4bit",
+      "foundryVariantId": "",
+      "executionProvider": "MLX-Metal",
+      "contextLength": 32768,
+      "fileSizeMb": 7100,
+      "role": "agent",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "servedModelId": "mlx-community/gemma-4-12B-it-OptiQ-4bit"
+    },
+    "gemma-4-e4b-mlx": {
+      "description": "Gemma 4 E4B IT (OptiQ 4-bit) via mlx_lm.server; the small efficient Gemma 4 variant.",
+      "family": "gemma",
+      "foundryAlias": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+      "foundryVariantId": "",
+      "executionProvider": "MLX-Metal",
+      "contextLength": 32768,
+      "fileSizeMb": 3600,
+      "role": "agent",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "servedModelId": "mlx-community/gemma-4-e4b-it-OptiQ-4bit"
     }
   },
   "embeddingProfiles": {
