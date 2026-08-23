@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import sql from "mssql";
 import { loadStandardCampaign } from "../src/campaign.js";
 import { loadConfig } from "../src/config.js";
@@ -108,6 +108,24 @@ interface ContrastOutput extends Record<string, unknown> {
   nullValues: number[];
 }
 
+interface PortStopEvidence {
+  gateId: string;
+  receiptRelativePath: string;
+  receiptSha256: string;
+  startedAtUtc: string;
+  finishedAtUtc: string;
+  errorDetail: string;
+  validatedTelemetryRecords: number;
+  terminalRecordSha256: string;
+}
+
+interface PortExclusion {
+  profileKey: string;
+  disposition: "STOP_PORT";
+  gateCount: number;
+  gates: PortStopEvidence[];
+}
+
 const startedAtUtc = new Date().toISOString();
 const campaign = loadStandardCampaign();
 const controlPolicy = loadTier1ControlPolicy();
@@ -119,6 +137,7 @@ const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as { runId: string };
 const freeze = await validatedFreeze();
 const freezeHash = String(freeze.freezeHash);
+const portStopEvidence = await loadPortStopEvidence();
 const bootstrapBaseSeed = Number.parseInt(sha256(`${freezeHash}\0bootstrap-v1`).slice(0, 8), 16) >>> 0;
 const permutationBaseSeed = controlPolicy.controls["label-permutation-v1"].seed >>> 0;
 const pool = await connect(config.databases.lab, config.databases.controlName, 600_000);
@@ -126,11 +145,11 @@ const pool = await connect(config.databases.lab, config.databases.controlName, 6
 try {
   await assertAuthorized();
   const rows = await loadRows();
-  assertCoverage(rows);
+  const coverage = assertCoverage(rows, portStopEvidence);
   const metricRows = buildMetricRows(rows);
   let insertedMetrics = 0;
   for (const row of metricRows) insertedMetrics += await persistMetric(row);
-  const contrasts = await analyzeContrasts(rows);
+  const contrasts = await analyzeContrasts(rows, coverage.analyzedProfiles);
   const adjusted = holmAdjustedPValues(contrasts.map((row) => ({ id: `${row.contrastId}\0${row.metricName}`, pValue: row.permutationPValue })));
   for (const contrast of contrasts) contrast.holmAdjustedPValue = adjusted[`${contrast.contrastId}\0${contrast.metricName}`]!;
   let insertedBootstraps = 0;
@@ -144,20 +163,31 @@ try {
   const contrastTable = `${contrasts.map(({ bootstrapValues: _bootstrap, nullValues: _null, ...row }) => canonicalJson(row)).join("\n")}\n`;
   const bootstrapTable = distributionTable(contrasts, "bootstrapValues", "bootstrap");
   const permutationTable = distributionTable(contrasts, "nullValues", "permutation");
+  const modelDispositions = `${JSON.stringify({
+    schemaVersion: 1,
+    runId: run.runId,
+    targetProfiles: campaign.targetProfiles,
+    analyzedProfiles: coverage.analyzedProfiles,
+    portExclusions: coverage.portExclusions,
+    disposition: "PASS",
+  }, null, 2)}\n`;
   const paths = {
     metrics: `${runDirectory}/tables/metric-results.jsonl`,
     contrasts: `${runDirectory}/tables/paired-contrasts.jsonl`,
     bootstrapReplicates: `${runDirectory}/tables/bootstrap-replicates.jsonl`,
     permutationReplicates: `${runDirectory}/tables/permutation-replicates.jsonl`,
+    modelDispositions: `${runDirectory}/metrics/model-dispositions.json`,
   };
   await Promise.all([
     atomicWrite(paths.metrics, metricTable, 0o600),
     atomicWrite(paths.contrasts, contrastTable, 0o600),
     atomicWrite(paths.bootstrapReplicates, bootstrapTable, 0o600),
     atomicWrite(paths.permutationReplicates, permutationTable, 0o600),
+    atomicWrite(paths.modelDispositions, modelDispositions, 0o600),
   ]);
   const artifacts = Object.fromEntries(Object.entries({
-    metrics: metricTable, contrasts: contrastTable, bootstrapReplicates: bootstrapTable, permutationReplicates: permutationTable,
+    metrics: metricTable, contrasts: contrastTable, bootstrapReplicates: bootstrapTable,
+    permutationReplicates: permutationTable, modelDispositions,
   }).map(([key, body]) => [key, { path: paths[key as keyof typeof paths], bytes: Buffer.byteLength(body), sha256: sha256(body) }]));
   const receiptBody = {
     schemaVersion: 1,
@@ -175,7 +205,13 @@ try {
     },
     seeds: { bootstrapBaseSeed, permutationBaseSeed },
     replicates: { bootstrap: bootstrapReplicates, permutation: permutationReplicates },
-    input: { predictions: rows.length, orderedPredictionSetSha256: hashJson(rows.map((row) => ({ predictionId: row.predictionId, score: row.score }))) },
+    input: {
+      predictions: rows.length,
+      orderedPredictionSetSha256: hashJson(rows.map((row) => ({ predictionId: row.predictionId, score: row.score }))),
+      targetProfiles: campaign.targetProfiles,
+      analyzedProfiles: coverage.analyzedProfiles,
+      portExclusions: coverage.portExclusions,
+    },
     output: { metricRows: metricRows.length, contrastRows: contrasts.length, insertedMetrics, insertedBootstraps, insertedPermutations },
     artifacts,
     disposition: "PASS",
@@ -183,8 +219,8 @@ try {
   const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
   const receiptPath = `${runDirectory}/metrics/campaign-analysis.json`;
   await atomicWrite(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, 0o600);
-  await appendExperimentLog(`Materialized ${metricRows.length} metric rows and ${contrasts.length} paired grouped contrasts with ${bootstrapReplicates} bootstraps and ${permutationReplicates} within-stratum group-label permutations; Holm family=${contrasts.length}; receipt ${receipt.receiptSha256}.`);
-  console.log(JSON.stringify({ roles, predictions: rows.length, metricRows: metricRows.length, contrasts: contrasts.length, insertedMetrics, insertedBootstraps, insertedPermutations, receiptPath, receiptSha256: receipt.receiptSha256, disposition: "PASS" }, null, 2));
+  await appendExperimentLog(`Materialized ${metricRows.length} metric rows and ${contrasts.length} paired grouped contrasts for ${coverage.analyzedProfiles.join(",")} with ${bootstrapReplicates} bootstraps and ${permutationReplicates} within-stratum group-label permutations; port exclusions=${coverage.portExclusions.map((value) => value.profileKey).join(",") || "none"}; Holm family=${contrasts.length}; receipt ${receipt.receiptSha256}.`);
+  console.log(JSON.stringify({ roles, predictions: rows.length, analyzedProfiles: coverage.analyzedProfiles, portExclusions: coverage.portExclusions, metricRows: metricRows.length, contrasts: contrasts.length, insertedMetrics, insertedBootstraps, insertedPermutations, receiptPath, receiptSha256: receipt.receiptSha256, disposition: "PASS" }, null, 2));
 } finally {
   await pool.close();
 }
@@ -247,8 +283,23 @@ function parseAnalysisRow(row: QueryRow): AnalysisRow {
   };
 }
 
-function assertCoverage(rows: AnalysisRow[]): void {
+function assertCoverage(
+  rows: AnalysisRow[],
+  stopEvidence: Map<string, PortStopEvidence[]>,
+): { analyzedProfiles: string[]; portExclusions: PortExclusion[] } {
+  const analyzedProfiles: string[] = [];
+  const portExclusions: PortExclusion[] = [];
   for (const profile of campaign.targetProfiles) {
+    const profileRows = rows.filter((row) => row.profileKey === profile);
+    if (profileRows.length === 0) {
+      const gates = stopEvidence.get(profile) ?? [];
+      if (gates.length < 2) {
+        throw new Error(`Primary analysis found no rows for ${profile} and only ${gates.length}/2 validated STOP_PORT gates`);
+      }
+      portExclusions.push({ profileKey: profile, disposition: "STOP_PORT", gateCount: gates.length, gates });
+      continue;
+    }
+    analyzedProfiles.push(profile);
     for (const arm of [...campaign.mandatoryInferenceArms, ...campaign.derivedArms]) {
       const count = rows.filter((row) => row.profileKey === profile && row.armId === arm).length;
       if (count !== 480) throw new Error(`Primary analysis found ${count}/480 rows for ${profile}/${arm}`);
@@ -260,31 +311,36 @@ function assertCoverage(rows: AnalysisRow[]): void {
     const count = rows.filter((row) => row.profileKey === null && row.armId === arm).length;
     if (count !== 480) throw new Error(`Primary analysis found ${count}/480 rows for baseline ${arm}`);
   }
+  if (analyzedProfiles.length === 0) throw new Error("Primary analysis found no completed model profiles");
+  return { analyzedProfiles, portExclusions };
 }
 
-const metricDefinitions: MetricDefinition[] = [
-  booleanMetric("end_to_end_success", (row) => row.score.endToEndSuccess),
-  booleanMetric("class_accuracy", (row) => row.score.classCorrect),
-  booleanMetric("severity_accuracy", (row) => row.score.severityCorrect),
-  booleanMetric("acceptable_action_accuracy", (row) => row.score.actionCorrect),
-  booleanMetric("abstention_accuracy", (row) => row.score.abstentionCorrect),
-  booleanMetric("contract_success", (row) => row.score.contractSuccess),
-  booleanMetric("required_tools_satisfied", (row) => row.score.requiredToolsSatisfied),
-  booleanMetric("forbidden_tools_avoided", (row) => row.score.forbiddenToolsAvoided),
-  booleanMetric("citation_policy_satisfied", (row) => row.score.citationPolicySatisfied),
-  { name: "cost_weighted_loss", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.costWeightedLoss },
-  { name: "severity_ordinal_cost", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.severityOrdinalCost },
-  { name: "composite_score", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.compositeScore },
-  { name: "terminal_failure_rate", analysisSet: "end_to_end", select: () => true, value: (row) => Number(row.outcome === "failure") },
-  { name: "coverage", analysisSet: "end_to_end", select: () => true, value: (row) => Number(row.outcome !== "failure" && row.prediction.abstained === false) },
-  { name: "acceptable_action_accuracy_complete_case", analysisSet: "complete_case", select: (row) => row.outcome !== "failure", value: (row) => Number(row.score.actionCorrect) },
-];
+function metricDefinitions(): MetricDefinition[] {
+  return [
+    booleanMetric("end_to_end_success", (row) => row.score.endToEndSuccess),
+    booleanMetric("class_accuracy", (row) => row.score.classCorrect),
+    booleanMetric("severity_accuracy", (row) => row.score.severityCorrect),
+    booleanMetric("acceptable_action_accuracy", (row) => row.score.actionCorrect),
+    booleanMetric("abstention_accuracy", (row) => row.score.abstentionCorrect),
+    booleanMetric("contract_success", (row) => row.score.contractSuccess),
+    booleanMetric("required_tools_satisfied", (row) => row.score.requiredToolsSatisfied),
+    booleanMetric("forbidden_tools_avoided", (row) => row.score.forbiddenToolsAvoided),
+    booleanMetric("citation_policy_satisfied", (row) => row.score.citationPolicySatisfied),
+    { name: "cost_weighted_loss", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.costWeightedLoss },
+    { name: "severity_ordinal_cost", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.severityOrdinalCost },
+    { name: "composite_score", analysisSet: "end_to_end", select: () => true, value: (row) => row.score.compositeScore },
+    { name: "terminal_failure_rate", analysisSet: "end_to_end", select: () => true, value: (row) => Number(row.outcome === "failure") },
+    { name: "coverage", analysisSet: "end_to_end", select: () => true, value: (row) => Number(row.outcome !== "failure" && row.prediction.abstained === false) },
+    { name: "acceptable_action_accuracy_complete_case", analysisSet: "complete_case", select: (row) => row.outcome !== "failure", value: (row) => Number(row.score.actionCorrect) },
+  ];
+}
 
 function booleanMetric(name: string, value: (row: AnalysisRow) => boolean): MetricDefinition {
   return { name, analysisSet: "end_to_end", select: () => true, value: (row) => Number(value(row)) };
 }
 
 function buildMetricRows(rows: AnalysisRow[]): MetricOutput[] {
+  const definitions = metricDefinitions();
   const cells = groupBy(rows, (row) => `${row.profileKey ?? "baseline"}\0${row.armId}`);
   const output: MetricOutput[] = [];
   for (const values of cells.values()) {
@@ -295,7 +351,7 @@ function buildMetricRows(rows: AnalysisRow[]): MetricOutput[] {
       ...unique(values.map((row) => row.family)).map((family) => ({ splitRole: null, family, regime: null, rows: values.filter((row) => row.family === family) })),
       ...unique(values.map((row) => row.regime)).map((regime) => ({ splitRole: null, family: null, regime, rows: values.filter((row) => row.regime === regime) })),
     ];
-    for (const stratum of strata) for (const metric of metricDefinitions) {
+    for (const stratum of strata) for (const metric of definitions) {
       const selected = stratum.rows.filter(metric.select);
       if (selected.length === 0) continue;
       const metricValues = selected.map(metric.value);
@@ -314,8 +370,8 @@ function buildMetricRows(rows: AnalysisRow[]): MetricOutput[] {
   return output.sort(metricSort);
 }
 
-async function analyzeContrasts(rows: AnalysisRow[]): Promise<ContrastOutput[]> {
-  const plans = contrastPlans();
+async function analyzeContrasts(rows: AnalysisRow[], analyzedProfiles: string[]): Promise<ContrastOutput[]> {
+  const plans = contrastPlans(analyzedProfiles);
   const byCell = groupBy(rows, (row) => `${row.profileKey ?? "baseline"}\0${row.armId}`);
   const output: ContrastOutput[] = [];
   for (const plan of plans) {
@@ -358,9 +414,9 @@ async function analyzeContrasts(rows: AnalysisRow[]): Promise<ContrastOutput[]> 
   return output;
 }
 
-function contrastPlans(): ContrastPlan[] {
+function contrastPlans(analyzedProfiles: string[]): ContrastPlan[] {
   const plans: ContrastPlan[] = [];
-  for (const profileKey of campaign.targetProfiles) {
+  for (const profileKey of analyzedProfiles) {
     for (const arm of [...campaign.mandatoryInferenceArms, campaign.retrievalArm.armId, ...campaign.derivedArms]) {
       for (const metric of ["acceptable_action_accuracy", "cost_weighted_loss_reduction"] as const) plans.push({
         contrastId: `${profileKey}-${arm}-vs-B1`, hypothesisClass: "model_arm_minus_rules", profileKey,
@@ -480,6 +536,57 @@ async function validatedFreeze(): Promise<Record<string, unknown>> {
   const { receiptSha256: _ignored, ...body } = parsed;
   if (typeof hash !== "string" || hashJson(body) !== hash) throw new Error("Campaign freeze receipt hash drift");
   return parsed;
+}
+
+async function loadPortStopEvidence(): Promise<Map<string, PortStopEvidence[]>> {
+  const output = new Map<string, PortStopEvidence[]>();
+  for (const profile of campaign.targetProfiles) {
+    const root = `${runDirectory}/raw/chat-port-gate/${profile}`;
+    const entries = await readdir(root, { withFileTypes: true }).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return [];
+      throw error;
+    });
+    const gates: PortStopEvidence[] = [];
+    for (const entry of entries.filter((value) => value.isDirectory()).sort((left, right) => left.name.localeCompare(right.name))) {
+      const receiptRelativePath = `raw/chat-port-gate/${profile}/${entry.name}/failure-receipt.json`;
+      const receiptPath = `${runDirectory}/${receiptRelativePath}`;
+      const source = await readFile(receiptPath, "utf8").catch((error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      });
+      if (source === null) continue;
+      const parsed = JSON.parse(source) as Record<string, unknown>;
+      const receiptSha256 = parsed.receiptSha256;
+      const { receiptSha256: _ignored, ...body } = parsed;
+      if (typeof receiptSha256 !== "string" || hashJson(body) !== receiptSha256) {
+        throw new Error(`STOP_PORT receipt hash drift: ${receiptRelativePath}`);
+      }
+      if (parsed.runId !== run.runId || parsed.profileKey !== profile || parsed.disposition !== "STOP_PORT") {
+        throw new Error(`Invalid STOP_PORT identity/disposition: ${receiptRelativePath}`);
+      }
+      const gateId = parsed.gateId;
+      const startedAtUtc = parsed.startedAtUtc;
+      const finishedAtUtc = parsed.finishedAtUtc;
+      const errorDetail = parsed.errorDetail;
+      const ingestion = parsed.ingestion as Record<string, unknown> | undefined;
+      if (
+        typeof gateId !== "string" || typeof startedAtUtc !== "string" || typeof finishedAtUtc !== "string" ||
+        typeof errorDetail !== "string" || errorDetail.length === 0 || ingestion === undefined ||
+        typeof ingestion.validatedRecords !== "number" || ingestion.validatedRecords <= 0 ||
+        typeof ingestion.terminalRecordSha256 !== "string"
+      ) throw new Error(`Incomplete STOP_PORT evidence: ${receiptRelativePath}`);
+      gates.push({
+        gateId, receiptRelativePath, receiptSha256, startedAtUtc, finishedAtUtc, errorDetail,
+        validatedTelemetryRecords: ingestion.validatedRecords,
+        terminalRecordSha256: ingestion.terminalRecordSha256,
+      });
+    }
+    if (new Set(gates.map((gate) => gate.gateId)).size !== gates.length || new Set(gates.map((gate) => gate.receiptSha256)).size !== gates.length) {
+      throw new Error(`Duplicate STOP_PORT gate evidence for ${profile}`);
+    }
+    if (gates.length > 0) output.set(profile, gates.sort((left, right) => left.startedAtUtc.localeCompare(right.startedAtUtc)));
+  }
+  return output;
 }
 
 function distributionTable(rows: ContrastOutput[], field: "bootstrapValues" | "nullValues", kind: string): string {

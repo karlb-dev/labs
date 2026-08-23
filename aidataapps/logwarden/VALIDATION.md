@@ -1,25 +1,18 @@
-# LogWarden Validation Record
+# LogWarden validation record
 
-A passing foundation proves plumbing, identity, isolation, and reconstruction
-contracts. It does not imply that any model improves on deterministic rules.
-
-## Foundation gates
-
-| Gate | Current disposition | Evidence |
+| Gate | Disposition | Evidence |
 |---|---|---|
-| Dedicated branch/worktree from current Lab 2 head | PASS | `aidataapps-logwarden` from `88ea443` |
-| Governing spec/addendum vendored byte-identically | PASS | `SOURCE_INTAKE.md` |
-| Lab 1/2 predecessor trees remain unmodified | PENDING CHECK | Git path diff gate |
-| Real CUDA allocation and synchronization | PASS | RTX PRO 6000, PyTorch CUDA 12.8 preflight |
-| Rootless Docker and Compose | PENDING | fresh VM bootstrap |
-| SQL Server 2025 + full-text image | PENDING | runtime doctor |
-| Both isolated databases initialize idempotently | PENDING | SQL integration suite |
-| Tier 1 two-principal permission skeleton | PENDING | permission matrix tests |
-| Row-only reconstruction | PENDING | `repro.sh --mode rows` |
+| Dedicated Lab 3 branch/worktree | PASS | `aidataapps-logwarden` |
+| CUDA/vLLM governed inference | PASS | three completed profiles; OLMo STOP_PORT |
+| SQL Server 2025 + full-text | PASS | capability and retrieval receipts |
+| Corpus capture | PASS | 600/600 episodes |
+| Packet leakage | PASS | 0 findings |
+| Freeze | PASS | `1819a96b69cb90c73c450aa2da5376bf6ab565c3d20f9293192746e5fc4e60df` |
+| Retrieval evaluation | PASS | 3000/3000 cells |
+| Primary scoring/statistics | PASS | `7fcfb31517c560a7fdaad9b03b800dec10898415c831377e3407135fff41737d` |
+| Telemetry reconciliation | PASS | `8c2de36fe09cdc0905cfa54977b7e32aeb49641360fdc4458e698ad0e7f3cb84` |
+| Tier-1 safety audit | PASS | `d26df484e660f853ccb4d55eb372753b9e9604cfb8776116e7bffb7a3bafd83b` |
+| Row-only reconstruction | PENDING CLOSEOUT | `repro.sh --mode rows` |
+| Database-restore reconstruction | PENDING CLOSEOUT | `repro.sh --mode restore` |
 
-## Scientific gates
-
-Scenario feasibility, capture completeness, leakage audit, packet freeze,
-retrieval, model port gates, replay completeness, paired scoring, controls,
-safety audit, restore-mode reconstruction, and state-of-record reports remain
-pending. Report generation—not hand editing—will populate their final results.
+A passing benchmark is not a positive model result. The primary scientific adjudication is `CLEAN_NULL`.

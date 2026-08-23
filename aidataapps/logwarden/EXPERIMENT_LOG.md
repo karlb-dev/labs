@@ -1522,3 +1522,73 @@ place and receive a later disposition.
   the interrupted tail is disclosed as incomplete, and the two proof samples
   use phase `graceful-stop-gate` so analysis can exclude them from Qwen's
   governed inference windows.
+
+- 2026-08-23T20:13:21Z — Pinned the closed Qwen profile boundary after the
+  final clean reconciliation. The verified control/workload backup pair is
+  1,042,751,488 and 774,144 bytes with receipt
+  `222f90043bbfe4bd911bd056f207b1eedabe2a510f567d679f3ec761c2a03322`;
+  after pinning/retention, its local and Drive copies matched final inventory
+  hash `d1ae49117ac2efd312cc9c3078e42d81d57469a0f4126eb1336fb6a7a90a8ab2`.
+  The reconciled state contains 11,332 closed traces, 65,321 closed spans,
+  9,986 exactly paired model requests/responses with zero bad hashes,
+  4,161,680 unique metric samples, and 16,501 unique raw metric snapshots.
+  Bounded retention then removed six redundant local/Drive checkpoint files
+  (2,090,282,128 bytes) while retaining the freeze, all four profile pins, the
+  two newest rolling recovery points, and two recovery bundles; receipt
+  `2125277920e9cb9cf8adfb3dcb5e0488260054c0cedb8bbc443bb92a8e9886e9`.
+  Impact: durability/storage only; all frozen scientific, control, raw-model,
+  and performance evidence remains retained.
+
+- 2026-08-23T20:22:10.064Z — Derived 2400 predictions for B0-majority-no-action-v1,B2-lexical-v1,B2-vector-v1,B2-hybrid-v1,B3-oracle-packet-v1 over test_id,test_variant_holdout,test_unknown; receipt e53d73c961b2ac02d59ebb9323d08e76faee2a8eadd3babe343f45328b1179cc.
+
+- 2026-08-23T20:25:23.935Z — Scored 2880 primary test_id,test_variant_holdout,test_unknown predictions for baseline-only across B0-majority-no-action-v1,B1-rules-v1,B2-lexical-v1,B2-vector-v1,B2-hybrid-v1,B3-oracle-packet-v1; receipt 559deaf2b54160ad86b7266368098a0f62690d0e4d6aa20378bea4e042a2bae0.
+
+- 2026-08-23T20:26:29.390Z — Materialized 5085 metric rows and 36 paired grouped contrasts for muse-glimmer-30b,gemma-4-31b,qwen-3.8-27b with 10000 bootstraps and 1000 within-stratum group-label permutations; port exclusions=olmo-3.1-32b-instruct; Holm family=36; receipt 7fcfb31517c560a7fdaad9b03b800dec10898415c831377e3407135fff41737d.
+
+- 2026-08-23T20:31:00Z — Closed the Qwen model residency after its pinned
+  checkpoint and final telemetry reconciliation, then evicted only the exact
+  Qwen chat-model cache revision. The embedding service and SQL Server remain
+  resident; the GPU is intentionally idle during SQL/statistics/report work.
+  Impact: teardown/storage only; no inference, score, or telemetry evidence was
+  deleted.
+
+- 2026-08-23T20:34:00Z — The first complete campaign analysis correctly
+  rejected an incomplete baseline grid: B0, the three B2 retrieval modes, and
+  B3 had frozen definitions but no retained test-role predictions. Derived the
+  five already-frozen deterministic/evaluator arms for all 480 test-role
+  episodes each (receipt
+  `e53d73c961b2ac02d59ebb9323d08e76faee2a8eadd3babe343f45328b1179cc`)
+  and scored all six baseline arms (receipt
+  `559deaf2b54160ad86b7266368098a0f62690d0e4d6aa20378bea4e042a2bae0`).
+  This is a pre-analysis completeness repair, not post-hoc inference: no LLM
+  was called, no frozen arm/episode/search identity changed, and no model row
+  changed. Impact: the declared baseline scorecard and contrasts became
+  complete; B3 remains an evaluator-only information ceiling.
+
+- 2026-08-23T20:40:00Z — Hardened final analysis so an absent target profile
+  may be excluded only after validating at least two distinct, hash-correct
+  `STOP_PORT` receipts and their terminal telemetry; synthesized missing model
+  rows are rejected. Also moved the metric-definition factory above top-level
+  execution after the complete grid exposed a latent initialization-order bug.
+  The rerun passed with 8,430 predictions, 5,085 metric rows, 36 frozen
+  contrasts, and an explicit OLMo exclusion under receipt
+  `7fcfb31517c560a7fdaad9b03b800dec10898415c831377e3407135fff41737d`.
+  No contrast cleared both CI-low > 0 and Holm p <= 0.05; disposition is
+  `CLEAN_NULL`. Impact: evidence validation/report eligibility only; statistics,
+  seeds, rows, and the frozen positive-claim rule were unchanged.
+
+- 2026-08-23T20:45:00Z — Exported a hash-verified row-only reporting bundle:
+  85,411 SQL rows across 13 deterministic queries plus 33 signed evidence
+  artifacts, query-bundle hash
+  `6ac31332676a99962baf0f9a480d87d06611a1e87a6a781cd42165993cdcd796`,
+  manifest receipt
+  `f62ca2de7ec965d3a2d2b571d86ddbbdc20e6c0f38e3b8f9343d0fff37855a71`.
+  Moving database-checkpoint receipts were deliberately excluded from report
+  inputs to prevent a backup/report/database hash cycle; final backup and
+  restored-database proof are separate signed closeout gates. Generated the
+  first deterministic Tier-1 results pack (22 scorecard rows, 206 taxonomy
+  rows, 41 claims, 13 figures) and reproduced its claim-bearing outputs
+  byte-for-byte from retained rows. Colab lacks `ensurepip`, so `python.sh`
+  now verifies and uses its preinstalled pinned-range scientific stack when an
+  isolated venv cannot be built. Impact: portability/reporting only; the final
+  row and restore closeout gates remain pending.

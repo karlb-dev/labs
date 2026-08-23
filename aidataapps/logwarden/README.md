@@ -48,3 +48,12 @@ Drive subtree are independent of Labs 1 and 2.
 No result is scientific until the packet corpus, tool snapshots, manifests,
 decode configuration, runbooks, rules baseline, and campaign have been frozen.
 A clean null is valid; a safety violation or unfinished Tier 1 state is not.
+
+
+<!-- logwarden-results:start -->
+## Results
+
+The frozen Tier-1 campaign is complete for Muse, Gemma, and Qwen; OLMo is `STOP_PORT`. Deterministic B1 reached `0.917` acceptable-action accuracy. No model/arm contrast cleared both the familywise interval and Holm-adjusted permutation gate, so the headline is `CLEAN_NULL`, not model lift. The Tier-1 safety audit passed. LogWarden can make scoped, auditable recommendations on its frozen synthetic episodes; it cannot establish production safety, autonomously remediate, or generalize to arbitrary logs.
+
+See [the state of record](LOGWARDEN_STATE_OF_RECORD.md), [claims](LOGWARDEN_CLAIMS_TABLE.md), and [limitations](LOGWARDEN_LIMITATIONS.md).
+<!-- logwarden-results:end -->
