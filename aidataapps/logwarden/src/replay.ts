@@ -54,6 +54,8 @@ export interface ReplayPredictionInput {
   } | null;
   failureClass: string | null;
   failureDetail: string | null;
+  controlId?: string | null;
+  sourcePredictionId?: number | null;
 }
 
 const roleSchema = z.enum(replayRoles);
@@ -133,6 +135,8 @@ export function replayPrediction(input: ReplayPredictionInput): {
     packetSha256: input.packetSha256,
     modelProfileId: input.modelProfileId,
     agentArmId: input.agentArmId,
+    controlId: input.controlId ?? null,
+    sourcePredictionId: input.sourcePredictionId ?? null,
     decodeConfigId: input.decodeConfigId,
     jobId: input.jobId,
     jobAttemptId: input.jobAttemptId,

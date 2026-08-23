@@ -17,7 +17,7 @@ import {
   type GatewayMessage,
 } from "./model-gateway.js";
 import type { EmbeddingProfile, ModelProfile } from "./models.js";
-import { executeRunbookRetrieval, type RetrievalMode } from "./retrieval.js";
+import { canonicalRetrievalQuery, executeRunbookRetrieval, type RetrievalMode } from "./retrieval.js";
 import { atomicWrite } from "./run.js";
 import type { FileTelemetryJournal, StartedSpan } from "./telemetry.js";
 import {
@@ -84,6 +84,14 @@ export interface AgentLoopOptions {
   timeoutMs?: number;
   maxResponseBytes?: number;
   maxRetries?: number;
+  control?: {
+    controlId: string;
+    retrievalOverride?: "shuffled_runbook";
+    transformToolResult?: (input: { tool: ToolName; arguments: Record<string, unknown>; result: unknown }) => {
+      result: unknown;
+      metadata: Record<string, unknown>;
+    };
+  };
 }
 
 export interface AgentSpanLink {
@@ -664,6 +672,25 @@ async function processToolRequest(input: {
       }
     }
   }
+  if (terminalReason === null && !cacheHit && input.options.control?.transformToolResult !== undefined) {
+    const originalSha256 = hashJson(execution.rawResult);
+    const transformed = input.options.control.transformToolResult({
+      tool: request.tool as ToolName,
+      arguments: canonicalArgs,
+      result: execution.rawResult,
+    });
+    execution = { ...execution, rawResult: transformed.result };
+    await input.options.journal.record("point", "control.tool_result_transformed", {
+      ...context,
+      parentSpanId: span.spanId,
+    }, {
+      controlId: input.options.control.controlId,
+      toolName: request.tool,
+      originalSha256,
+      transformedSha256: hashJson(transformed.result),
+      ...transformed.metadata,
+    }, { status: "success" });
+  }
   const bounded = boundToolResult(execution.rawResult, input.budget.maxToolResultChars);
   if (terminalReason === null && input.toolResultChars + bounded.transmittedJson.length > input.budget.maxTotalToolResultChars) {
     terminalReason = "max_total_tool_result_chars_exceeded";
@@ -771,6 +798,9 @@ async function executeTool(
 ): Promise<ToolExecution> {
   if (tool === "runbook_search") {
     if (options.retrievalMode === "none") throw new Error("runbook_search cannot execute with retrieval mode none");
+    if (options.control?.retrievalOverride === "shuffled_runbook") {
+      return executeShuffledRunbookControl(options, args, turnId, parent);
+    }
     const result = await executeRunbookRetrieval({
       pool: options.toolPool,
       runId: options.identity.runId,
@@ -844,6 +874,118 @@ async function executeTool(
     retrievalRunId: null,
     returnedChunks: [],
   };
+}
+
+async function executeShuffledRunbookControl(
+  options: AgentLoopOptions,
+  args: Record<string, unknown>,
+  turnId: number,
+  parent: StartedSpan,
+): Promise<ToolExecution> {
+  const query = canonicalRetrievalQuery(String(args.query));
+  const topK = Number(args.topK);
+  const corpusId = String(args.corpusId);
+  const source = await options.controlPool.request()
+    .input("run", sql.VarChar(120), options.identity.runId)
+    .input("episode", sql.VarChar(120), options.identity.episodeId)
+    .input("top_k", sql.Int, topK)
+    .query<{
+      result_sha256: string; source_retrieval_run_id: string; rank_ordinal: number; chunk_id: string;
+      runbook_id: string; fused_score: number; heading_path: string; content: string;
+    }>(`
+      SELECT benchmark.result_sha256,benchmark.retrieval_run_id source_retrieval_run_id,
+        result.rank_ordinal,result.chunk_id,result.runbook_id,result.fused_score,chunk.heading_path,chunk.content
+      FROM eval.retrieval_benchmark_results benchmark
+      INNER JOIN kb.retrieval_results result ON result.retrieval_run_id=benchmark.retrieval_run_id
+      INNER JOIN kb.runbook_chunks chunk ON chunk.chunk_id=result.chunk_id
+      WHERE benchmark.run_id=@run AND benchmark.episode_id=@episode
+        AND benchmark.retrieval_mode='shuffled_runbook' AND benchmark.evaluator_only=1
+        AND result.rank_ordinal<=@top_k
+      ORDER BY result.rank_ordinal;
+    `);
+  if (source.recordset.length === 0) throw new Error("Frozen shuffled-runbook control has no source rows");
+  const sourceRunId = String(source.recordset[0]!.source_retrieval_run_id);
+  const sourceHash = source.recordset[0]!.result_sha256;
+  if (source.recordset.some((row) => String(row.source_retrieval_run_id) !== sourceRunId || row.result_sha256 !== sourceHash)) {
+    throw new Error("Shuffled-runbook source identity drifted within an episode");
+  }
+  const startedAtUtc = new Date();
+  const started = performance.now();
+  const transaction = new sql.Transaction(options.controlPool);
+  await transaction.begin(sql.ISOLATION_LEVEL.SERIALIZABLE);
+  try {
+    const inserted = await new sql.Request(transaction)
+      .input("run", sql.VarChar(120), options.identity.runId)
+      .input("episode", sql.VarChar(120), options.identity.episodeId)
+      .input("turn", sql.BigInt, turnId)
+      .input("corpus", sql.VarChar(80), corpusId)
+      .input("query", sql.NVarChar(sql.MAX), query)
+      .input("query_hash", sql.Char(64), sha256(query))
+      .input("top_k", sql.Int, topK)
+      .input("count", sql.Int, source.recordset.length)
+      .input("started", sql.DateTime2(7), startedAtUtc)
+      .query<{ retrieval_run_id: string }>(`
+        INSERT kb.retrieval_runs(run_id,episode_id,turn_id,corpus_id,embedding_profile_id,retrieval_mode,
+          query_text,query_sha256,requested_k,candidate_count,started_at_utc,finished_at_utc,latency_ms,status,evaluator_only)
+        OUTPUT inserted.retrieval_run_id
+        VALUES(@run,@episode,@turn,@corpus,NULL,'shuffled_runbook',@query,@query_hash,@top_k,@count,
+          @started,SYSUTCDATETIME(),0,'complete',0);
+      `);
+    const retrievalRunId = Number(inserted.recordset[0]!.retrieval_run_id);
+    for (const row of source.recordset) await new sql.Request(transaction)
+      .input("run", sql.BigInt, retrievalRunId).input("rank", sql.Int, row.rank_ordinal)
+      .input("chunk", sql.VarChar(120), row.chunk_id).input("runbook", sql.VarChar(100), row.runbook_id)
+      .input("score", sql.Float, Number(row.fused_score)).query(`
+        INSERT kb.retrieval_results(retrieval_run_id,rank_ordinal,chunk_id,runbook_id,fused_score,returned_to_agent)
+        VALUES(@run,@rank,@chunk,@runbook,@score,1);
+      `);
+    const latencyMs = round(performance.now() - started);
+    await new sql.Request(transaction).input("id", sql.BigInt, retrievalRunId).input("latency", sql.Decimal(18, 3), latencyMs)
+      .query("UPDATE kb.retrieval_runs SET latency_ms=@latency WHERE retrieval_run_id=@id;");
+    await transaction.commit();
+    await options.journal.record("point", "control.shuffled_retrieval_cloned", {
+      jobId: options.identity.jobId,
+      episodeId: options.identity.episodeId,
+      attemptId: options.identity.jobAttemptId,
+      traceId: parent.traceId,
+      parentSpanId: parent.spanId,
+    }, {
+      controlId: options.control?.controlId,
+      sourceEvaluatorRetrievalRunId: Number(sourceRunId),
+      sourceResultSha256: sourceHash,
+      agentVisibleRetrievalRunId: retrievalRunId,
+      agentVisibleEvaluatorOnly: false,
+      actualMode: "shuffled_runbook",
+      blindedReportedMode: options.retrievalMode,
+      returnedRows: source.recordset.length,
+      latencyMs,
+    }, { status: "success" });
+    return {
+      rawResult: {
+        status: "ok",
+        mode: options.retrievalMode,
+        querySha256: sha256(query),
+        retrievalRunId,
+        rows: source.recordset.map((row) => ({
+          rank: row.rank_ordinal,
+          chunkId: row.chunk_id,
+          runbookId: row.runbook_id,
+          headingPath: row.heading_path,
+          content: row.content,
+          lexicalRank: null,
+          vectorRank: null,
+          fusedScore: Number(row.fused_score),
+        })),
+      },
+      rowCount: source.recordset.length,
+      snapshotMiss: false,
+      retrievalRunId,
+      returnedChunks: source.recordset.map((row) => ({ chunkId: row.chunk_id, retrievalRunId })),
+    };
+  } catch (error) {
+    await transaction.rollback().catch(() => undefined);
+    throw error;
+  }
 }
 
 async function heartbeat(options: AgentLoopOptions): Promise<void> {

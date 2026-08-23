@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
-import { runAgentLoop, type AgentLoopResult, type PrimaryAgentArm } from "../src/agent-loop.js";
+import { runAgentLoop, type AgentLoopOptions, type AgentLoopResult, type PrimaryAgentArm } from "../src/agent-loop.js";
 import { frozenArmIdentities, loadAgentArmRegistry, loadDecodeRegistry, loadStandardCampaign } from "../src/campaign.js";
 import { summarizeChatMetrics, validateChatMetricDelta } from "../src/chat-metrics.js";
 import { loadConfig } from "../src/config.js";
+import { loadTier1ControlPolicy, maskErrorNumbersAndSignatures, parseInferenceControlId, type InferenceControlId } from "../src/controls.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { resolveEmbeddingProfile, resolveModelProfile } from "../src/models.js";
 import { connect } from "../src/repository.js";
@@ -54,28 +55,44 @@ interface SpanLink {
   modelRequestId?: number;
   toolInvocationId?: number;
 }
+interface FrozenControlRow { episodeId: string; splitRole: ReplayRole; family: string; regime: string }
+interface ControlAssignmentEvidence {
+  controlId: InferenceControlId;
+  episodeId: string;
+  assignmentOrdinal: number;
+  sourcePacketSha256: string;
+  transformedPacketSha256: string;
+  replacementCount: number;
+  manifestSha256: string;
+}
 
 const startedAtUtc = new Date().toISOString();
 const invocationId = randomUUID();
 const profileKey = argument("--profile") ?? process.env.MODEL_PROFILE ?? "qwen-smoke";
 const profile = resolveModelProfile(profileKey);
 const campaignConfig = loadStandardCampaign();
+const controlPolicy = loadTier1ControlPolicy();
+const controlPolicySha256 = hashJson(controlPolicy);
+const controlId = controlArgument();
 const armRegistry = loadAgentArmRegistry();
 const decodeRegistry = loadDecodeRegistry();
 const decodeConfigId = armRegistry.decodeConfigId;
 const decodeConfig = requiredDecodeConfig();
-const roles = parseReplayRoles(argument("--roles") ?? (profileKey === "qwen-smoke" ? "dev" : campaignConfig.qualityRoles.join(",")));
-const arms = parseReplayArms(argument("--arms") ?? "A-direct,A-rag,A-tools");
-const workerCount = numberArgument("--workers", campaignConfig.workerCount, 1, 64);
+const roles = parseReplayRoles(argument("--roles") ?? (profileKey === "qwen-smoke" ? "dev" : controlId === null ? campaignConfig.qualityRoles.join(",") : "test_id,test_unknown"));
+const arms = parseReplayArms(argument("--arms") ?? (controlId === null ? "A-direct,A-rag,A-tools" : "A-tools"));
+const defaultWorkers = controlId === "batching-sequential-v1" ? controlPolicy.controls[controlId].workers : campaignConfig.workerCount;
+const workerCount = numberArgument("--workers", defaultWorkers, 1, 64);
 const config = loadConfig();
 const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as RunManifest;
-const runKind = profileKey === "qwen-smoke" ? "qwen_smoke_replay" : "agent_replay";
-const receiptPath = `${runDirectory}/metrics/replay-${safeName(profileKey)}-${safeName(roles.join("-"))}.json`;
-const rawRoot = `${runDirectory}/raw/replay/${safeName(profileKey)}/${invocationId}`;
+const runKind = profileKey === "qwen-smoke" ? "qwen_smoke_replay" : controlId === null ? "agent_replay" : `control_${controlId.replace(/-v\d+$/, "").replaceAll("-", "_")}`;
+const controlSuffix = controlId === null ? "" : `-${safeName(controlId)}`;
+const receiptPath = `${runDirectory}/metrics/replay-${safeName(profileKey)}-${safeName(roles.join("-"))}${controlSuffix}.json`;
+const rawRoot = `${runDirectory}/raw/replay/${safeName(profileKey)}/${controlId ?? "primary"}/${invocationId}`;
 const embeddingProfile = resolveEmbeddingProfile(campaignConfig.embeddingProfile);
 const control = await connect(config.databases.lab, config.databases.controlName, 600_000);
 const agent = await connect(config.databases.agent, config.databases.controlName, 600_000);
+let controlAssignments: ControlAssignmentEvidence[] = [];
 
 try {
   const campaign = await loadCampaign();
@@ -85,6 +102,7 @@ try {
   await registerDecode(campaign.status);
   await registerArms(campaign.status);
   const episodes = await loadEpisodes();
+  await assertControlSources(episodes);
   const cells = buildReplayCells(episodes, arms);
   if (cells.length === 0) throw new Error("Replay selection produced no cells");
   const jobs = await ensureJobs(campaign, cells);
@@ -118,6 +136,8 @@ try {
     model: { modelId: profile.modelId, revision: profile.revision, image: profile.vllmImage, profileSha256: hashJson(profile) },
     roles,
     arms,
+    controlId,
+    controlPolicySha256: controlId === null ? null : controlPolicySha256,
     workerCount,
     runKind,
     decodeConfigId,
@@ -131,6 +151,11 @@ try {
     selectedEpisodes: episodes.length,
     selectedCells: cells.length,
     selectedCellSetSha256: hashJson(cells),
+    controlAssignments: controlId === null ? null : {
+      count: controlAssignments.length,
+      orderedSetSha256: hashJson(controlAssignments),
+      rows: controlAssignments,
+    },
     workers: workerResults,
     verification,
     modelRequestsBefore,
@@ -142,12 +167,13 @@ try {
   const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
   await atomicWrite(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, 0o600);
   await persistEvidence("PASS", receipt);
-  await appendExperimentLog(`${profileKey} replay retained ${cells.length} cells across ${roles.join(",")} and ${arms.join(",")} with ${String(verification.decision_count)} decisions, ${String(verification.failure_count)} failures, and ${modelRequestCount} model requests; receipt ${receipt.receiptSha256}.`);
+  await appendExperimentLog(`${profileKey} ${controlId === null ? "primary replay" : `control ${controlId}`} retained ${cells.length} cells across ${roles.join(",")} and ${arms.join(",")} with ${String(verification.decision_count)} decisions, ${String(verification.failure_count)} failures, and ${modelRequestCount} model requests; receipt ${receipt.receiptSha256}.`);
   console.log(JSON.stringify({
     runId: run.runId,
     profileKey,
     roles,
     arms,
+    controlId,
     selectedCells: cells.length,
     decisions: verification.decision_count,
     failures: verification.failure_count,
@@ -166,6 +192,7 @@ try {
     profileKey,
     roles,
     arms,
+    controlId,
     workerCount,
     startedAtUtc,
     finishedAtUtc: new Date().toISOString(),
@@ -196,6 +223,7 @@ async function loadCampaign(): Promise<CampaignRow> {
 
 async function assertGovernance(campaign: CampaignRow): Promise<void> {
   if (profileKey === "qwen-smoke") {
+    if (controlId !== null) throw new Error("qwen-smoke cannot run frozen target controls");
     if (roles.some((role) => role !== "dev")) throw new Error("qwen-smoke is restricted to the development role");
     if (campaign.status !== "building") throw new Error(`qwen-smoke is a pre-freeze development gate and cannot run while campaign status is ${campaign.status}`);
     return;
@@ -205,8 +233,15 @@ async function assertGovernance(campaign: CampaignRow): Promise<void> {
   const freeze = await validatedReceipt(`${runDirectory}/manifests/freeze.json`, "FROZEN");
   const targets = freeze.targetProfiles;
   if (!Array.isArray(targets) || !targets.includes(profileKey)) throw new Error(`Campaign freeze does not authorize ${profileKey}`);
-  const configured = [...campaignConfig.qualityRoles].sort();
-  if (canonicalJson([...roles].sort()) !== canonicalJson(configured)) throw new Error("Primary target replay must cover every frozen quality role in one cell set");
+  if (controlId === null) {
+    const configured = [...campaignConfig.qualityRoles].sort();
+    if (canonicalJson([...roles].sort()) !== canonicalJson(configured)) throw new Error("Primary target replay must cover every frozen quality role in one cell set");
+  } else {
+    if (canonicalJson(arms) !== canonicalJson(["A-tools"])) throw new Error("Tier 1 inference controls are restricted to A-tools");
+    if (canonicalJson([...roles].sort()) !== canonicalJson(["test_id", "test_unknown"])) throw new Error("Tier 1 inference controls require the frozen test_id/test_unknown subset");
+    if (controlId === "batching-sequential-v1" && workerCount !== 1) throw new Error("Batching-invariance sequential control requires exactly one worker");
+    if (controlId !== "batching-sequential-v1" && workerCount !== campaignConfig.workerCount) throw new Error("Masking and shuffled controls use the frozen primary worker count");
+  }
 }
 
 async function markCampaignRunning(campaign: CampaignRow): Promise<void> {
@@ -282,23 +317,112 @@ async function loadEpisodes(): Promise<ReplayEpisode[]> {
     INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run
     WHERE packet.is_valid=1 ORDER BY packet.split_role,packet.episode_id;
   `);
-  const selected = result.recordset.filter((row) => roles.includes(row.split_role as ReplayRole)).map((row) => {
+  const available = new Map(result.recordset.map((row) => [row.episode_id, row]));
+  const selectedRows = controlId === null
+    ? result.recordset.filter((row) => roles.includes(row.split_role as ReplayRole))
+    : (await frozenControlRows()).map((assignment) => {
+        const row = available.get(assignment.episodeId);
+        if (row === undefined || row.split_role !== assignment.splitRole) throw new Error(`Frozen control packet is missing or role-drifted: ${assignment.episodeId}`);
+        return row;
+      });
+  const selected: ReplayEpisode[] = [];
+  controlAssignments = [];
+  for (const [ordinal, row] of selectedRows.entries()) {
     const packet = JSON.parse(row.packet_json) as unknown;
     if (hashJson(packet) !== row.packet_sha256) throw new Error(`Packet hash drift for ${row.episode_id}`);
     const expectedRunbooks = JSON.parse(row.expected_runbooks_json) as unknown;
     if (!Array.isArray(expectedRunbooks) || !expectedRunbooks.every((value) => typeof value === "string")) throw new Error(`Invalid retrieval eligibility for ${row.episode_id}`);
-    return {
+    const transformed = controlId === "error-number-mask-v1" ? maskErrorNumbersAndSignatures(packet, controlPolicy.controls[controlId])
+      : { value: packet, replacementCount: 0, originalSha256: row.packet_sha256, transformedSha256: row.packet_sha256 };
+    if (transformed.originalSha256 !== row.packet_sha256) throw new Error(`Control source hash drift for ${row.episode_id}`);
+    if (controlId !== null) {
+      const definition = controlPolicy.controls[controlId];
+      const manifest = {
+        schemaVersion: 1, controlId, controlPolicySha256, controlDefinitionSha256: hashJson(definition),
+        episodeId: row.episode_id, assignmentOrdinal: ordinal, sourcePacketSha256: row.packet_sha256,
+        transformedPacketSha256: transformed.transformedSha256, replacementCount: transformed.replacementCount,
+      };
+      await persistControlAssignment(manifest);
+      controlAssignments.push({
+        controlId, episodeId: row.episode_id, assignmentOrdinal: ordinal, sourcePacketSha256: row.packet_sha256,
+        transformedPacketSha256: transformed.transformedSha256, replacementCount: transformed.replacementCount,
+        manifestSha256: hashJson(manifest),
+      });
+    }
+    selected.push({
       episodeId: row.episode_id,
       splitRole: row.split_role as ReplayRole,
-      packetSha256: row.packet_sha256,
-      packet,
+      packetSha256: transformed.transformedSha256,
+      packet: transformed.value,
       expectedRunbooks,
-    };
-  });
+    });
+  }
   const expected = roles.reduce((sum, role) => sum + Number(campaignRoleCounts[role] ?? 0), 0);
-  if (profileKey !== "qwen-smoke" && selected.length !== expected) throw new Error(`Target replay selected ${selected.length}/${expected} frozen episodes`);
+  if (profileKey !== "qwen-smoke" && controlId === null && selected.length !== expected) throw new Error(`Target replay selected ${selected.length}/${expected} frozen episodes`);
   if (profileKey === "qwen-smoke" && selected.length !== 60) throw new Error(`qwen-smoke requires all 60 dev episodes, found ${selected.length}`);
+  const controlExpected = controlId === "batching-sequential-v1" ? 48 : 96;
+  if (controlId !== null && selected.length !== controlExpected) throw new Error(`Control ${controlId} selected ${selected.length}/${controlExpected} frozen episodes`);
   return selected;
+}
+
+async function frozenControlRows(): Promise<FrozenControlRow[]> {
+  if (controlId === null) return [];
+  const [freeze, subset] = await Promise.all([
+    validatedReceipt(`${runDirectory}/manifests/freeze.json`, "FROZEN"),
+    readFile(`${runDirectory}/manifests/control-subset.json`, "utf8").then((value) => JSON.parse(value) as Record<string, unknown>),
+  ]);
+  const rows = subset.rows;
+  if (!Array.isArray(rows)) throw new Error("Frozen control subset has no rows");
+  const parsed = rows.map((value): FrozenControlRow => {
+    const row = value as Record<string, unknown>;
+    if (typeof row.episodeId !== "string" || (row.splitRole !== "test_id" && row.splitRole !== "test_unknown")
+        || typeof row.family !== "string" || typeof row.regime !== "string") throw new Error("Frozen control subset row violates its contract");
+    return { episodeId: row.episodeId, splitRole: row.splitRole, family: row.family, regime: row.regime };
+  });
+  if (parsed.length !== campaignConfig.controls.subsetEpisodes || hashJson(parsed) !== subset.subsetSha256
+      || subset.subsetSha256 !== freeze.controlSubsetSha256) throw new Error("Frozen control subset hash or cardinality drift");
+  return controlId === "batching-sequential-v1" ? parsed.slice(0, 48) : parsed;
+}
+
+async function persistControlAssignment(manifest: {
+  controlId: InferenceControlId; episodeId: string; assignmentOrdinal: number; sourcePacketSha256: string;
+  transformedPacketSha256: string; replacementCount: number;
+} & Record<string, unknown>): Promise<void> {
+  const manifestJson = canonicalJson(manifest);
+  const manifestSha256 = hashJson(manifest);
+  const prior = await control.request().input("run", sql.VarChar(120), run.runId).input("control", sql.VarChar(80), manifest.controlId)
+    .input("episode", sql.VarChar(120), manifest.episodeId).query<{ transform_manifest_sha256: string }>(`
+      SELECT transform_manifest_sha256 FROM eval.control_assignments WHERE run_id=@run AND control_id=@control AND episode_id=@episode;
+    `);
+  if (prior.recordset[0] !== undefined) {
+    if (prior.recordset[0].transform_manifest_sha256 !== manifestSha256) throw new Error(`Control assignment drift for ${manifest.controlId}/${manifest.episodeId}`);
+    return;
+  }
+  await control.request().input("run", sql.VarChar(120), run.runId).input("control", sql.VarChar(80), manifest.controlId)
+    .input("episode", sql.VarChar(120), manifest.episodeId).input("ordinal", sql.Int, manifest.assignmentOrdinal)
+    .input("source", sql.Char(64), manifest.sourcePacketSha256).input("transformed", sql.Char(64), manifest.transformedPacketSha256)
+    .input("json", sql.NVarChar(sql.MAX), manifestJson).input("hash", sql.Char(64), manifestSha256).query(`
+      INSERT eval.control_assignments(run_id,control_id,episode_id,assignment_ordinal,source_packet_sha256,
+        transformed_packet_sha256,transform_manifest_json,transform_manifest_sha256)
+      VALUES(@run,@control,@episode,@ordinal,@source,@transformed,@json,@hash);
+    `);
+}
+
+async function assertControlSources(episodes: ReplayEpisode[]): Promise<void> {
+  if (controlId === null) return;
+  const ids = JSON.stringify(episodes.map((episode) => episode.episodeId));
+  const result = await control.request().input("ids", sql.NVarChar(sql.MAX), ids).input("profile", sql.VarChar(80), profileKey)
+    .input("run", sql.VarChar(120), run.runId).query<{ primary_count: number; shuffled_count: number }>(`
+      WITH selected AS (SELECT CONVERT(varchar(120),value) episode_id FROM OPENJSON(@ids))
+      SELECT
+        (SELECT COUNT(*) FROM selected INNER JOIN eval.predictions prediction ON prediction.episode_id=selected.episode_id
+          WHERE prediction.model_profile_id=@profile AND prediction.agent_arm_id='A-tools' AND prediction.control_id IS NULL) primary_count,
+        (SELECT COUNT(*) FROM selected INNER JOIN eval.retrieval_benchmark_results benchmark ON benchmark.episode_id=selected.episode_id
+          WHERE benchmark.run_id=@run AND benchmark.retrieval_mode='shuffled_runbook' AND benchmark.evaluator_only=1) shuffled_count;
+    `);
+  const row = result.recordset[0]!;
+  if (Number(row.primary_count) !== episodes.length) throw new Error(`Control ${controlId} requires ${episodes.length} completed primary A-tools source predictions`);
+  if (controlId === "shuffled-runbooks-v1" && Number(row.shuffled_count) !== episodes.length) throw new Error("Shuffled control source rows are incomplete");
 }
 
 const campaignRoleCounts: Partial<Record<ReplayRole, number>> = {
@@ -400,14 +524,15 @@ async function assertQueueIsolation(jobs: JobIdentity[]): Promise<void> {
 
 async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity[], episodes: ReplayEpisode[]): Promise<Record<string, unknown>> {
   const workerId = `replay-${safeName(profileKey)}-${invocationId.slice(0, 8)}-${String(index).padStart(2, "0")}`.slice(0, 120);
-  const created = await createComponentTelemetryJournal(runDirectory, run.runId, `replay-${profileKey}-worker-${index}`);
+  const created = await createComponentTelemetryJournal(runDirectory, run.runId, `replay-${profileKey}-${controlId ?? "primary"}-worker-${index}`);
   const links: SpanLink[] = [];
   const episodeMap = new Map(episodes.map((episode) => [episode.episodeId, episode]));
   const jobMap = new Map(jobs.map((job) => [job.jobId, job]));
+  const agentControl = agentControlOptions();
   let claimed = 0;
   let decisions = 0;
   let failures = 0;
-  await created.journal.record("point", "replay.worker.started", {}, { invocationId, workerId, profileKey, roles, arms });
+  await created.journal.record("point", "replay.worker.started", {}, { invocationId, workerId, profileKey, roles, arms, controlId, runKind });
   while (true) {
     const leaseToken = randomUUID();
     const claim = await control.request().input("worker_id", sql.VarChar(120), workerId)
@@ -454,13 +579,14 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
         budget: campaignConfig.agentBudget,
         timeoutMs: campaignConfig.agentBudget.maxWallTimeSeconds * 1_000,
         maxRetries: 0,
+        ...(agentControl === undefined ? {} : { control: agentControl }),
       });
       links.push(...result.spanLinks);
       const prediction = await materializePrediction(job, result);
       if (prediction === "decision") decisions += 1;
       else failures += 1;
       await created.journal.record("point", "replay.cell.terminal", { jobId: job.jobId, episodeId: job.cell.episodeId, attemptId: attempt.jobAttemptId }, {
-        invocationId, workerId, arm: job.cell.arm, status: result.status, terminalReason: result.terminalReason, prediction: prediction,
+        invocationId, workerId, arm: job.cell.arm, controlId, status: result.status, terminalReason: result.terminalReason, prediction: prediction,
       }, { status: result.status === "complete" ? "success" : "failed" });
     } catch (error) {
       failures += 1;
@@ -468,11 +594,11 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
       await terminalizeUnexpected(job, attempt, detail);
       await materializePrediction(job, result).catch(() => undefined);
       await created.journal.record("point", "replay.cell.exception", { jobId: job.jobId, episodeId: job.cell.episodeId, ...(attempt === null ? {} : { attemptId: attempt.jobAttemptId }) }, {
-        invocationId, workerId, arm: job.cell.arm, errorDetail: detail,
+        invocationId, workerId, arm: job.cell.arm, controlId, errorDetail: detail,
       }, { status: "failed" });
     }
   }
-  await created.journal.record("point", "replay.worker.finished", {}, { invocationId, workerId, claimed, decisions, failures }, { status: "success" });
+  await created.journal.record("point", "replay.worker.finished", {}, { invocationId, workerId, controlId, claimed, decisions, failures }, { status: "success" });
   await created.journal.flush();
   const ingestion = await ingestTelemetryJournal(control, run.runId, created.path, { batchSize: 250 });
   await linkTelemetry(links);
@@ -493,6 +619,9 @@ async function startAttempt(job: JobIdentity, workerId: string, leaseToken: stri
     role: job.cell.splitRole,
     episodeId: job.cell.episodeId,
     packetSha256: job.cell.packetSha256,
+    controlId,
+    controlPolicySha256: controlId === null ? null : controlPolicySha256,
+    runKind,
     decodeConfigId,
     decodeConfigSha256: hashJson(decodeConfig),
     endpointIdentitySha256: sha256(new URL(config.inference.chatBaseUrl).origin),
@@ -591,6 +720,7 @@ async function materializePrediction(job: JobIdentity, immediate: AgentLoopResul
     snapshotMissCount: Number(row.snapshot_miss_count ?? 0),
     elapsedMs: Number(row.elapsed_ms ?? 0),
   });
+  const sourcePredictionId = await primarySourcePredictionId(job.cell.episodeId);
   const prediction = replayPrediction({
     episodeId: job.cell.episodeId,
     splitRole: job.cell.splitRole,
@@ -606,6 +736,8 @@ async function materializePrediction(job: JobIdentity, immediate: AgentLoopResul
     decision,
     failureClass: row.job_error_class,
     failureDetail: row.job_error_detail ?? row.terminal_reason,
+    controlId,
+    sourcePredictionId,
   });
   await control.request().input("job", sql.BigInt, job.jobId).input("run", sql.BigInt, row.agent_run_id === null ? null : Number(row.agent_run_id))
     .input("decision", sql.BigInt, row.decision_id === null ? null : Number(row.decision_id)).input("episode", sql.VarChar(120), job.cell.episodeId)
@@ -614,15 +746,33 @@ async function materializePrediction(job: JobIdentity, immediate: AgentLoopResul
     .input("action", sql.VarChar(100), prediction.predictedAction).input("confidence", sql.Decimal(9, 6), prediction.confidence)
     .input("abstain", sql.Bit, prediction.abstained).input("outcome", sql.VarChar(32), prediction.outcome)
     .input("stage", sql.VarChar(80), prediction.failureStage).input("failure", sql.VarChar(80), row.job_error_class)
-    .input("complete", sql.Bit, prediction.completeCaseEligible).input("json", sql.NVarChar(sql.MAX), canonicalJson(prediction.envelope)).query(`
+    .input("complete", sql.Bit, prediction.completeCaseEligible).input("control_id", sql.VarChar(80), controlId)
+    .input("source_prediction", sql.BigInt, sourcePredictionId)
+    .input("json", sql.NVarChar(sql.MAX), canonicalJson(prediction.envelope)).query(`
       IF NOT EXISTS(SELECT 1 FROM eval.predictions WHERE job_id=@job)
         INSERT eval.predictions(job_id,agent_run_id,decision_id,episode_id,model_profile_id,agent_arm_id,
           prediction_source,predicted_class,predicted_severity,predicted_action,confidence,abstained,outcome,
-          failure_stage,failure_class,eligible,complete_case_eligible,prediction_json)
+          failure_stage,failure_class,eligible,complete_case_eligible,control_id,source_prediction_id,prediction_json)
         VALUES(@job,@run,@decision,@episode,@model,@arm,'agent',@class,@severity,@action,@confidence,@abstain,
-          @outcome,@stage,@failure,1,@complete,@json);
+          @outcome,@stage,@failure,1,@complete,@control_id,@source_prediction,@json);
     `);
   return decision === null ? "failure" : "decision";
+}
+
+async function primarySourcePredictionId(episodeId: string): Promise<number | null> {
+  if (controlId === null) return null;
+  const result = await control.request().input("run", sql.VarChar(120), run.runId)
+    .input("episode", sql.VarChar(120), episodeId).input("profile", sql.VarChar(80), profileKey)
+    .query<{ prediction_id: string }>(`
+      SELECT prediction.prediction_id
+      FROM eval.predictions prediction
+      INNER JOIN ops.work_items item ON item.job_id=prediction.job_id AND item.run_id=@run
+      WHERE prediction.episode_id=@episode AND prediction.model_profile_id=@profile
+        AND prediction.agent_arm_id='A-tools' AND prediction.prediction_source='agent'
+        AND prediction.control_id IS NULL;
+    `);
+  if (result.recordset.length !== 1) throw new Error(`Expected exactly one primary A-tools prediction for ${profileKey}/${episodeId}, found ${result.recordset.length}`);
+  return Number(result.recordset[0]!.prediction_id);
 }
 
 async function linkTelemetry(links: SpanLink[]): Promise<void> {
@@ -723,6 +873,7 @@ async function exportRawResponses(jobs: JobIdentity[]): Promise<Array<Record<str
       schemaVersion: 1,
       profileKey,
       arm,
+      controlId,
       jobId: Number(row.job_id),
       episodeId: row.episode_id,
       splitRole: row.split_role,
@@ -747,7 +898,7 @@ async function exportRawResponses(jobs: JobIdentity[]): Promise<Array<Record<str
       timingMs: { client: row.client_elapsed_ms, headersWait: row.headers_wait_ms, bodyRead: row.body_read_ms, parse: row.parse_ms },
     }));
     const body = lines.length === 0 ? "" : `${lines.join("\n")}\n`;
-    const path = `${runDirectory}/raw/model-responses-${safeName(profileKey)}-${safeName(arm)}.jsonl`;
+    const path = `${runDirectory}/raw/model-responses-${safeName(profileKey)}-${safeName(arm)}${controlSuffix}.jsonl`;
     await atomicWrite(path, body, 0o600);
     output.push({ arm, path, rows: lines.length, bytes: Buffer.byteLength(body), sha256: sha256(body) });
   }
@@ -775,11 +926,12 @@ function zeroDelta(before: ReturnType<typeof summarizeChatMetrics>, after: Retur
 
 async function persistEvidence(disposition: string, detail: unknown): Promise<void> {
   const detailJson = canonicalJson(detail);
-  await control.request().input("key", sql.VarChar(120), `replay-${safeName(profileKey)}-${invocationId}`)
+  await control.request().input("key", sql.VarChar(120), `replay-${safeName(profileKey)}-${safeName(controlId ?? "primary")}-${invocationId}`)
     .input("run", sql.VarChar(120), run.runId).input("disposition", sql.VarChar(40), disposition)
+    .input("stage", sql.VarChar(80), controlId === null ? "agent_replay" : "negative_control")
     .input("detail", sql.NVarChar(sql.MAX), detailJson).input("hash", sql.Char(64), sha256(detailJson)).query(`
       INSERT control.evidence_events(event_key,run_id,stage,scientific_tier,disposition,detail_json,detail_sha256)
-      VALUES(@key,@run,'agent_replay','tier1',@disposition,@detail,@hash);
+      VALUES(@key,@run,@stage,'tier1',@disposition,@detail,@hash);
     `);
 }
 
@@ -807,6 +959,31 @@ function requiredDecodeConfig(): NonNullable<typeof decodeRegistry.configs[strin
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   return index < 0 ? undefined : process.argv[index + 1];
+}
+
+function controlArgument(): InferenceControlId | null {
+  const value = argument("--control");
+  return value === undefined || value === "primary" ? null : parseInferenceControlId(value);
+}
+
+function agentControlOptions(): AgentLoopOptions["control"] {
+  if (controlId === null) return undefined;
+  if (controlId === "shuffled-runbooks-v1") return { controlId, retrievalOverride: "shuffled_runbook" };
+  if (controlId === "error-number-mask-v1") return {
+    controlId,
+    transformToolResult: ({ result }) => {
+      const transformed = maskErrorNumbersAndSignatures(result, controlPolicy.controls[controlId]);
+      return {
+        result: transformed.value,
+        metadata: {
+          replacementCount: transformed.replacementCount,
+          originalSha256: transformed.originalSha256,
+          transformedSha256: transformed.transformedSha256,
+        },
+      };
+    },
+  };
+  return { controlId };
 }
 
 function safeName(value: string): string { return value.replace(/[^a-z0-9_.-]+/gi, "-").toLowerCase(); }

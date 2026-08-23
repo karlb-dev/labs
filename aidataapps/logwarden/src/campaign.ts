@@ -41,7 +41,7 @@ const decodeRegistrySchema = z.object({
 const campaignSchema = z.object({
   schemaVersion: z.literal(1), campaignId: z.string().min(1), tier: z.literal("standard"),
   scenarioCatalog: z.string().min(1), runbookCorpus: z.string().min(1), agentArms: z.string().min(1),
-  decodeConfigs: z.string().min(1), rulesBaseline: z.string().min(1), derivedBaselines: z.string().min(1), embeddingProfile: z.string().min(1),
+  decodeConfigs: z.string().min(1), rulesBaseline: z.string().min(1), derivedBaselines: z.string().min(1), controlPolicies: z.string().min(1), embeddingProfile: z.string().min(1),
   targetProfiles: z.array(z.string()).length(4), qualityRoles: z.array(z.string()).min(1),
   mandatoryInferenceArms: z.array(z.string()).min(1),
   retrievalArm: z.object({ armId: z.string(), eligibility: z.literal("expected_runbooks_nonempty") }).strict(),
@@ -156,6 +156,7 @@ export function campaignInputManifest(campaign = loadStandardCampaign()) {
     scenarioCatalog: campaign.scenarioCatalog, runbookCorpus: campaign.runbookCorpus,
     agentArms: campaign.agentArms, decodeConfigs: campaign.decodeConfigs, rulesBaseline: campaign.rulesBaseline,
     derivedBaselines: campaign.derivedBaselines,
+    controlPolicies: campaign.controlPolicies,
   };
   return {
     schemaVersion: 1,

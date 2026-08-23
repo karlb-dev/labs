@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "policyId": "tier1-controls-v1",
+  "authoredAtUtc": "2026-08-23T09:00:00.000Z",
+  "authoringProvenance": {
+    "sources": [
+      "docs/SPEC.md sections 22.1, 22.7, 22.11, and 22.14",
+      "docs/SPEC_ADDENDUM.md sections A-4, A-6, and E-5",
+      "config/baselines/rules-v1.json signatures"
+    ],
+    "packetInspection": "No standard incident packet, target-model response, target score, or protected test label was inspected to author these transformations.",
+    "temporalDeviation": "The executable controls were authored during standard SQL capture, before packet construction, target-model inference, target scoring, or campaign freeze.",
+    "impact": "The timing cannot alter captured evidence. Transformations, subset rules, null seeds, and concurrency are hash-frozen before target inference."
+  },
+  "controls": {
+    "error-number-mask-v1": {
+      "kind": "packet_and_tool_transform",
+      "armId": "A-tools",
+      "subset": "frozen-control-96",
+      "fieldNames": ["errorNumber", "error_number"],
+      "numericSignatures": [208, 245, 515, 547, 701, 823, 824, 825, 1205, 2601, 2627, 2628, 3013, 3201, 3241, 3257, 3634, 4064, 8134, 8152, 8628, 8645, 8651, 9002, 18456, 50000],
+      "signatureRegexes": [
+        "\\bdeadlock victim\\b",
+        "\\btransaction log(?: for database [^.;,]+)? is full\\b",
+        "\\blogin failed for user\\b",
+        "\\bbackup(?: database)? is terminating abnormally\\b",
+        "\\bconversion failed\\b",
+        "\\bintegrity\\b",
+        "\\bconsistency(?: check)?\\b",
+        "\\bpage verification\\b",
+        "\\bstorage integrity\\b",
+        "\\bmay require review\\b",
+        "\\bevidence is incomplete\\b",
+        "\\bsignals disagree\\b",
+        "\\bclassification is uncertain\\b",
+        "\\bunsupported signature\\b"
+      ],
+      "numberReplacement": "[ERROR_NUMBER]",
+      "signatureReplacement": "[EXACT_SIGNATURE]"
+    },
+    "shuffled-runbooks-v1": {
+      "kind": "retrieval_override",
+      "armId": "A-tools",
+      "subset": "frozen-control-96",
+      "sourceMode": "shuffled_runbook",
+      "sourcePolicy": "deterministic_hash_ranked_nonacceptable_runbooks_v1",
+      "agentVisibleCloneEvaluatorOnly": false
+    },
+    "batching-sequential-v1": {
+      "kind": "concurrency_invariance",
+      "armId": "A-tools",
+      "subset": "first-48-of-frozen-control-96",
+      "selection": "control_manifest_order",
+      "workers": 1,
+      "comparisonSource": "primary-workers-16",
+      "requiredComparisons": ["raw_response_sha256", "decision_sha256", "ordered_tool_call_sha256"]
+    },
+    "label-permutation-v1": {
+      "kind": "analysis_null",
+      "subset": "all-frozen-quality-roles",
+      "within": ["family", "split_role"],
+      "groupingUnit": "scenario_group_id",
+      "seed": 20260823,
+      "replicates": 1000,
+      "inferenceRequired": false
+    }
+  }
+}

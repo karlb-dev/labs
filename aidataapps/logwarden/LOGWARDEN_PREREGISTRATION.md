@@ -64,6 +64,14 @@ and the router selects resolved B1 rows, otherwise the matched A-tools row. This
 timing cannot affect captured evidence, but is disclosed because executable
 baseline policy was not present before capture began.
 
+The executable Tier 1 control policy was likewise added during standard SQL
+capture at 2026-08-23T09:00Z and before any packet or target output inspection.
+It freezes the 96-episode subset transforms for error-number/signature masking
+and shuffled runbooks, the first-48 sequential batching-invariance cell, and a
+1,000-replicate family/role-stratified label-permutation null. The control file
+is part of the campaign input manifest, so no transform or seed can change
+after freeze.
+
 ## Transport and runtime
 
 The primary decode is `primary-json-v3`: temperature 0, top-p 1, top-k 0,

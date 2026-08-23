@@ -280,6 +280,7 @@ async function routerCandidate(truth: TruthRow, profile: string): Promise<Candid
         prediction.complete_case_eligible,prediction.prediction_json
       FROM eval.predictions prediction
       WHERE prediction.episode_id=@episode AND
+        prediction.control_id IS NULL AND
         ((prediction.agent_arm_id=@b1 AND prediction.model_profile_id IS NULL)
           OR (prediction.agent_arm_id=@tools AND prediction.model_profile_id=@profile));
     `);

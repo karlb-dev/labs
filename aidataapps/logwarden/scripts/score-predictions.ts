@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
+import { parseInferenceControlId, type InferenceControlId } from "../src/controls.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { connect } from "../src/repository.js";
 import { scoreRunbookRetrieval } from "../src/retrieval-metrics.js";
@@ -32,6 +33,8 @@ interface PredictionRow {
   prediction_json: string;
   contract_valid: boolean | null;
   policy_valid: boolean | null;
+  control_id: string | null;
+  source_prediction_id: string | null;
 }
 interface ToolRow {
   prediction_id: string;
@@ -51,6 +54,8 @@ const startedAtUtc = new Date().toISOString();
 const roles = parseReplayRoles(argument("--roles") ?? "dev");
 const arms = listArgument("--arms", "B1-rules-v1,A-direct,A-rag,A-tools");
 const profiles = listArgument("--profiles", "qwen-smoke");
+const controlId = controlArgument();
+const controlSuffix = controlId === null ? "" : `-${safeName(controlId)}`;
 const config = loadConfig();
 const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as { runId: string };
@@ -113,6 +118,8 @@ try {
       episodeId: prediction.episode_id,
       modelProfileId: prediction.model_profile_id,
       agentArmId: prediction.agent_arm_id,
+      controlId: prediction.control_id,
+      sourcePredictionId: prediction.source_prediction_id === null ? null : Number(prediction.source_prediction_id),
       scoringArmId,
       splitRole: prediction.split_role,
       score,
@@ -147,6 +154,7 @@ try {
       episodeId: prediction.episode_id,
       modelProfileId: prediction.model_profile_id,
       agentArmId: prediction.agent_arm_id,
+      controlId: prediction.control_id,
       splitRole: prediction.split_role,
       ...score,
       retrieval,
@@ -159,7 +167,7 @@ try {
     || String(left.agentArmId).localeCompare(String(right.agentArmId))
     || String(left.episodeId).localeCompare(String(right.episodeId)));
   const tableBody = rows.map((row) => canonicalJson(row)).join("\n") + "\n";
-  const tablePath = `${runDirectory}/tables/prediction-scores-${safeName(roles.join("-"))}-${safeName(profiles.join("-"))}.jsonl`;
+  const tablePath = `${runDirectory}/tables/prediction-scores-${safeName(roles.join("-"))}-${safeName(profiles.join("-"))}${controlSuffix}.jsonl`;
   await atomicWrite(tablePath, tableBody, 0o600);
   const counts = Object.fromEntries(arms.map((arm) => [arm, rows.filter((row) => row.agentArmId === arm).length]));
   const receiptBody = {
@@ -168,6 +176,7 @@ try {
     roles,
     profiles,
     arms,
+    controlId,
     startedAtUtc,
     finishedAtUtc: new Date().toISOString(),
     predictionCount: rows.length,
@@ -181,15 +190,16 @@ try {
     disposition: "PASS",
   };
   const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
-  const receiptPath = `${runDirectory}/metrics/prediction-scores-${safeName(roles.join("-"))}-${safeName(profiles.join("-"))}.json`;
+  const receiptPath = `${runDirectory}/metrics/prediction-scores-${safeName(roles.join("-"))}-${safeName(profiles.join("-"))}${controlSuffix}.json`;
   await atomicWrite(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, 0o600);
-  await appendExperimentLog(`Scored ${rows.length} ${roles.join(",")} predictions for ${profiles.join(",")} across ${arms.join(",")}; receipt ${receipt.receiptSha256}.`);
-  console.log(JSON.stringify({ roles, profiles, arms, predictionCount: rows.length, counts, insertedDecisionScores, insertedToolScores, insertedRetrievalScores, receiptPath, receiptSha256: receipt.receiptSha256, disposition: "PASS" }, null, 2));
+  await appendExperimentLog(`Scored ${rows.length} ${controlId === null ? "primary" : `control ${controlId}`} ${roles.join(",")} predictions for ${profiles.join(",")} across ${arms.join(",")}; receipt ${receipt.receiptSha256}.`);
+  console.log(JSON.stringify({ roles, profiles, arms, controlId, predictionCount: rows.length, counts, insertedDecisionScores, insertedToolScores, insertedRetrievalScores, receiptPath, receiptSha256: receipt.receiptSha256, disposition: "PASS" }, null, 2));
 } finally {
   await pool.close();
 }
 
 async function assertScoringAuthorized(): Promise<void> {
+  if (controlId !== null && (arms.length !== 1 || arms[0] !== "A-tools")) throw new Error("Tier 1 inference-control scoring is restricted to A-tools");
   const status = await pool.request().input("run", sql.VarChar(120), run.runId).query<{ status: string }>(`
     SELECT campaign.status FROM control.campaigns campaign INNER JOIN control.runs run ON run.campaign_id=campaign.campaign_id WHERE run.run_id=@run;
   `);
@@ -202,6 +212,7 @@ async function assertScoringAuthorized(): Promise<void> {
 async function loadPredictions(): Promise<PredictionRow[]> {
   const result = await pool.request().input("roles", sql.NVarChar(sql.MAX), JSON.stringify(roles))
     .input("arms", sql.NVarChar(sql.MAX), JSON.stringify(arms)).input("profiles", sql.NVarChar(sql.MAX), JSON.stringify(profiles))
+    .input("control", sql.VarChar(80), controlId)
     .query<PredictionRow>(`
       WITH selected_roles AS (SELECT CONVERT(varchar(40),value) value FROM OPENJSON(@roles)),
            selected_arms AS (SELECT CONVERT(varchar(80),value) value FROM OPENJSON(@arms)),
@@ -211,13 +222,15 @@ async function loadPredictions(): Promise<PredictionRow[]> {
         prediction.predicted_class,prediction.predicted_severity,prediction.predicted_action,
         prediction.abstained,prediction.outcome,truth.split_role,truth.expected_class,truth.expected_severity,
         truth.expected_action,truth.acceptable_actions_json,truth.should_abstain,truth.expected_runbooks_json,
-        truth.protected_truth_json,prediction.prediction_json,decision.contract_valid,decision.policy_valid
+        truth.protected_truth_json,prediction.prediction_json,decision.contract_valid,decision.policy_valid,
+        prediction.control_id,prediction.source_prediction_id
       FROM eval.predictions prediction INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=prediction.episode_id
       INNER JOIN selected_roles role ON role.value=truth.split_role
       INNER JOIN selected_arms arm ON arm.value=prediction.agent_arm_id
       LEFT JOIN selected_profiles profile ON profile.value=prediction.model_profile_id
       LEFT JOIN agent.decisions decision ON decision.decision_id=prediction.decision_id
-      WHERE prediction.model_profile_id IS NULL OR profile.value IS NOT NULL
+      WHERE (prediction.model_profile_id IS NULL OR profile.value IS NOT NULL)
+        AND ((@control IS NULL AND prediction.control_id IS NULL) OR prediction.control_id=@control)
       ORDER BY truth.split_role,prediction.model_profile_id,prediction.agent_arm_id,prediction.episode_id;
     `);
   return result.recordset;
@@ -419,4 +432,8 @@ function listArgument(name: string, fallback: string): string[] {
   return values;
 }
 function argument(name: string): string | undefined { const index = process.argv.indexOf(name); return index < 0 ? undefined : process.argv[index + 1]; }
+function controlArgument(): InferenceControlId | null {
+  const value = argument("--control");
+  return value === undefined || value === "primary" ? null : parseInferenceControlId(value);
+}
 function safeName(value: string): string { return value.replace(/[^a-z0-9_.-]+/gi, "-").toLowerCase(); }

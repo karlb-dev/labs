@@ -8,6 +8,7 @@
   "decodeConfigs": "config/decode.json",
   "rulesBaseline": "config/baselines/rules-v1.json",
   "derivedBaselines": "config/baselines/derived-v1.json",
+  "controlPolicies": "config/controls/tier1-v1.json",
   "embeddingProfile": "qwen3-embedding-0.6b",
   "targetProfiles": [
     "muse-glimmer-30b",
