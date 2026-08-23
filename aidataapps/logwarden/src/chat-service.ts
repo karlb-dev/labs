@@ -34,6 +34,20 @@ export function terminalChatContainerFailure(state: ChatContainerState): string 
   ].join(" ");
 }
 
+const fatalChatLogPatterns = [
+  ["cuda_out_of_memory", /CUDA out of memory|torch\.OutOfMemoryError|OutOfMemoryError:\s*CUDA/i],
+  ["engine_initialization_failed", /Engine core initialization failed|EngineCore failed to start/i],
+  ["fatal_python_error", /Fatal Python error:/i],
+  ["segmentation_fault", /Segmentation fault|SIGSEGV/i],
+  ["fatal_nccl_error", /NCCL (?:error|failure)|ncclUnhandledCudaError/i],
+] as const;
+
+export function fatalChatServiceLogSignatures(logs: string): string[] {
+  return fatalChatLogPatterns
+    .filter(([, pattern]) => pattern.test(logs))
+    .map(([name]) => name);
+}
+
 export function chatContainerName(project: string): string {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(project)) throw new Error("Invalid Compose project name");
   return `${project}-chat`;

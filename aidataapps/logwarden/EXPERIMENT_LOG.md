@@ -1023,3 +1023,22 @@ place and receive a later disposition.
   it changes no packet, prompt, decode value, image, model, revision, arm,
   threshold, or score. The retry uses the exact frozen configuration against
   the now-complete pinned cache.
+- 2026-08-23T11:41:23Z — The unchanged warm-cache Muse service reached HTTP
+  readiness and returned nine 2xx canary responses; every response passed the
+  structured-decision, token-usage, finish-reason, transport, GPU-residency,
+  and metric-delta checks. The gate then emitted `STOP_PORT` because its log
+  scan treated any Python traceback as fatal. The retained service log contains
+  66 warning-prefixed TorchInductor stacks for absent temporary Triton cubins,
+  followed by an explicit successful compiled-graph-cache fallback and
+  application startup; it contains zero explicit engine-initialization, OOM,
+  fatal-Python, segmentation, or NCCL failure signatures, and the service
+  remained healthy. Failure receipt:
+  `852334f03e39f3d1e45fe99df99738cb16fecb34f0375b460d45d50805970e85`;
+  its 66-record telemetry journal was hash-validated and projected with zero
+  duplicates. The post-freeze gate classifier now enumerates explicit fatal
+  signatures, rejects those signatures, ignores the evidenced recoverable
+  compiler warning stack, and re-inspects the container after the log scan.
+  Regression fixtures cover both cases. Impact: validation classification
+  only; no service setting, model output, prompt, packet, decode, arm,
+  threshold, or score changed. The false-positive canaries remain retained and
+  the required warm port gate will be rerun.

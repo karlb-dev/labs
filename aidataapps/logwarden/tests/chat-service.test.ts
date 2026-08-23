@@ -2,6 +2,7 @@ import {
   chatContainerName,
   chatDockerRunArguments,
   chatServerArguments,
+  fatalChatServiceLogSignatures,
   terminalChatContainerFailure,
 } from "../src/chat-service.js";
 import { resolveModelProfile } from "../src/models.js";
@@ -52,5 +53,18 @@ describe("pinned chat service command", () => {
       Error: "",
       FinishedAt: "2026-08-23T11:24:10Z",
     })).toContain("status=exited running=false exitCode=1 oomKilled=false");
+  });
+
+  it("does not treat recoverable compiler warning stacks as fatal service failures", () => {
+    const warning = [
+      "[rank0]:W torch/_inductor/triton_bundler.py Failed to reload cubin file",
+      "[rank0]:W torch/_inductor/triton_bundler.py Traceback (most recent call last):",
+      "[rank0]:W RuntimeError: Cubin file saved by TritonBundler not found",
+      "INFO Directly load the compiled graph(s) from the cache",
+      "INFO Application startup complete.",
+    ].join("\n");
+    expect(fatalChatServiceLogSignatures(warning)).toEqual([]);
+    expect(fatalChatServiceLogSignatures("torch.OutOfMemoryError: CUDA out of memory")).toEqual(["cuda_out_of_memory"]);
+    expect(fatalChatServiceLogSignatures("RuntimeError: Engine core initialization failed")).toEqual(["engine_initialization_failed"]);
   });
 });

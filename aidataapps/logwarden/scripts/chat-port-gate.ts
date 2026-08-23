@@ -4,7 +4,11 @@ import { readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import sql from "mssql";
 import { buildInitialAgentMessages } from "../src/agent-loop.js";
-import { terminalChatContainerFailure, type ChatContainerState } from "../src/chat-service.js";
+import {
+  fatalChatServiceLogSignatures,
+  terminalChatContainerFailure,
+  type ChatContainerState,
+} from "../src/chat-service.js";
 import { summarizeChatMetrics, validateChatMetricDelta } from "../src/chat-metrics.js";
 import { loadConfig } from "../src/config.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
@@ -80,8 +84,10 @@ try {
 
   const logs = await command("docker", ["logs", "--timestamps", "--tail", "2000", containerName]);
   await atomicWrite(`${rawDirectory}/service.log`, logs, 0o600);
-  if (/CUDA out of memory|Engine core initialization failed|Traceback \(most recent call last\)/i.test(logs))
-    throw new Error("Chat service logs contain a fatal runtime signature");
+  const fatalLogSignatures = fatalChatServiceLogSignatures(logs);
+  if (fatalLogSignatures.length > 0)
+    throw new Error(`Chat service logs contain fatal runtime signatures: ${fatalLogSignatures.join(",")}`);
+  await inspectService();
   const samplingLines = logs.split(/\r?\n/).filter((line) => /SamplingParams\(/.test(line));
   const effectiveSamplingParamsLine = samplingLines.at(-1) ?? null;
   if (effectiveSamplingParamsLine === null) throw new Error("vLLM did not log effective SamplingParams");
@@ -116,6 +122,7 @@ try {
     gpu: { before: gpuBefore, during: gpuDuring },
     metrics: { before: metricsBefore, after: metricsAfter },
     metricDelta,
+    fatalLogSignatures,
     effectiveSamplingParamsLine,
     calls: calls.map(summarizeCall),
     determinism: { repeatedCalls: contentHashes.length, exactMatches, exactMatchRate, contentHashes },
