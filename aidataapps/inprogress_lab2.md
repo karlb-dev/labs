@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 07:40 UTC
+Last manually updated: 2026-08-23 07:51 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -117,9 +117,31 @@ Gemma is complete:
   evicted with `hf cache rm`, freeing 62.6 GB; it remains re-downloadable at
   the pinned revision
 
-OLMo has not started and is the next residency. OLMo, final cross-likelihood
-completion, features, analyses, reports, BACPAC, archive, mirror, and
-reproducibility run remain.
+OLMo is active:
+
+- profile `olmo-3.1-32b-instruct`, pinned revision
+  `ac0587e4a7744a551c059d8cd17ba220bc940dae`
+- residency container `aidataapps-modelprint-chat-olmo-r1`
+- the 60.04 GiB checkpoint downloaded and loaded successfully at the frozen
+  GPU utilization 0.78; no runtime override or batch-invariant mode is active
+- available KV cache is 12.18 GiB / 49,863 tokens, 3.04x the frozen 16K context
+- runtime profile hash:
+  `261bd96df4ed073845a192b214d28a891e522041579f065dd455b6535203e9a6`
+- strict gate passed on the first attempt with six identical hashes
+  `0e6aa633784346ef6d8a0825219e5485ef9a242f83be91ff26423c10706ff73c`
+- gate file SHA-256:
+  `39b191343db714d617f784247bcdd47cd364d2af41533aeb9b1a36e884bc54de`
+- active primary command:
+
+```bash
+npm run generate -- --profile olmo-3.1-32b-instruct --resume --concurrency 64 --checkpoint-size 100
+```
+
+- first durable checkpoint: 100/10,000, zero failed at
+  `2026-08-23T07:50:31Z`; later checkpoint/SQL counts supersede this value
+
+OLMo robustness/likelihood, final cross-likelihood completion, features,
+analyses, reports, BACPAC, archive, mirror, and reproducibility run remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -183,11 +205,10 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Gemma is complete and no chat process should be restarted unless a later
-cross-likelihood fill rotation explicitly requires it. Confirm port 8000 is
-free, then start OLMo with the exact pinned profile and a unique container;
-inspect current processes and SQL/manifests before resuming any interrupted
-OLMo stage.
+Do not start a second OLMo generator if the command is alive. If it is absent,
+rerun the exact primary command above; `--resume` reconciles the frozen config
+hash and SQL state before selecting missing rows. Inspect processes,
+checkpoints, manifests, and SQL before resuming any later OLMo stage.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -250,15 +271,10 @@ tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 ## Remaining residency workflow
 
 Qwen, Muse, and Gemma are fully complete for their first residencies and are no
-longer resident. Start OLMo at its frozen defaults and run the unchanged gate
-before any campaign request:
+longer resident. OLMo is gated and its primary generator is active. After
+primary completion, run:
 
 ```bash
-unset CHAT_GPU_MEMORY_UTILIZATION VLLM_BATCH_INVARIANT
-export CHAT_CONTAINER_NAME=aidataapps-modelprint-chat-olmo-r1
-npm run model -- start --profile olmo-3.1-32b-instruct
-npm run port:gate -- --profile olmo-3.1-32b-instruct
-npm run generate -- --profile olmo-3.1-32b-instruct --resume --concurrency 64 --checkpoint-size 100
 npm run robustness:generate -- --profile olmo-3.1-32b-instruct --concurrency 64 --checkpoint-size 100
 npm run likelihood:score -- --scorer olmo-3.1-32b-instruct --include-robustness --concurrency 64 --checkpoint-size 200
 npm run checkpoint:once
