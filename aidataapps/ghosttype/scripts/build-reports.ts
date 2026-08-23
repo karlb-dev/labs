@@ -121,5 +121,49 @@ stateReport += table(["stage", "disposition", "event key", "at (UTC)"],
 stateReport += "\n## Inherited scars honored\n\nAutocommit DDL for preview features; explicit isolation hygiene; BACPAC restore re-applies preview/compat; unpaired-surrogate policy in insertion integrity; DiskANN INT-key rule reserved for the Tier-2 ANN comparator; statement-relative cursor offsets documented in migration 004.\n";
 await atomicWrite("reports/STATE_OF_RECORD.md", stateReport);
 
-console.log(JSON.stringify({ reports: ["DATASET_REPORT", "COMPLETION_QUALITY_REPORT", "CLAIMS_TABLE", "STATE_OF_RECORD"], runId, events: events.length, claims: claims.length }, null, 2));
+// ---------------- SAFETY_REPORT ----------------
+const safetyClasses = (await pool.request().query<{ safety_class: string; n: number }>(
+  `SELECT JSON_VALUE(oracle_json, '$.safety_class') safety_class, COUNT(*) n
+   FROM dataset.cases GROUP BY JSON_VALUE(oracle_json, '$.safety_class') ORDER BY n DESC`)).recordset;
+let safetyReport = header("GhostType SAFETY_REPORT (Tier 1)");
+safetyReport += "## Safety class routing (package-declared, per case)\n\n";
+safetyReport += table(["safety class", "cases"], safetyClasses.map((r) => [r.safety_class, r.n]));
+safetyReport += `\n## Execution posture\n\nNo model or baseline candidate has been executed against any database in this campaign. All Tier-1 scoring is static (normalize/constraint/grounding/parse via ScriptDom). Fixture DDL execution and the execution/mutation oracles are dispositioned to a later stage (SOURCE_INTAKE.md); when they run they follow spec §39: rollback-safe transactions, disposable fixture databases, per-fixture throwaway principals, harness-enforced row/time caps, and static adjudication (never execution) for server-level/destructive statements.\n\n## Injection surface\n\nPrompt-injection stress descriptions ship inside package prompts; they are scored like any other rows and can never be cited as ordinary evidence (addendum B-6). No injection-marked content is embedded into retrieval indexes in Tier 1 (no retrieval index has been built from case text).\n`;
+await atomicWrite("reports/SAFETY_REPORT.md", safetyReport);
+
+// ---------------- LIMITATIONS ----------------
+let limitations = header("GhostType LIMITATIONS (Tier 1)");
+limitations += `- **Mac campaign, not the spec's GPU serving plane.** Single-resident MLX serving, sequential replay; no multi-user serving results exist yet (Colab lift-and-shift is the second campaign).
+- **SQL timings are DEV-tier** (SQL Server 2025 under Rosetta emulation, outside Microsoft's support boundary).
+- **Simulated acceptance is not observed user acceptance** (claim ceiling, addendum §7).
+- **Power labels are provisional** until the E-1 power simulation runs; paired-test labels use a discordant-count rule of thumb.
+- **8 package defects** are adjudicated findings (3 invalid golds, 5 cursor placements); their rows still score, so exact-match ceilings are slightly depressed for affected families until dataset v2.1.
+- **The M-arm matrix is reduced**: the mac campaign replays the package's frozen prompt (arm M1-packaged). M0/M2/R0 prompt constructions and retrieval arms are not yet run.
+- **B4's identifier-safe adaptation** is reduced to same-catalog exemplar reuse; cross-catalog adaptation is unimplemented.
+- **Execution/compile oracles have not run**; parse and static gates only. compile_eligible/execution_eligible flags are stored and waiting.
+`;
+await atomicWrite("reports/LIMITATIONS.md", limitations);
+
+// ---------------- REPRODUCIBILITY ----------------
+let repro = header("GhostType REPRODUCIBILITY (Tier 1)");
+repro += `## Row-only reproduction (Tier-1 closeout gate)
+
+\`\`\`bash
+docker compose -f compose.yaml -f compose.mac.yaml up -d   # SQL on :1435
+./scripts/repro.sh --mode rows
+\`\`\`
+
+Rebuilds every row-level artifact from the vendored, hash-verified package: schema migrations (drift-refusing), dataset import (588 record hashes re-verified in-process), all GT-1 gates, catalog snapshots, the GT-3 parse oracle under the pinned ScriptDom [170.191.0], deterministic baselines B0–B4, aggregate metrics, and the unit suite for the frozen rules.
+
+## Database backup/restore
+
+Stage-boundary backups only (no rolling dumps): \`npm run db:backup\`. Restore re-applies PREVIEW_FEATURES and compatibility level 170 (inherited ModelPrint scar): \`./scripts/export-database.sh restore <bak>\`.
+
+## Model campaign reproduction
+
+Model rows depend on the frozen MLX servings on this machine (registry \`config/models.mac.json\`; per-profile pins recorded by the port gate in \`control.model_profiles\`). Re-running \`npm run quality:run -- --profile <id>\` after wiping that profile's requests reproduces the campaign at temperature 0; exact token-for-token stability is recorded per profile by the port-gate determinism canary.
+`;
+await atomicWrite("reports/REPRODUCIBILITY.md", repro);
+
+console.log(JSON.stringify({ reports: ["DATASET_REPORT", "COMPLETION_QUALITY_REPORT", "CLAIMS_TABLE", "STATE_OF_RECORD", "SAFETY_REPORT", "LIMITATIONS", "REPRODUCIBILITY"], runId, events: events.length, claims: claims.length }, null, 2));
 await pool.close();

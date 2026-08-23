@@ -1,6 +1,6 @@
 # GhostType CLAIMS_TABLE (Tier 1)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-23T22:14:08.921Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-23T22:16:32.030Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
