@@ -911,3 +911,10 @@ place and receive a later disposition.
 - 2026-08-23T10:10:50.780Z — Derived 600 predictions for B0-majority-no-action-v1,B2-lexical-v1,B2-vector-v1,B2-hybrid-v1,B3-oracle-packet-v1 over dev,calibration; receipt 4569707de9cfceda7a628b00d55e2684054466ebc9aa7668256b773a222903d1.
 
 - 2026-08-23T10:13:28.807Z — Scored 60 primary dev predictions for qwen-smoke across B1-rules-v1; receipt 21c0e8a35e752aa2522eced5c6733cca25ad56b085eb81713601eb8e681bad8c.
+
+- 2026-08-23T10:35:42Z — Prompt-contract v2 passed the real qwen-smoke
+  port gate, including an A-direct packet that advertised untrusted tool hints:
+  9/9 structured decisions, zero length/error/preemption outcomes, deterministic
+  repeat rate 1.0, and 81,952 MiB resident GPU memory; receipt
+  `49fa3bd3e0afa5dd27d3ee935fb4c929a2bdbb0b5e421f5a98feb8f7644dfee6`.
+- 2026-08-23T10:35:51.429Z — Retained the failed qwen-smoke attempt-1 grid and its 190 raw model request/response hashes at /content/worktrees/aidataapps-logwarden/aidataapps/logwarden/runs/logwarden-smoke-20260823T031714Z/manifests/qwen-smoke-pilot-retained-20260823T103551249Z.json; reset exactly 180 development-only cells for prompt-contract v2 attempt 2, receipt 51ec9210c54de714a70a3588908dec4988da90cf1566bda800350ddd75848e1b.
