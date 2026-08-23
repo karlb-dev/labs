@@ -21,8 +21,10 @@ const evidence = {
   scores: await validatedReceipt(evidencePaths.scores, "PASS"),
   baseline: await validatedReceipt(evidencePaths.baseline, "PASS"),
 };
-const replayStarted = dateValue(evidence.replay.startedAtUtc, "replay.startedAtUtc");
-const replayFinished = dateValue(evidence.replay.finishedAtUtc, "replay.finishedAtUtc");
+const inferenceWindow = evidence.replay.inferenceWindow as Record<string, unknown> | undefined;
+if (inferenceWindow === undefined || Number(inferenceWindow.modelRequestCount ?? 0) < 180) throw new Error("Qwen replay inference window is incomplete");
+const replayStarted = dateValue(inferenceWindow.startedAtUtc, "replay.inferenceWindow.startedAtUtc");
+const replayFinished = dateValue(inferenceWindow.finishedAtUtc, "replay.inferenceWindow.finishedAtUtc");
 if (replayStarted >= replayFinished) throw new Error("Qwen replay time window is invalid");
 const pool = await connect(config.databases.lab, config.databases.controlName, 600_000);
 
@@ -130,7 +132,7 @@ try {
     runId: run.runId,
     profileKey,
     verifiedAtUtc: new Date().toISOString(),
-    replayWindow: { startedAtUtc: replayStarted.toISOString(), finishedAtUtc: replayFinished.toISOString() },
+    replayWindow: { startedAtUtc: replayStarted.toISOString(), finishedAtUtc: replayFinished.toISOString(), modelRequestCount: Number(inferenceWindow.modelRequestCount) },
     expectedRagCount,
     expectedAgentCells,
     evidence: Object.fromEntries(Object.entries(evidence).map(([key, value]) => [key, {

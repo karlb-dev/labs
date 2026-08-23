@@ -899,6 +899,15 @@ place and receive a later disposition.
   inference remains parallel while journal projection is serialized. An audited
   development-only retry retains attempt 1, refuses frozen/scored rows, and
   selects the current prediction-linked attempt in the end-to-end gate.
+- 2026-08-23T10:43:01Z — Qwen pilot attempt 2 completed all GPU/agent work and
+  serialized journal projection, then its final constrained-transport verifier
+  decoded UTF-8 request bytes as SQL Server UTF-16 and rejected the leading byte
+  sequence. The verifier now uses `varchar(max)`, matching the raw-body hash and
+  export paths. PASS receipts also carry the prediction-linked agent inference
+  window rather than a later no-op finalization window. Impact: no inference is
+  rerun; 180 current predictions, 129 accepted decisions, 51 retained failures,
+  267 successful tool calls, 60 retrieval calls, and every raw attempt remain
+  unchanged.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 

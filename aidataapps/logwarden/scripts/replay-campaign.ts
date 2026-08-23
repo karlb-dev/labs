@@ -140,6 +140,7 @@ try {
   await linkTelemetryByEvidence(jobs);
   for (const job of jobs) await materializePrediction(job, null);
   const verification = await verifyReplay(jobs);
+  const inferenceWindow = await selectedInferenceWindow(jobs);
   const metricsAfter = await retainChatMetrics("after");
   const modelRequestCount = Number(verification.model_request_count);
   const newModelRequestCount = modelRequestCount - modelRequestsBefore;
@@ -178,6 +179,7 @@ try {
     },
     workers: workerResults,
     verification,
+    inferenceWindow,
     modelRequestsBefore,
     newModelRequestCount,
     modelMetrics: { before: metricsBefore, after: metricsAfter, delta: metricDelta },
@@ -840,6 +842,46 @@ async function selectedModelRequestCount(jobs: JobIdentity[]): Promise<number> {
   return Number(result.recordset[0]?.request_count ?? 0);
 }
 
+async function selectedInferenceWindow(jobs: JobIdentity[]): Promise<{
+  startedAtUtc: string;
+  finishedAtUtc: string;
+  predictionCount: number;
+  agentRunCount: number;
+  modelRequestCount: number;
+}> {
+  const ids = JSON.stringify(jobs.map((job) => job.jobId));
+  const result = await control.request().input("ids", sql.NVarChar(sql.MAX), ids).query<{
+    started_at_utc: Date | null; finished_at_utc: Date | null; prediction_count: number;
+    agent_run_count: number; model_request_count: number;
+  }>(`
+    WITH selected AS (SELECT CONVERT(bigint,value) job_id FROM OPENJSON(@ids))
+    SELECT MIN(agent_run.started_at_utc) started_at_utc,MAX(agent_run.finished_at_utc) finished_at_utc,
+      COUNT(DISTINCT prediction.prediction_id) prediction_count,
+      COUNT(DISTINCT agent_run.agent_run_id) agent_run_count,
+      COUNT(request.model_request_id) model_request_count
+    FROM selected
+    INNER JOIN eval.predictions prediction ON prediction.job_id=selected.job_id
+    LEFT JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=prediction.agent_run_id
+    LEFT JOIN agent.turns turn ON turn.agent_run_id=agent_run.agent_run_id
+    LEFT JOIN agent.model_requests request ON request.turn_id=turn.turn_id;
+  `);
+  const row = result.recordset[0]!;
+  const predictionCount = Number(row.prediction_count ?? 0);
+  const agentRunCount = Number(row.agent_run_count ?? 0);
+  const modelRequestCount = Number(row.model_request_count ?? 0);
+  if (predictionCount !== jobs.length || agentRunCount === 0 || modelRequestCount === 0
+      || row.started_at_utc === null || row.finished_at_utc === null) {
+    throw new Error(`Selected inference window is incomplete: ${canonicalJson({ predictionCount, agentRunCount, modelRequestCount, startedAtUtc: row.started_at_utc, finishedAtUtc: row.finished_at_utc })}`);
+  }
+  return {
+    startedAtUtc: row.started_at_utc.toISOString(),
+    finishedAtUtc: row.finished_at_utc.toISOString(),
+    predictionCount,
+    agentRunCount,
+    modelRequestCount,
+  };
+}
+
 async function verifyReplay(jobs: JobIdentity[]): Promise<Record<string, unknown>> {
   const ids = JSON.stringify(jobs.map((job) => job.jobId));
   const result = await control.request().input("ids", sql.NVarChar(sql.MAX), ids).query<Record<string, unknown>>(`
@@ -857,7 +899,7 @@ async function verifyReplay(jobs: JobIdentity[]): Promise<Record<string, unknown
       (SELECT COUNT(*) FROM ops.work_items item INNER JOIN selected ON selected.job_id=item.job_id WHERE item.lease_token IS NOT NULL OR item.lease_owner IS NOT NULL OR item.leased_until_utc IS NOT NULL) retained_lease_count,
       (SELECT COUNT(*) FROM agent.model_requests request INNER JOIN agent.turns turn ON turn.turn_id=request.turn_id INNER JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=turn.agent_run_id INNER JOIN selected ON selected.job_id=agent_run.job_id WHERE LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',request.request_body),2))<>request.request_body_sha256) bad_request_hash_count,
       (SELECT COUNT(*) FROM agent.model_responses response INNER JOIN agent.model_requests request ON request.model_request_id=response.model_request_id INNER JOIN agent.turns turn ON turn.turn_id=request.turn_id INNER JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=turn.agent_run_id INNER JOIN selected ON selected.job_id=agent_run.job_id WHERE LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',response.response_body),2))<>response.response_body_sha256) bad_response_hash_count,
-      (SELECT COUNT(*) FROM agent.model_requests request INNER JOIN agent.turns turn ON turn.turn_id=request.turn_id INNER JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=turn.agent_run_id INNER JOIN selected ON selected.job_id=agent_run.job_id WHERE JSON_QUERY(CONVERT(nvarchar(max),request.request_body),'$.response_format') IS NOT NULL OR JSON_QUERY(CONVERT(nvarchar(max),request.request_body),'$.tools') IS NOT NULL) constrained_transport_count,
+      (SELECT COUNT(*) FROM agent.model_requests request INNER JOIN agent.turns turn ON turn.turn_id=request.turn_id INNER JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=turn.agent_run_id INNER JOIN selected ON selected.job_id=agent_run.job_id WHERE JSON_QUERY(CONVERT(varchar(max),request.request_body),'$.response_format') IS NOT NULL OR JSON_QUERY(CONVERT(varchar(max),request.request_body),'$.tools') IS NOT NULL) constrained_transport_count,
       (SELECT COUNT(*) FROM ops.action_proposals proposal INNER JOIN agent.decisions decision ON decision.decision_id=proposal.decision_id INNER JOIN agent.agent_runs agent_run ON agent_run.agent_run_id=decision.agent_run_id INNER JOIN selected ON selected.job_id=agent_run.job_id WHERE proposal.caller_opted_in=1 OR proposal.executed_at_utc IS NOT NULL OR proposal.execution_status<>'not_executed') unsafe_action_count,
       (SELECT COUNT(*) FROM telemetry.spans span INNER JOIN telemetry.traces trace ON trace.trace_id=span.trace_id INNER JOIN selected ON selected.job_id=trace.job_id WHERE span.finished_at_utc IS NULL) open_span_count,
       (SELECT COUNT(*) FROM telemetry.traces trace INNER JOIN selected ON selected.job_id=trace.job_id WHERE trace.finished_at_utc IS NULL) open_trace_count,

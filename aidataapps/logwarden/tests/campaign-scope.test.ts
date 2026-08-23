@@ -27,6 +27,8 @@ describe("standard campaign schedule isolation", () => {
     expect(source).toContain("for (const execution of workerExecutions)");
     expect(source).toContain("execution.journalPath");
     expect(source).toContain("replay workers failed: ${details.join");
+    expect(source).toContain("selectedInferenceWindow(jobs)");
+    expect(source).not.toContain("CONVERT(nvarchar(max),request.request_body)");
   });
 
   it("evaluates resumed qwen pilots from the prediction-selected agent attempts", async () => {

@@ -347,7 +347,7 @@ async function verifyCase(
         (SELECT COUNT(*) FROM ops.action_proposals p INNER JOIN agent.decisions d ON d.decision_id=p.decision_id WHERE d.agent_run_id=@run AND p.caller_opted_in=0 AND p.execution_status='not_executed') AS safe_proposal_count,
         (SELECT COUNT(*) FROM agent.model_requests q INNER JOIN agent.turns t ON t.turn_id=q.turn_id WHERE t.agent_run_id=@run AND LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',q.request_body),2))<>q.request_body_sha256) AS bad_request_hashes,
         (SELECT COUNT(*) FROM agent.model_responses p INNER JOIN agent.model_requests q ON q.model_request_id=p.model_request_id INNER JOIN agent.turns t ON t.turn_id=q.turn_id WHERE t.agent_run_id=@run AND LOWER(CONVERT(varchar(64),HASHBYTES('SHA2_256',p.response_body),2))<>p.response_body_sha256) AS bad_response_hashes,
-        (SELECT COUNT(*) FROM agent.model_requests q INNER JOIN agent.turns t ON t.turn_id=q.turn_id WHERE t.agent_run_id=@run AND CONVERT(nvarchar(max),q.request_body) LIKE '%response_format%') AS guided_request_count,
+        (SELECT COUNT(*) FROM agent.model_requests q INNER JOIN agent.turns t ON t.turn_id=q.turn_id WHERE t.agent_run_id=@run AND CONVERT(varchar(max),q.request_body) LIKE '%response_format%') AS guided_request_count,
         (SELECT COUNT(*) FROM telemetry.traces WHERE trace_id=@trace AND finished_at_utc IS NULL) AS open_trace_count,
         (SELECT COUNT(*) FROM telemetry.spans WHERE trace_id=@trace AND finished_at_utc IS NULL) AS open_span_count,
         (SELECT COUNT(*) FROM telemetry.spans WHERE trace_id=@trace AND span_name='model.request' AND model_request_id IS NULL) AS unlinked_model_spans,
