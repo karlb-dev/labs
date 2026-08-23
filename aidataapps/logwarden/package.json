@@ -17,6 +17,8 @@
     "scenarios:build": "node --import tsx scripts/scenarios-build.ts",
     "scenarios:inject": "node --import tsx scripts/scenarios-inject.ts",
     "capture:verify": "node --import tsx scripts/capture-verify.ts",
+    "db:backup": "node --import tsx scripts/database-checkpoint.ts",
+    "db:restore-test": "node --import tsx scripts/database-checkpoint.ts --restore-test",
     "secrets:rotate": "node --import tsx scripts/rotate-local-secrets.ts",
     "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
     "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",

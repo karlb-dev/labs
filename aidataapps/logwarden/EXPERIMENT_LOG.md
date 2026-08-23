@@ -129,3 +129,21 @@ place and receive a later disposition.
   explicit login-failed message; authoritative source verification still
   requires error number 18456. ERRORLOG replay inserted 0/461 on the immediate
   duplicate scan, proving the initial idempotency path.
+- 2026-08-23T04:05:43Z — Closed the database recovery gate. The separately
+  mounted exports volume was root-owned, so SQL Server correctly refused its
+  first backup attempt; no backup file was created. Moved the target to an
+  `mssql`-owned directory inside the dedicated Lab 3 data volume. Nested
+  rootless `docker cp` then hit the known proc-remount restriction, so the
+  checkpoint resolves the exact rootless volume mountpoint read-only and
+  copies the named backup file from the host namespace. This changes only the
+  export transport. COPY_ONLY/CHECKSUM/compressed backups, RESTORE VERIFYONLY,
+  full restore, physical CHECKDB, table-count probes, and teardown all passed
+  for both exact Lab 3 databases. Durable restore-test receipt:
+  `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`.
+- 2026-08-23T04:05:43Z — The Lab 3 checkpoint watchdog passed its dirty-tree
+  recovery mode: it created and verified a branch bundle, retained binary
+  worktree patch and untracked archive, made checksummed database backups,
+  refreshed the run resume record, pushed committed HEAD, regenerated the
+  artifact inventory, and mirrored the run to Drive. It deliberately did not
+  auto-commit concurrent source changes. The clean-tree auto-handoff/commit
+  mode will be exercised after this implementation checkpoint is committed.

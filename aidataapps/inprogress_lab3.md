@@ -110,12 +110,22 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 
 ## Active processes and checkpoints
 
+<!-- lab3-watchdog-status:start -->
+- Last watchdog checkpoint: 2026-08-23T04:04:43.673Z
+- Last watchdog Git head: `3b1c1d0cedb82183bdc40a600aaf25e74ecdfdc7` on `aidataapps-logwarden`
+- Last watchdog disposition: captured dirty recovery patch; no automatic source commit
+- Last watchdog database receipt: `3bf507fe139b3e6707bf4fa3d38afe24e82278006f1ac07325c50b4ac46f035c`
+- Last watchdog run: `logwarden-smoke-20260823T031714Z`
+<!-- lab3-watchdog-status:end -->
+
 - Long-running scientific process: none
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Watchdog: scaffold exists but has not yet passed its recovery/backup gate or
-  been launched
-- SQL backup: none (foundation schema only; backup path is next durability gate)
+- Watchdog: one dirty-tree checkpoint completed and mirrored; clean-tree
+  auto-handoff/commit mode is the next validation
+- SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
+  full disposable restore, physical CHECKDB, and teardown; latest restore-test
+  receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `72dd444ac65f7b1203c711c1383878e100f78cffd33fa2e4bc8b775a9f6d88e3` (`PASS`)
 - SQL integration receipt: `8ecaf7cd8f3693b96554b9fb3a0e2108fe698de301c0f5c7f649282ddd9a4ebd` (8/8 passed)
