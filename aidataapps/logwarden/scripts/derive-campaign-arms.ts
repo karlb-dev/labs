@@ -208,6 +208,9 @@ async function loadTruth(): Promise<TruthRow[]> {
     FROM eval.ground_truth_episodes truth INNER JOIN selected_roles role ON role.value=truth.split_role
     INNER JOIN ingest.incident_packets packet ON packet.episode_id=truth.episode_id AND packet.is_valid=1
     INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE schedule.schedule_name='standard-v1'
     ORDER BY truth.split_role,truth.scenario_group_id,truth.episode_id;
   `);
   return result.recordset;

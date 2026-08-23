@@ -71,7 +71,11 @@ try {
       FROM eval.retrieval_benchmark_results score
       INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=score.episode_id
       INNER JOIN kb.retrieval_runs run ON run.retrieval_run_id=score.retrieval_run_id
-      WHERE score.run_id=@run AND score.split_role IN (SELECT value FROM OPENJSON(@roles))
+      INNER JOIN workload.injection_executions execution ON execution.episode_id=score.episode_id AND execution.run_id=@run
+      INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+      INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+      WHERE score.run_id=@run AND schedule.schedule_name='standard-v1'
+        AND score.split_role IN (SELECT value FROM OPENJSON(@roles))
     ), episode_queries AS
     (
       SELECT episode_id FROM selected GROUP BY episode_id HAVING COUNT(DISTINCT query_sha256)<>1
@@ -91,15 +95,24 @@ try {
   const evaluationRow = evaluation.recordset[0]!;
   const roleRows = await pool.request().input("run", sql.VarChar(120), run.runId)
     .input("roles", sql.NVarChar(sql.MAX), JSON.stringify(roles)).query<{ split_role: string; episodes: number; cells: number }>(`
-    SELECT split_role,COUNT(DISTINCT episode_id) episodes,COUNT(*) cells
-    FROM eval.retrieval_benchmark_results WHERE run_id=@run AND split_role IN (SELECT value FROM OPENJSON(@roles))
-    GROUP BY split_role ORDER BY split_role;
+    SELECT score.split_role,COUNT(DISTINCT score.episode_id) episodes,COUNT(*) cells
+    FROM eval.retrieval_benchmark_results score
+    INNER JOIN workload.injection_executions execution ON execution.episode_id=score.episode_id AND execution.run_id=@run
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE score.run_id=@run AND schedule.schedule_name='standard-v1'
+      AND score.split_role IN (SELECT value FROM OPENJSON(@roles))
+    GROUP BY score.split_role ORDER BY score.split_role;
   `);
   const modeRows = await pool.request().input("run", sql.VarChar(120), run.runId)
     .input("roles", sql.NVarChar(sql.MAX), JSON.stringify(roles)).query<{ retrieval_mode: string; cells: number }>(`
-    SELECT retrieval_mode,COUNT(*) cells FROM eval.retrieval_benchmark_results
-    WHERE run_id=@run AND split_role IN (SELECT value FROM OPENJSON(@roles))
-    GROUP BY retrieval_mode ORDER BY retrieval_mode;
+    SELECT score.retrieval_mode,COUNT(*) cells FROM eval.retrieval_benchmark_results score
+    INNER JOIN workload.injection_executions execution ON execution.episode_id=score.episode_id AND execution.run_id=@run
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE score.run_id=@run AND schedule.schedule_name='standard-v1'
+      AND score.split_role IN (SELECT value FROM OPENJSON(@roles))
+    GROUP BY score.retrieval_mode ORDER BY score.retrieval_mode;
   `);
   const actualRoles = roleRows.recordset.map((row) => row.split_role).sort();
   if (hashJson(actualRoles) !== hashJson([...roles].sort())) throw new Error(`Retrieval roles drift: ${actualRoles.join(",")}`);

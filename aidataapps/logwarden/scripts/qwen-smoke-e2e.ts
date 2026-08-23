@@ -27,9 +27,12 @@ if (replayStarted >= replayFinished) throw new Error("Qwen replay time window is
 const pool = await connect(config.databases.lab, config.databases.controlName, 600_000);
 
 try {
-  const expectedRag = await pool.request().query<{ expected_rag: number }>(`
-    SELECT COUNT(*) expected_rag FROM eval.ground_truth_episodes
-    WHERE split_role='dev' AND expected_runbooks_json<>N'[]';
+  const expectedRag = await pool.request().input("run", sql.VarChar(120), run.runId).query<{ expected_rag: number }>(`
+    SELECT COUNT(*) expected_rag FROM eval.ground_truth_episodes truth
+    INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE schedule.schedule_name='standard-v1' AND truth.split_role='dev' AND truth.expected_runbooks_json<>N'[]';
   `);
   const expectedRagCount = Number(expectedRag.recordset[0]?.expected_rag ?? 0);
   const observed = await pool.request().input("profile", sql.VarChar(80), profileKey)
@@ -77,7 +80,8 @@ try {
   };
   if (Object.values(checks).some((value) => !value)) throw new Error(`Qwen end-to-end gate failed: ${JSON.stringify({ checks, observed: row, expectedRagCount })}`);
 
-  const pairsResult = await pool.request().input("profile", sql.VarChar(80), profileKey).query<{
+  const pairsResult = await pool.request().input("profile", sql.VarChar(80), profileKey)
+    .input("run", sql.VarChar(120), run.runId).query<{
     episode_id: string; scenario_group_id: string; baseline_success: boolean; treatment_success: boolean;
   }>(`
     SELECT truth.episode_id,truth.scenario_group_id,baseline_score.action_correct baseline_success,
@@ -87,7 +91,11 @@ try {
     INNER JOIN eval.decision_scores baseline_score ON baseline_score.prediction_id=baseline.prediction_id
     INNER JOIN eval.predictions treatment ON treatment.episode_id=truth.episode_id AND treatment.agent_arm_id='A-tools' AND treatment.model_profile_id=@profile
     INNER JOIN eval.decision_scores treatment_score ON treatment_score.prediction_id=treatment.prediction_id
-    WHERE truth.split_role='dev' ORDER BY truth.scenario_group_id,truth.episode_id;
+    INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE schedule.schedule_name='standard-v1' AND truth.split_role='dev'
+    ORDER BY truth.scenario_group_id,truth.episode_id;
   `);
   const pairRows = pairsResult.recordset.map((pair) => ({
     episode_id: pair.episode_id,

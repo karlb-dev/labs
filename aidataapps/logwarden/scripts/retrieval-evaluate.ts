@@ -250,7 +250,9 @@ async function loadPackets(): Promise<PacketRow[]> {
     FROM ingest.incident_packets packet
     INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=packet.episode_id
     INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run
-    WHERE packet.is_valid=1
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE packet.is_valid=1 AND schedule.schedule_name='standard-v1'
     ORDER BY packet.split_role,truth.scenario_group_id,packet.episode_id;
   `);
   const filtered = result.recordset.filter((row) => roles.includes(row.split_role as typeof roles[number]));

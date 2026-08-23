@@ -144,10 +144,10 @@ async function requireDatabaseState(): Promise<void> {
       (SELECT COUNT(*) FROM control.schema_migrations WHERE migration_id='031_inference_and_retrieval_provenance') migrations,
       (SELECT COUNT(*) FROM workload.injection_executions execution INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE execution.run_id=@run AND schedule.schedule_name='standard-v1') executions,
       (SELECT COUNT(*) FROM workload.injection_executions execution INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE execution.run_id=@run AND schedule.schedule_name='standard-v1' AND (execution.verified=0 OR execution.cleanup_verified=0 OR execution.return_code<>0 OR execution.error_detail IS NOT NULL)) invalid_executions,
-      (SELECT COUNT(*) FROM ingest.incident_packets packet INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run) packets,
-      (SELECT COUNT(*) FROM ingest.incident_packets packet INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run WHERE packet.is_valid=0) invalid_packets,
-      (SELECT COUNT(*) FROM eval.ground_truth_episodes truth INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run) truth_rows,
-      (SELECT COUNT(*) FROM (SELECT scenario_group_id FROM eval.ground_truth_episodes GROUP BY scenario_group_id HAVING COUNT(DISTINCT split_role)>1) drift) cross_role_groups,
+      (SELECT COUNT(*) FROM ingest.incident_packets packet INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE schedule.schedule_name='standard-v1') packets,
+      (SELECT COUNT(*) FROM ingest.incident_packets packet INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE schedule.schedule_name='standard-v1' AND packet.is_valid=0) invalid_packets,
+      (SELECT COUNT(*) FROM eval.ground_truth_episodes truth INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE schedule.schedule_name='standard-v1') truth_rows,
+      (SELECT COUNT(*) FROM (SELECT truth.scenario_group_id FROM eval.ground_truth_episodes truth INNER JOIN workload.injection_executions execution ON execution.episode_id=truth.episode_id AND execution.run_id=@run INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE schedule.schedule_name='standard-v1' GROUP BY truth.scenario_group_id HAVING COUNT(DISTINCT truth.split_role)>1) drift) cross_role_groups,
       (SELECT COUNT(*) FROM workload.injection_executions execution INNER JOIN workload.schedule_items item ON item.schedule_item_id=execution.schedule_item_id INNER JOIN workload.schedules schedule ON schedule.schedule_id=item.schedule_id WHERE execution.run_id=@run AND schedule.schedule_name='standard-v1' AND NOT EXISTS(SELECT 1 FROM ingest.injection_event_links link WHERE link.injection_execution_id=execution.injection_execution_id)) unlinked_executions,
       (SELECT COUNT(*) FROM telemetry.model_service_samples WHERE run_id=@run AND model_profile_id IN ('muse-glimmer-30b','gemma-4-31b','olmo-3.1-32b-instruct','qwen-3.8-27b')) target_model_samples;
   `);
@@ -204,7 +204,10 @@ async function packetInventory() {
       truth.truth_sha256,truth.split_role,truth.family,truth.regime,truth.scenario_group_id
     FROM ingest.incident_packets packet INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=packet.episode_id
     INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run
-    WHERE packet.is_valid=1 ORDER BY packet.episode_id;
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE packet.is_valid=1 AND schedule.schedule_name='standard-v1'
+    ORDER BY packet.episode_id;
   `);
   const episodes = result.recordset.map((row) => ({
     episodeId: row.episode_id, packetSha256: row.packet_sha256,

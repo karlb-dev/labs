@@ -802,3 +802,24 @@ place and receive a later disposition.
   unapplied until capture closes. Full build and 30-file/98-test suite pass.
   Impact: no captured row or model output changed; the late pre-freeze timing is
   disclosed and hash-bound, and control rows cannot contaminate primary views.
+- 2026-08-23T09:54:00Z — The governed `standard-v1` capture completed all
+  600/600 episodes with zero failures (injection receipt
+  `df6883fc388516a71cabd3064208b6259bd2ed1bca6c6915f106872386301a58`).
+  Final source drain retained 7,305 new XE rows and 1,246 new ERRORLOG rows;
+  verification passed 600/600 (`46a737b0e184030b84762ace40d2ed184a1b7b0253aff343285b6dc9a898df70`),
+  packet construction retained 600 packets
+  (`f32c6913c7c9a33e920b3b3bff26307535afe4e659770c392913a866eab208cd`),
+  and the protected-truth audit found zero leakage
+  (`5c9e0025ce73af0eb0d940dbe5480d0d00899819f55cbd24d18e0f785aa54b7f`).
+  Migrations 031 and 032 were then applied and the doctor, 104-test unit suite,
+  eight SQL integration cases, and 20-case tool-security matrix all passed.
+  The first all-role retrieval-evaluation attempt selected 610 packets because
+  its run-level query also admitted ten retained `smoke-v1` development
+  packets. It was stopped after 240 packets/1,200 evaluator-only cells, before
+  search freeze or any target inference. Campaign capture, retrieval, baseline,
+  replay, Qwen gate, and freeze queries now require membership in schedule
+  `standard-v1`; the earlier smoke evaluator rows remain immutable but are
+  excluded from all standard evidence and reporting. Impact: no packet, label,
+  or model output was changed, and no target output existed; the adjustment
+  restores the preregistered 600-episode population without deleting useful
+  development evidence.

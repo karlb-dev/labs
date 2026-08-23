@@ -326,7 +326,10 @@ async function loadEpisodes(): Promise<ReplayEpisode[]> {
     SELECT packet.episode_id,packet.split_role,packet.packet_json,packet.packet_sha256,truth.expected_runbooks_json
     FROM ingest.incident_packets packet INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=packet.episode_id
     INNER JOIN workload.injection_executions execution ON execution.episode_id=packet.episode_id AND execution.run_id=@run
-    WHERE packet.is_valid=1 ORDER BY packet.split_role,packet.episode_id;
+    INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
+    INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
+    WHERE packet.is_valid=1 AND schedule.schedule_name='standard-v1'
+    ORDER BY packet.split_role,packet.episode_id;
   `);
   const available = new Map(result.recordset.map((row) => [row.episode_id, row]));
   const selectedRows = controlId === null
