@@ -1177,3 +1177,51 @@ place and receive a later disposition.
   metric receipt, and SQL evidence event; 39/39 test files and 137/137 tests
   passed. Diagnostic receipt:
   `7810da399de51d80e99b133a8490feff11ab7ed3b24821429786feaac43c298d`.
+
+- 2026-08-23T16:27:08.372Z — gemma-4-31b primary replay retained 180 cells across calibration and A-direct,A-rag,A-tools with 180 decisions, 0 failures, and 250 model requests; receipt e6a9cbc9cc0ed523b9751c6d6db25a8342db8d29bb5f2657ce8f69e310e844d7.
+
+- 2026-08-23T16:27:38.698Z — Derived 60 predictions for A-router over calibration and gemma-4-31b; receipt a9891d4e5224dce842a700fba7df56448204e7024fd4ff4fcecfc1ae63a6244a.
+
+- 2026-08-23T16:27:56.028Z — Scored 240 primary calibration predictions for gemma-4-31b across A-direct,A-rag,A-tools,A-router; receipt 8ad054196fb90c9c8e26e0cc27fb57f53f608819cde6832d7bbe2fbf33d9ee32.
+
+- 2026-08-23T16:27:56.590Z — Fitted and hash-locked 4 calibration-only models for gemma-4-31b before test inference; receipt cfaae197a0c42323f5f73ea405b6fd3e2dcf4a3e70d0d1d4ae489f0451dbbe83.
+
+- 2026-08-23T16:28:15Z — Retrospective canonical-log consolidation for the
+  already receipt-backed 15:40–16:17 profile transition. Muse residency
+  telemetry reconciled PASS across 193 journals / 119,595 records / 8,640 raw
+  artifacts, with 6,001 closed traces, 31,220 closed spans, 4,243 paired model
+  requests/responses, 2,725,869 unique metric samples, and 11,285 raw metric
+  snapshots; receipt
+  `fd256614a7fe153fbbe17b88acb8a72589ccd5db63050b7d644e38de8fadad2e`.
+  The profile checkpoint was pinned at
+  `18447e0da29362059b975ae2cbec930bc77b4d3aad864105311de6543ec8e8de`.
+  Bounded retention then removed 600 hash-verified redundant local/Drive/SQL
+  staging files (28,350,983,266 bytes) while keeping the frozen and pinned Muse
+  boundaries plus two rolling database/Git recovery points; receipt
+  `ba8843aa7f452b553d14772d334372da2c38641940a158749d3f586bea76eb24`.
+  Impact is durability/storage only; scientific evidence is unchanged.
+
+- 2026-08-23T16:28:15Z — Muse's exact rootless container teardown waited on
+  its already-idle orphaned `VLLM::EngineCore` PID 419481 after API-server
+  removal. With reconciliation and the pinned profile boundary complete, an
+  exact SIGTERM ended that process cleanly; SQL and embedding services remained
+  healthy. Only reproducible Muse and qwen-smoke weight caches were evicted.
+  Impact is post-profile lifecycle/storage only; no output or metric changed.
+
+- 2026-08-23T16:28:15Z — Gemma's exact frozen 0.78 profile downloaded and
+  loaded its 58.25 GiB checkpoint, then correctly emitted retained `STOP_PORT`
+  before HTTP/model requests: one 16K request needed 13.76 GiB KV versus 13.22
+  GiB available (receipt
+  `103e7dabd7506d125a60dcd8e5fa4e323072d97539669105c7d425d08c9b6133`).
+  Added a separately labeled runtime-only 0.79 memory cap, preserving the
+  frozen model/profile hash, weights, revision, image, 16K context, prompts,
+  decode, seed, and 64-sequence ceiling. It exposed 15.55 GiB KV and passed two
+  nine-call gates with 18/18 stop finishes and zero length/error/preemption
+  outcomes; receipts
+  `0a9e9adb19f74d70d616c981061ef4acbda51e2820009b5a4e925f5c41f64f01`
+  and
+  `ed37c268649a713231c585b6a6710fb2a35031cf876fdcdfc557d8d5afbf5b4a`.
+  Impact: quality inputs/outputs are unchanged, but Gemma capacity/performance
+  rows disclose the +1-point resource cap and cross-profile throughput cannot
+  be attributed solely to model identity. Repeated gate exact-output rates
+  (1/6 and 2/6) are retained for the governed batching control.

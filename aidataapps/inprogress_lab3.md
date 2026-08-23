@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 16:17 UTC
+Last manually updated: 2026-08-23 16:28 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -149,9 +149,21 @@ and its effect on the evidence ceiling must be recorded append-only in
   and
   `ed37c268649a713231c585b6a6710fb2a35031cf876fdcdfc557d8d5afbf5b4a`.
   Repeated exact-output rates were 1/6 and 2/6 and remain a measured Gemma
-  property for the formal batching control. Next: checkpoint this gate boundary
-  and launch Gemma calibration primary replay (180 cells, 16 workers). Do not
-  relaunch completed Muse jobs or the retained failed Gemma cold gate.
+  property for the formal batching control. Gemma calibration primary replay
+  then passed all 180 cells with 180 decisions, zero failures, 250/250
+  successful stop-finished requests, zero length/error/preemption outcomes,
+  384,158 prompt tokens, and 35,935 generation tokens. Receipt:
+  `e6a9cbc9cc0ed523b9751c6d6db25a8342db8d29bb5f2657ce8f69e310e844d7`.
+  A-router derived 60 rows (receipt
+  `a9891d4e5224dce842a700fba7df56448204e7024fd4ff4fcecfc1ae63a6244a`),
+  all 240 calibration predictions were scored (receipt
+  `8ad054196fb90c9c8e26e0cc27fb57f53f608819cde6832d7bbe2fbf33d9ee32`),
+  and four calibration-only models were fit with zero prior Gemma test
+  predictions (receipt
+  `cfaae197a0c42323f5f73ea405b6fd3e2dcf4a3e70d0d1d4ae489f0451dbbe83`).
+  Next: launch Gemma protected primary replay (1,370 cells, 16 workers), then
+  derive router and score. Do not relaunch completed Muse/Gemma calibration or
+  the retained failed Gemma cold gate.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
@@ -428,8 +440,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay is active; Gemma is resident,
-  twice port-gated, and authorized for calibration replay.
+- Long-running scientific process: no replay is active; Gemma calibration is
+  closed before test access and protected primary replay is now authorized.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `gemma-4-31b-residency` whole-system sampler is retained
