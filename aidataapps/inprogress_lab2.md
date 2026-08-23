@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 07:51 UTC
+Last manually updated: 2026-08-23 09:50 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline before this update: `44364c5` (run `git rev-parse HEAD`
+- latest pushed baseline before this update: `634abf9` (run `git rev-parse HEAD`
   because later watchdog-safe milestone commits supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
@@ -117,11 +117,11 @@ Gemma is complete:
   evicted with `hf cache rm`, freeing 62.6 GB; it remains re-downloadable at
   the pinned revision
 
-OLMo is active:
+OLMo first residency is complete and durably backed up:
 
 - profile `olmo-3.1-32b-instruct`, pinned revision
   `ac0587e4a7744a551c059d8cd17ba220bc940dae`
-- residency container `aidataapps-modelprint-chat-olmo-r1`
+- completed residency container `aidataapps-modelprint-chat-olmo-r1`
 - the 60.04 GiB checkpoint downloaded and loaded successfully at the frozen
   GPU utilization 0.78; no runtime override or batch-invariant mode is active
 - available KV cache is 12.18 GiB / 49,863 tokens, 3.04x the frozen 16K context
@@ -131,17 +131,25 @@ OLMo is active:
   `0e6aa633784346ef6d8a0825219e5485ef9a242f83be91ff26423c10706ff73c`
 - gate file SHA-256:
   `39b191343db714d617f784247bcdd47cd364d2af41533aeb9b1a36e884bc54de`
-- active primary command:
+- primary completed 10,000/10,000 with zero failures; raw SHA-256
+  `90bff0cf46eb89e1f3aae06a23a8885d4fe0a1e415966aa8ee4e1d36bed323ad`
+- robustness completed 501/501 with zero failures; raw SHA-256
+  `d25a6d61f5c836a099e79d5d2d2507fc08d6990b398c6d1203dc338bb9406a1e`
+- likelihood selected all 31,940 eligible non-empty rows across the four
+  targets: prompted 31,940/31,940; unprompted 31,878/31,940
+- all 62 prompted-only rows were audited from retained JSONL: every row has a
+  valid prompted score, exactly one OLMo output token, and only the expected
+  no-first-token unprompted-logprob condition; target counts are Qwen 20,
+  Muse 4, Gemma 28, and OLMo 10; no value was imputed
+- 64 empty-final Muse rows are separately unavailable
+- likelihood raw SHA-256:
+  `7e5c8f0196da3cc7e962f54347e44d44f263eaf79455b4525ed2e003604995aa`
+- pre-eviction native backup and Drive copy match at SHA-256
+  `55e9555b33dfa1b9e25b23ddf6952b7648eedfba4df467f887c2d2b622dff935`
 
-```bash
-npm run generate -- --profile olmo-3.1-32b-instruct --resume --concurrency 64 --checkpoint-size 100
-```
-
-- first durable checkpoint: 100/10,000, zero failed at
-  `2026-08-23T07:50:31Z`; later checkpoint/SQL counts supersede this value
-
-OLMo robustness/likelihood, final cross-likelihood completion, features,
-analyses, reports, BACPAC, archive, mirror, and reproducibility run remain.
+The prior-scorer cross-likelihood fill rotation, features, analyses, reports,
+BACPAC, archive, mirror, and reproducibility run remain. Stop OLMo and evict
+only its exact re-downloadable cache after this checkpoint is committed.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -270,20 +278,24 @@ tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 
 ## Remaining residency workflow
 
-Qwen, Muse, and Gemma are fully complete for their first residencies and are no
-longer resident. OLMo is gated and its primary generator is active. After
-primary completion, run:
+All four first residencies are complete. OLMo still owns port 8000 only until
+its verified completion checkpoint is committed and mirrored. Then stop it,
+evict its exact pinned cache, and rotate Qwen, Muse, and Gemma once more so
+each scorer fills cells for targets generated after its first residency.
 
 ```bash
-npm run robustness:generate -- --profile olmo-3.1-32b-instruct --concurrency 64 --checkpoint-size 100
-npm run likelihood:score -- --scorer olmo-3.1-32b-instruct --include-robustness --concurrency 64 --checkpoint-size 200
-npm run checkpoint:once
+# Run after each exact pinned scorer is loaded and passes the unchanged gate.
+npm run likelihood:score -- --scorer <profile> --include-robustness --concurrency 64 --checkpoint-size 200
+npm run db:backup
+npm run run:mirror
 ```
 
-During each scorer residency, score every target output available. Rotate prior
-scorers again after later model generations to fill missing cross-likelihood
-cells. If resource/time limits prevent a rectangular matrix, label it
-`PARTIAL_LIKELIHOOD`; never imply completion from diagonal cells.
+Fill order is Qwen (missing Muse/Gemma/OLMo targets), Muse (missing Gemma/OLMo),
+then Gemma (missing OLMo). Existing scorer-specific one-token gaps may be
+selected again and legitimately remain prompted-only. Audit completeness in
+SQL after every residency. If resource/time limits prevent a rectangular
+matrix, label it `PARTIAL_LIKELIHOOD`; never imply completion from diagonal
+cells.
 
 ## Final analysis and archive
 
