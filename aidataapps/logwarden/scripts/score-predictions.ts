@@ -123,6 +123,15 @@ try {
       scoringArmId,
       splitRole: prediction.split_role,
       score,
+      prediction: {
+        outcome: prediction.outcome,
+        predictedClass: prediction.predicted_class,
+        predictedSeverity: prediction.predicted_severity,
+        predictedAction: prediction.predicted_action,
+        abstained: prediction.abstained === null ? null : Boolean(prediction.abstained),
+        contractValid: prediction.prediction_source !== "agent" ? prediction.outcome !== "failure" : Boolean(prediction.contract_valid),
+        policyValid: prediction.prediction_source !== "agent" ? true : Boolean(prediction.policy_valid),
+      },
       truth: {
         expectedClass: truth.expectedClass,
         expectedSeverity: truth.expectedSeverity,
@@ -133,6 +142,7 @@ try {
         optionalTools: truth.optionalTools,
         forbiddenTools: truth.forbiddenTools,
         expectedRunbooks: truth.expectedRunbooks,
+        costWeights: truth.costWeights,
       },
       observed: { toolInvocations, returnedRunbooks, citedRunbooks },
     };

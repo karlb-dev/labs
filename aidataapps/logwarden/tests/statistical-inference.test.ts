@@ -3,6 +3,7 @@ import {
   pairedGroupedBootstrap,
   pairedGroupedSignSwap,
   stableStatisticsSeed,
+  withinStratumGroupLabelPermutation,
 } from "../src/statistics.js";
 
 const rows = [
@@ -40,5 +41,23 @@ describe("paired grouped statistical inference", () => {
     ])).toEqual({ a: 0.03, c: 0.06, b: 0.06 });
     expect(stableStatisticsSeed(20260823, "A")).toBe(stableStatisticsSeed(20260823, "A"));
     expect(stableStatisticsSeed(20260823, "A")).not.toBe(stableStatisticsSeed(20260823, "B"));
+  });
+
+  it("permutes complete group labels only within frozen strata", () => {
+    const labels = [
+      { rowId: "a1", groupId: "a", stratum: "f1|test", label: "x" },
+      { rowId: "a2", groupId: "a", stratum: "f1|test", label: "x" },
+      { rowId: "b1", groupId: "b", stratum: "f1|test", label: "y" },
+      { rowId: "b2", groupId: "b", stratum: "f1|test", label: "y" },
+      { rowId: "c1", groupId: "c", stratum: "f2|test", label: "z" },
+      { rowId: "c2", groupId: "c", stratum: "f2|test", label: "z" },
+    ];
+    const result = withinStratumGroupLabelPermutation(labels, (permuted) =>
+      [...permuted].filter(([rowId, label]) => rowId.startsWith("a") && label === "x").length / 2,
+    { seed: 20260823, replicates: 1000, observedValue: 1 });
+    expect(result.algorithm).toBe("within-stratum-group-label-permutation-v1");
+    expect(result.stratumCount).toBe(2);
+    expect(result.nullValues).toContain(0);
+    expect(result.nullValues).toContain(1);
   });
 });

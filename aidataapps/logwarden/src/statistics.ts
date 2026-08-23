@@ -37,6 +37,28 @@ export interface PairedPermutationResult {
   nullValues: number[];
 }
 
+export interface GroupLabelRow<Label> {
+  rowId: string;
+  groupId: string;
+  stratum: string;
+  label: Label;
+}
+
+export interface GroupLabelPermutationResult {
+  algorithm: "within-stratum-group-label-permutation-v1";
+  seed: number;
+  replicates: number;
+  rowCount: number;
+  groupCount: number;
+  stratumCount: number;
+  observedValue: number;
+  nullMean: number;
+  nullSd: number;
+  pValueTwoSided: number;
+  orderedNullSha256: string;
+  nullValues: number[];
+}
+
 export function pairedGroupedBootstrap(
   rows: PairedMetricRow[],
   options: { seed: number; replicates: number; confidenceLevel?: number },
@@ -116,6 +138,61 @@ export function pairedGroupedSignSwap(
   };
 }
 
+export function withinStratumGroupLabelPermutation<Label>(
+  rows: GroupLabelRow<Label>[],
+  statistic: (permutedLabels: ReadonlyMap<string, Label>) => number,
+  options: { seed: number; replicates: number; observedValue: number },
+): GroupLabelPermutationResult {
+  validateSimulation(options.seed, options.replicates);
+  if (!Number.isFinite(options.observedValue)) throw new Error("observedValue must be finite");
+  if (rows.length < 2 || new Set(rows.map((row) => row.rowId)).size !== rows.length) throw new Error("Label permutation requires unique rows");
+  const strata = new Map<string, Map<string, GroupLabelRow<Label>[]>>();
+  for (const [index, row] of rows.entries()) {
+    if (row.rowId.length === 0 || row.groupId.length === 0 || row.stratum.length === 0) throw new Error(`Label row ${index} lacks identity`);
+    const groups = strata.get(row.stratum) ?? new Map<string, GroupLabelRow<Label>[]>();
+    groups.set(row.groupId, [...(groups.get(row.groupId) ?? []), row]);
+    strata.set(row.stratum, groups);
+  }
+  for (const [stratum, groups] of strata) {
+    const sizes = new Set([...groups.values()].map((values) => values.length));
+    if (sizes.size !== 1) throw new Error(`Label-permutation groups have unequal sizes within ${stratum}`);
+    for (const values of groups.values()) values.sort((left, right) => left.rowId.localeCompare(right.rowId));
+  }
+  const random = mulberry32(options.seed);
+  const nullValues: number[] = [];
+  for (let replicate = 0; replicate < options.replicates; replicate += 1) {
+    const labels = new Map<string, Label>();
+    for (const groups of [...strata.values()]) {
+      const targetIds = [...groups.keys()].sort();
+      const sourceIds = shuffled(targetIds, random);
+      for (const [groupOrdinal, targetId] of targetIds.entries()) {
+        const targetRows = groups.get(targetId)!;
+        const sourceRows = groups.get(sourceIds[groupOrdinal]!)!;
+        for (const [rowOrdinal, target] of targetRows.entries()) labels.set(target.rowId, sourceRows[rowOrdinal]!.label);
+      }
+    }
+    const value = statistic(labels);
+    if (!Number.isFinite(value)) throw new Error(`Label-permutation replicate ${replicate} returned a non-finite statistic`);
+    nullValues.push(round(value));
+  }
+  const extreme = nullValues.filter((value) => Math.abs(value) >= Math.abs(options.observedValue)).length;
+  const ordered = [...nullValues].sort((left, right) => left - right);
+  return {
+    algorithm: "within-stratum-group-label-permutation-v1",
+    seed: options.seed,
+    replicates: options.replicates,
+    rowCount: rows.length,
+    groupCount: new Set(rows.map((row) => row.groupId)).size,
+    stratumCount: strata.size,
+    observedValue: round(options.observedValue),
+    nullMean: mean(nullValues),
+    nullSd: sampleSd(nullValues),
+    pValueTwoSided: round((extreme + 1) / (options.replicates + 1)),
+    orderedNullSha256: sha256(JSON.stringify(ordered)),
+    nullValues,
+  };
+}
+
 export function holmAdjustedPValues(values: Array<{ id: string; pValue: number }>): Record<string, number> {
   if (new Set(values.map((value) => value.id)).size !== values.length) throw new Error("Holm inputs require unique IDs");
   for (const value of values) if (!(value.pValue >= 0 && value.pValue <= 1)) throw new Error(`Invalid p-value for ${value.id}`);
@@ -170,6 +247,14 @@ function quantile(ordered: number[], probability: number): number {
   if (lower === upper) return ordered[lower]!;
   return round(ordered[lower]! + (ordered[upper]! - ordered[lower]!) * (position - lower));
 }
+function shuffled<T>(values: T[], random: () => number): T[] {
+  const output = [...values];
+  for (let index = output.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(random() * (index + 1));
+    [output[index], output[swap]] = [output[swap]!, output[index]!];
+  }
+  return output;
+}
 function round(value: number): number { return Math.round(value * 1_000_000_000) / 1_000_000_000; }
 
 // Small, deterministic, explicitly versioned PRNG. Statistical artifacts retain
@@ -184,4 +269,3 @@ function mulberry32(seed: number): () => number {
     return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
   };
 }
-
