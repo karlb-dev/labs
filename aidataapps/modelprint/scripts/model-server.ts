@@ -54,8 +54,9 @@ if (command === "list") {
   if (!Number.isFinite(effectiveGpuMemoryUtilization) || effectiveGpuMemoryUtilization <= 0 || effectiveGpuMemoryUtilization >= 1) {
     throw new Error(`CHAT_GPU_MEMORY_UTILIZATION must be between 0 and 1; received ${process.env.CHAT_GPU_MEMORY_UTILIZATION}`);
   }
+  const batchInvariant = process.env.VLLM_BATCH_INVARIANT ?? (key === "muse-glimmer-30b" ? "1" : undefined);
   const profileHash = hashJson(profile);
-  const runtimeProfileHash = hashJson({ profileHash, effectiveGpuMemoryUtilization });
+  const runtimeProfileHash = hashJson({ profileHash, effectiveGpuMemoryUtilization, batchInvariant: batchInvariant ?? "0" });
   const snapshot = JSON.parse(readFileSync("data/manifests/model-registry-snapshot.json", "utf8")) as { profiles?: Record<string, { hf?: { weightBytes?: number } }> };
   const weightBytes = snapshot.profiles?.[key]?.hf?.weightBytes ?? 0;
   const volume = process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache";
@@ -80,7 +81,6 @@ if (command === "list") {
   args.push("--volume", `${process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache"}:/root/.cache/huggingface`,
     "--volume", `${process.env.SHARED_VLLM_VOLUME ?? "aidataapps-rag-vllm-cache"}:/root/.cache/vllm`,
     "--env", "VLLM_ENABLE_CUDA_COMPATIBILITY=1");
-  const batchInvariant = process.env.VLLM_BATCH_INVARIANT ?? (key === "muse-glimmer-30b" ? "1" : undefined);
   if (batchInvariant) args.push("--env", `VLLM_BATCH_INVARIANT=${batchInvariant}`, "--label", `ai.labs.batch-invariant=${batchInvariant}`);
   if (process.env.HF_TOKEN) args.push("--env", `HF_TOKEN=${process.env.HF_TOKEN}`);
   const serverArgs = ["--model", profile.modelId, "--revision", profile.revision, "--tokenizer-revision", profile.revision,
