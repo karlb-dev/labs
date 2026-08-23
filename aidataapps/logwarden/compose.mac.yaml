@@ -1,0 +1,16 @@
+# Mac profile overlay (Docker Desktop + Rosetta x86 emulation).
+# SQL Server 2025 ships amd64-only images; Docker Desktop runs them under
+# Rosetta when UseVirtualizationFrameworkRosetta is enabled. Emulated startup
+# is slower than native, so the health window is widened, and the memory limit
+# is lowered because the Docker Desktop VM typically has ~8 GB total.
+# The vLLM embedding services in compose.yaml stay unused on this profile;
+# Azure Foundry Local serves chat and embedding models natively instead
+# (see docs/MAC_PROFILE.md).
+services:
+  sqlserver:
+    platform: linux/amd64
+    environment:
+      MSSQL_MEMORY_LIMIT_MB: "4096"
+    healthcheck:
+      start_period: 120s
+      retries: 120

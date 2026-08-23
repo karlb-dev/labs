@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "platform": "mac-foundry-local",
+  "runtime": {
+    "tool": "azure-foundry-local",
+    "cliVersionTested": "0.10.3",
+    "openAiCompatible": true
+  },
+  "comparability": "Foundry Local serves Microsoft-published ONNX builds through WebGPU/Metal. These are different served artifacts from the digest-pinned vLLM CUDA profiles in config/models.json; results from this registry are mac-plane evidence and are never comparable rows in the frozen Colab campaign.",
+  "defaultProfile": "qwen3-4b-foundry",
+  "smokeProfile": "qwen2.5-0.5b-foundry",
+  "profiles": {
+    "qwen2.5-0.5b-foundry": {
+      "description": "Plumbing smoke control; assumed too small to hold the agent operating contract.",
+      "family": "qwen",
+      "foundryAlias": "qwen2.5-0.5b",
+      "foundryVariantId": "qwen2.5-0.5b-instruct-generic-gpu:4",
+      "executionProvider": "WebGpuExecutionProvider",
+      "contextLength": 32768,
+      "fileSizeMb": 700,
+      "role": "plumbing"
+    },
+    "qwen3-4b-foundry": {
+      "description": "Primary mac agent candidate; same family and scale as the frozen registry's qwen-smoke control (Qwen3-4B).",
+      "family": "qwen",
+      "foundryAlias": "qwen3-4b",
+      "foundryVariantId": "qwen3-4b-generic-gpu:2",
+      "executionProvider": "WebGpuExecutionProvider",
+      "contextLength": 40960,
+      "fileSizeMb": 2939,
+      "role": "agent"
+    },
+    "qwen3-8b-foundry": {
+      "description": "Larger mac agent candidate if 4B quality is insufficient and decode speed allows.",
+      "family": "qwen",
+      "foundryAlias": "qwen3-8b",
+      "foundryVariantId": "",
+      "executionProvider": "WebGpuExecutionProvider",
+      "contextLength": 40960,
+      "fileSizeMb": 6000,
+      "role": "agent"
+    }
+  },
+  "embeddingProfiles": {
+    "qwen3-embedding-0.6b-foundry": {
+      "foundryAlias": "qwen3-embedding-0.6b",
+      "foundryVariantId": "qwen3-embedding-0.6b-generic-gpu:1",
+      "baseModelId": "Qwen/Qwen3-Embedding-0.6B",
+      "expectedDimensions": 1024,
+      "note": "Same base model as the frozen qwen3-embedding-0.6b profile, but an ONNX build; vectors are not interchangeable with vLLM campaign vectors."
+    }
+  }
+}

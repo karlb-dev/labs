@@ -32,6 +32,13 @@ npm run check
 full-text image, and starts SQL only. It intentionally does not download a chat
 model or start an embedding service during the CPU-only foundation stage.
 
+## Mac development profile
+
+The foundation stage and a small-model serving plane also run on Apple Silicon
+via Docker Desktop (Rosetta) and Azure Foundry Local — see
+[`docs/MAC_PROFILE.md`](docs/MAC_PROFILE.md). Mac-plane results are development
+evidence only and are never comparable to the frozen Colab campaign.
+
 Lab 3 reserves SQL port 1434, chat port 8010, and embedding ports 8011–8012.
 Its Compose project, containers, volumes, databases, run pointer, watchdog, and
 Drive subtree are independent of Labs 1 and 2.

@@ -18,7 +18,9 @@ if (!new Set(["smoke", "dev", "standard", "full"]).has(campaign)) {
   throw new Error(`Invalid campaign ${campaign}`);
 }
 const branch = diagnostic("git", ["branch", "--show-current"]);
-if (branch !== "aidataapps-logwarden") {
+// aidataapps-logwarden-mac is the mac-profile working branch; its runs are
+// mac-plane evidence and are never merged into the frozen Colab campaign.
+if (branch !== "aidataapps-logwarden" && branch !== "aidataapps-logwarden-mac") {
   throw new Error(`Refusing Lab 3 run initialization on branch ${JSON.stringify(branch)}`);
 }
 const predecessorDiff = diagnostic("git", [
@@ -38,7 +40,8 @@ const runId = `logwarden-${campaign}-${stamp}`;
 const runDirectory = `${RUNS_ROOT}/${runId}`;
 await ensureRunLayout(runDirectory);
 
-const dockerHost = process.env.DOCKER_HOST ?? "unix:///run/user/1000/docker.sock";
+const dockerHost = process.env.DOCKER_HOST;
+const dockerHostArgs = dockerHost ? ["--host", dockerHost] : [];
 const inputs = {
   specSha256: await hashFile(`${LAB_ROOT}/docs/SPEC.md`),
   addendumSha256: await hashFile(`${LAB_ROOT}/docs/SPEC_ADDENDUM.md`),
@@ -66,14 +69,19 @@ const environment = {
     processes: diagnostic("nvidia-smi", ["--query-compute-apps=pid,process_name,used_memory", "--format=csv,noheader"]),
   },
   docker: {
-    host: dockerHost,
-    version: diagnostic("docker", ["--host", dockerHost, "version", "--format", "{{.Server.Version}}"]),
-    containers: diagnostic("docker", ["--host", dockerHost, "ps", "--format", "{{json .}}"]),
-    images: diagnostic("docker", ["--host", dockerHost, "image", "ls", "--digests", "--format", "{{json .}}"]),
+    host: dockerHost ?? "default-context",
+    version: diagnostic("docker", [...dockerHostArgs, "version", "--format", "{{.Server.Version}}"]),
+    containers: diagnostic("docker", [...dockerHostArgs, "ps", "--format", "{{json .}}"]),
+    images: diagnostic("docker", [...dockerHostArgs, "image", "ls", "--digests", "--format", "{{json .}}"]),
+  },
+  host: {
+    platform: process.platform,
+    arch: process.arch,
+    uname: diagnostic("uname", ["-a"]),
   },
   disk: {
-    local: diagnostic("df", ["-h", "/content"]),
-    drive: diagnostic("df", ["-h", "/content/drive/MyDrive"]),
+    local: diagnostic("df", ["-h", LAB_ROOT]),
+    drive: diagnostic("df", ["-h", process.env.RUNS_MIRROR ?? "/content/drive/MyDrive"]),
   },
 };
 const run = { ...environment, runManifestHash: hashJson(environment) };

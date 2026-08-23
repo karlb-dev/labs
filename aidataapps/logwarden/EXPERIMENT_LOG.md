@@ -100,3 +100,19 @@ place and receive a later disposition.
   passed, including concurrent distinct claims, invalid-transition rejection,
   expired mid-state recovery, negative permissions, constraint rejection,
   full-text population, and exact 1024-dimensional vector retrieval.
+
+- 2026-08-23T04:10:28.290Z — LW-0 run initialized: logwarden-smoke-20260823T041027Z; manifest=dfa2aa4cb8ae5cfacc50e8eeb7b000068be080ff9d1114f376a66ccb1c00e979.
+
+- 2026-08-23T04:20:00.000Z — Mac profile established on branch
+  `aidataapps-logwarden-mac` (docs/MAC_PROFILE.md). Foundation reproduced on
+  Apple Silicon (M4 Max, 48 GB): SQL Server 2025 FTS image (17.0.4075.5) built
+  and healthy under Docker Desktop Rosetta amd64 emulation with
+  MSSQL_MEMORY_LIMIT_MB=4096; run logwarden-smoke-20260823T041027Z reached
+  doctor disposition PASS (exact vector, full-text, XE session, Query Store,
+  two-principal permission matrix) and 8/8 SQL integration tests. Serving
+  plane: Azure Foundry Local 0.10.3 pinned to :8010; qwen3-4b-generic-gpu:2
+  passed a deterministic decision canary (~60 tok/s warm, think_strip repair);
+  qwen3-embedding-0.6b-generic-gpu:1 returned 1024-dimension embeddings.
+  Deviations recorded in docs/MAC_PROFILE.md; base compose.yaml gpus stanza
+  rewritten to long-form list syntax for older compose validators (semantics
+  unchanged). Mac-plane evidence is never comparable to the frozen campaign.
