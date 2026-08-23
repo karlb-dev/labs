@@ -935,3 +935,34 @@ place and receive a later disposition.
 - 2026-08-23T10:45:33.363Z — Real qwen-smoke end-to-end replay gate passed 180 dev agent cells plus 60 B1 rows with complete raw/SQL/trace/service/GPU provenance; empirical power pairs 9b9969df74b938ce730cf5e60728a16db0b4ce304c10b0d12c7256e40f2ea8ba, gate c82e47987f78e6093691939b0370199dad9ddee1b37f8fc7b7da276be47d760c.
 
 - 2026-08-23T10:46:04.439Z — Paired grouped power simulation completed with PASS disposition; receipt 1190731ab7ea182043522d123726a67efc0e21e8d0ff98ba899431cbe208335c.
+
+- 2026-08-23T10:52:44.689Z — The final pre-freeze telemetry audit found one
+  open `sampler.sample` span in the retrieval systems journal, left when that
+  sampler was intentionally interrupted after retrieval evaluation completed.
+  Recovery validated the original hash chain, appended a child-first
+  `interrupted` close under recovery epoch
+  `350db56d-4178-4081-b346-286d9f04a6d3`, and projected the two appended
+  records with all 475 original records recognized as duplicates. Recovery
+  receipt: `70dc5aa87ba469f670905a396bee5d8e494dcde31b4a4b7776bb539cf0ce61b8`;
+  ingestion receipt:
+  `baa365632e1ff34caaac1df9f6a97d27f721f9a213324c4c9e017d0cb7e0fb0e`.
+  Impact: interruption provenance was added append-only; no inference,
+  retrieval, metric, or prior telemetry record was changed.
+- 2026-08-23T10:52:53.783Z — Global telemetry reconciliation passed over 118
+  journals, 36,630 hash-chained records, and 1,428 raw artifacts. SQL exactly
+  matches 2,110 traces/9,595 spans with zero open rows, 664 model
+  requests/responses with zero bad hashes, 973,790 unique metric samples, and
+  5,009 unique raw metric snapshots; no gate work or agent run remains open.
+  Input-set hash:
+  `cf27d6491910dd75aea8e1b0d55d418ca31a5ea56807ff8612b876cb1172a1f5`;
+  reconciliation receipt:
+  `2a5f0a4e39bb2831eec506067de3186ab2eb1aeb2965e322161b69f5fb0287c8`.
+- 2026-08-23T10:58:59Z — The completed qwen-smoke chat service was removed to
+  free the GPU for governed targets. Docker's force-removal waited indefinitely
+  on an orphaned chat `EngineCore` process (PID 307208) still holding 75.9 GiB.
+  After verifying that PID was distinct from the Qwen embedding `EngineCore`
+  (PID 173774), the orphan was terminated and Docker completed removal. SQL and
+  the embedding service remain healthy/resident; only the embedding process now
+  holds 6,042 MiB. Impact: operational teardown occurred after all Qwen
+  requests, receipts, power evidence, sampler shutdown, journal ingestion, and
+  reconciliation; no scientific evidence was lost or rerun.
