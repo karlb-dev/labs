@@ -54,7 +54,7 @@
       ],
       "retrievalMode": "hybrid_rrf",
       "correlationMode": "frozen_packet",
-      "execution": "derive_B1_else_A-tools"
+      "execution": "config/baselines/derived-v1.json#router"
     },
     {
       "armId": "B0-majority-no-action-v1",
@@ -63,7 +63,7 @@
       "allowedTools": [],
       "retrievalMode": "none",
       "correlationMode": "frozen_packet",
-      "execution": "derived"
+      "execution": "config/baselines/derived-v1.json#majority"
     },
     {
       "armId": "B1-rules-v1",
@@ -81,7 +81,7 @@
       "allowedTools": ["runbook_search"],
       "retrievalMode": "lexical_fulltext",
       "correlationMode": "frozen_packet",
-      "execution": "derived"
+      "execution": "config/baselines/derived-v1.json#retrievalOnly"
     },
     {
       "armId": "B2-vector-v1",
@@ -90,7 +90,7 @@
       "allowedTools": ["runbook_search"],
       "retrievalMode": "vector_exact",
       "correlationMode": "frozen_packet",
-      "execution": "derived"
+      "execution": "config/baselines/derived-v1.json#retrievalOnly"
     },
     {
       "armId": "B2-hybrid-v1",
@@ -99,7 +99,7 @@
       "allowedTools": ["runbook_search"],
       "retrievalMode": "hybrid_rrf",
       "correlationMode": "frozen_packet",
-      "execution": "derived"
+      "execution": "config/baselines/derived-v1.json#retrievalOnly"
     },
     {
       "armId": "B3-oracle-packet-v1",
@@ -108,7 +108,7 @@
       "allowedTools": [],
       "retrievalMode": "oracle_runbook",
       "correlationMode": "frozen_packet",
-      "execution": "evaluator_only"
+      "execution": "config/baselines/derived-v1.json#oracle"
     }
   ]
 }

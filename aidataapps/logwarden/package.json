@@ -53,6 +53,7 @@
     "search:freeze": "node --import tsx scripts/search-freeze.ts",
     "power:check": "node --import tsx scripts/power-check.ts",
     "baseline:B1": "node --import tsx scripts/baseline-rules-run.ts",
+    "campaign:derive": "node --import tsx scripts/derive-campaign-arms.ts",
     "campaign:replay": "node --import tsx scripts/replay-campaign.ts",
     "campaign:score": "node --import tsx scripts/score-predictions.ts",
     "gate:qwen-e2e": "node --import tsx scripts/qwen-smoke-e2e.ts",

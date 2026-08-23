@@ -4,6 +4,7 @@ import { OPERATING_CONTRACT_VERSION, operatingContract } from "./contracts.js";
 import { hashJson, sha256 } from "./hash.js";
 import { loadModelRegistry } from "./models.js";
 import { LAB_ROOT } from "./run.js";
+import { loadDerivedBaselineConfig } from "./derived-baselines.js";
 import { loadRulesBaseline } from "./rules-baseline.js";
 import { loadToolRegistry, promptToolSchemas, type ToolName } from "./tools.js";
 
@@ -40,7 +41,7 @@ const decodeRegistrySchema = z.object({
 const campaignSchema = z.object({
   schemaVersion: z.literal(1), campaignId: z.string().min(1), tier: z.literal("standard"),
   scenarioCatalog: z.string().min(1), runbookCorpus: z.string().min(1), agentArms: z.string().min(1),
-  decodeConfigs: z.string().min(1), rulesBaseline: z.string().min(1), embeddingProfile: z.string().min(1),
+  decodeConfigs: z.string().min(1), rulesBaseline: z.string().min(1), derivedBaselines: z.string().min(1), embeddingProfile: z.string().min(1),
   targetProfiles: z.array(z.string()).length(4), qualityRoles: z.array(z.string()).min(1),
   mandatoryInferenceArms: z.array(z.string()).min(1),
   retrievalArm: z.object({ armId: z.string(), eligibility: z.literal("expected_runbooks_nonempty") }).strict(),
@@ -120,15 +121,26 @@ export function loadStandardCampaign(path = `${LAB_ROOT}/config/campaigns/standa
 export function frozenArmIdentities(registry = loadAgentArmRegistry()): FrozenArmIdentity[] {
   const tools = loadToolRegistry();
   const rules = loadRulesBaseline();
+  const derived = loadDerivedBaselineConfig();
   return registry.arms.map((arm) => {
     const allowedTools = arm.allowedTools as ToolName[];
     const promptSchemas = promptToolSchemas(tools, allowedTools);
     const promptTemplate = arm.kind === "agent" || arm.kind === "derived"
       ? operatingContract(promptSchemas)
       : `${arm.armId} has no model prompt`;
+    const derivedPolicy = arm.armId === derived.majority.armId ? derived.majority
+      : derived.retrievalOnly.arms.some((value) => value.armId === arm.armId) ? {
+          ...derived.retrievalOnly,
+          arm: derived.retrievalOnly.arms.find((value) => value.armId === arm.armId),
+        }
+        : arm.armId === derived.oracle.armId ? derived.oracle
+          : arm.armId === derived.router.armId ? derived.router
+            : undefined;
     const policy = arm.armId === rules.baselineId
       ? { policyVersion: registry.policyVersion, rulesetSha256: hashJson(rules), execution: arm.execution }
-      : { policyVersion: registry.policyVersion, noRemediation: true, unknownRequiresAbstention: true, execution: arm.execution };
+      : derivedPolicy !== undefined
+        ? { policyVersion: registry.policyVersion, derivedConfigSha256: hashJson(derived), armPolicy: derivedPolicy, execution: arm.execution }
+        : { policyVersion: registry.policyVersion, noRemediation: true, unknownRequiresAbstention: true, execution: arm.execution };
     return {
       armId: arm.armId, kind: arm.kind, modelRequired: arm.modelRequired,
       promptSha256: sha256(promptTemplate), toolRegistrySha256: hashJson(promptSchemas),
@@ -143,6 +155,7 @@ export function campaignInputManifest(campaign = loadStandardCampaign()) {
   const files = {
     scenarioCatalog: campaign.scenarioCatalog, runbookCorpus: campaign.runbookCorpus,
     agentArms: campaign.agentArms, decodeConfigs: campaign.decodeConfigs, rulesBaseline: campaign.rulesBaseline,
+    derivedBaselines: campaign.derivedBaselines,
   };
   return {
     schemaVersion: 1,

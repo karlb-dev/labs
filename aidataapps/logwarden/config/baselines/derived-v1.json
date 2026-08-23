@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "configId": "derived-baselines-v1",
+  "authoredAtUtc": "2026-08-23T08:45:00.000Z",
+  "authoringProvenance": {
+    "sources": [
+      "docs/SPEC.md section 15.1",
+      "docs/SPEC_ADDENDUM.md sections A-5 and K-4",
+      "config/scenarios/standard-v1.json dev role only",
+      "config/runbooks/primary-v1.json metadata only"
+    ],
+    "packetInspection": "No standard incident packet, target-model response, target score, or protected test label was inspected to author this policy.",
+    "temporalDeviation": "This executable policy was authored during standard SQL capture, before packet construction, migration 031, target-model inference, target scoring, or campaign freeze.",
+    "impact": "The timing cannot affect captured evidence. The full policy and its inputs are hash-frozen before any target campaign; B0 is fit only on the predeclared dev role, B2 consumes only returned runbook metadata, and B3 remains evaluator-only."
+  },
+  "majority": {
+    "armId": "B0-majority-no-action-v1",
+    "fitRole": "dev",
+    "catalogSha256": "e20d84a390704392c69bca8c648387096d3f9456fed0bf429ba45b0f867dcd6b",
+    "fitEpisodeCount": 60,
+    "tieBreak": "count_desc_then_lexicographic_asc",
+    "classCounts": {
+      "backup_restore_failure": 10,
+      "benign_noise": 30,
+      "deadlock": 10,
+      "schema_data_error": 10
+    },
+    "severityCounts": {
+      "high": 20,
+      "info": 30,
+      "medium": 10
+    },
+    "actionCounts": {
+      "no_action": 30,
+      "run_tsg": 30
+    },
+    "prediction": {
+      "incidentClass": "benign_noise",
+      "severity": "info",
+      "action": "no_action",
+      "confidence": 0.5,
+      "abstain": false
+    }
+  },
+  "retrievalOnly": {
+    "corpusId": "primary-v1",
+    "topK": 5,
+    "selection": "first_unique_returned_runbook",
+    "severityPolicy": "top_runbook_severity_floor",
+    "returnedPredictionConfidence": 0.5,
+    "arms": [
+      {
+        "armId": "B2-lexical-v1",
+        "retrievalMode": "lexical_fulltext"
+      },
+      {
+        "armId": "B2-vector-v1",
+        "retrievalMode": "vector_exact"
+      },
+      {
+        "armId": "B2-hybrid-v1",
+        "retrievalMode": "hybrid_rrf"
+      }
+    ],
+    "actionByIncidentClass": {
+      "authentication_failure": "run_tsg",
+      "backup_restore_failure": "run_tsg",
+      "benign_noise": "no_action",
+      "blocking": "run_tsg",
+      "deadlock": "run_tsg",
+      "integrity_signal": "run_tsg",
+      "query_resource_pressure": "run_tsg",
+      "schema_data_error": "run_tsg",
+      "transaction_log_full": "run_tsg",
+      "unknown_ambiguous": "escalate_to_human"
+    },
+    "noResultPrediction": {
+      "incidentClass": "unknown_ambiguous",
+      "severity": "low",
+      "action": "escalate_to_human",
+      "confidence": 0,
+      "abstain": true
+    }
+  },
+  "oracle": {
+    "armId": "B3-oracle-packet-v1",
+    "evaluatorOnly": true,
+    "source": "eval.ground_truth_episodes",
+    "fieldPolicy": "copy_expected_class_severity_preferred_action_and_should_abstain",
+    "confidence": 1
+  },
+  "router": {
+    "armId": "A-router",
+    "rulesArmId": "B1-rules-v1",
+    "fallbackArmId": "A-tools",
+    "selection": "B1_when_prediction_json_resolved_true_else_profile_matched_A-tools",
+    "inferenceCalls": 0,
+    "rulesCostPolicy": "zero_incremental_model_tokens_and_latency",
+    "fallbackCostPolicy": "inherit_source_A-tools_costs"
+  }
+}

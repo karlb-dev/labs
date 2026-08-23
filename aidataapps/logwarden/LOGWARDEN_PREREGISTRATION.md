@@ -55,6 +55,15 @@ Baselines are B0 majority/no-action; B1 frozen deterministic rules; B2
 retrieval-only under lexical, vector, and hybrid search; and evaluator-only B3
 oracle packet classification. B3 cannot support a deployable-system claim.
 
+The executable B0/B2/B3/router policy was added during standard SQL capture at
+2026-08-23T08:45Z, before packet construction, target inference, target scoring,
+or campaign freeze. B0 is mechanically fit on the predeclared dev role only;
+B2 maps the top returned runbook's frozen class/severity metadata through a
+frozen action map; B3 copies protected truth under `lw_lab` and is evaluator-only;
+and the router selects resolved B1 rows, otherwise the matched A-tools row. This
+timing cannot affect captured evidence, but is disclosed because executable
+baseline policy was not present before capture began.
+
 ## Transport and runtime
 
 The primary decode is `primary-json-v3`: temperature 0, top-p 1, top-k 0,
