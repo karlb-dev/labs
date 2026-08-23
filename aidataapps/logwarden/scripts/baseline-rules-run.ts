@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
+import { frozenArmIdentities } from "../src/campaign.js";
 import { loadConfig } from "../src/config.js";
-import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
+import { canonicalJson, hashJson } from "../src/hash.js";
 import { connect } from "../src/repository.js";
 import { applyRulesBaseline, loadRulesBaseline } from "../src/rules-baseline.js";
 import { appendExperimentLog, atomicWrite, resolveRunDirectory } from "../src/run.js";
@@ -105,16 +106,9 @@ async function campaignState(): Promise<{ campaignId: number; status: string }> 
 }
 
 async function registerArm(campaignStatus: string): Promise<void> {
-  const configJson = canonicalJson({
-    schemaVersion: 1, baselineId: armId, predictionSource: "B1", rulesPath, rulesetSha256,
-    outputContract: "decision-fields-v1", model: null, tools: [], retrieval: null,
-  });
-  const identity = {
-    armId, promptSha256: sha256("B1 has no model prompt"), toolRegistrySha256: hashJson([]),
-    policySha256: rulesetSha256, contractSha256: hashJson({ outputContract: "decision-fields-v1" }),
-    packetVersion: "incident-packet-v1", retrievalMode: "none", correlationMode: "frozen_packet",
-    configSha256: sha256(configJson),
-  };
+  const identity = frozenArmIdentities().find((value) => value.armId === armId);
+  if (identity === undefined) throw new Error(`Frozen arm registry omits ${armId}`);
+  const configJson = canonicalJson(identity);
   const armHash = hashJson(identity);
   const existing = await pool.request().input("id", sql.VarChar(80), armId)
     .query<{ arm_hash: string }>("SELECT arm_hash FROM control.agent_arms WHERE agent_arm_id=@id;");

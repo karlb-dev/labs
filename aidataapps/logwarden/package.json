@@ -53,6 +53,7 @@
     "search:freeze": "node --import tsx scripts/search-freeze.ts",
     "power:check": "node --import tsx scripts/power-check.ts",
     "baseline:B1": "node --import tsx scripts/baseline-rules-run.ts",
+    "campaign:freeze": "node --import tsx scripts/campaign-freeze.ts",
     "secrets:rotate": "node --import tsx scripts/rotate-local-secrets.ts",
     "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
     "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",
