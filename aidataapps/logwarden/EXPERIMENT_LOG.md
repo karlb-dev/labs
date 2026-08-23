@@ -1717,3 +1717,29 @@ place and receive a later disposition.
   gates passed. The model/cache volumes and all evidence are retained; no GPU
   compute process remains. Primary SQL Server remains healthy on port 1434 for
   inspection. Impact: runtime resource release only.
+
+- 2026-08-23T22:06:00Z — Added the requested self-contained Tier-1 HTML model-
+  comparison report and a companion deterministic JSON payload. The generator
+  fails closed against the frozen-output, campaign, telemetry, finalization,
+  reproduction, backup, and figure receipts; embeds six retained figures; and
+  exposes the full baseline/agent scorecard, arm contrasts, failure funnel,
+  retrieval/tool quality, calibration, negative controls, GPU/vLLM residency,
+  receipts, source hashes, and evidence limits. Payload receipt:
+  `b49a5b3860b54782d93cdb76a0ae24ed3c611fd382a3e929b9d208335e3de61b`;
+  HTML SHA-256:
+  `80915f567b664780016b56399542e0acc35ce6df9c5d72639b6fe1cbad5a50ed`;
+  JSON SHA-256:
+  `a5feee5f51d0ea3b7973017d5f8acbce83914c96d109d4eb1d6f6ac3f11332fc`.
+  The checked-in snapshot rebuilt byte-for-byte, its browser script parsed and
+  populated all 29 targets without invalid values, and all 43 test files / 152
+  tests passed. Impact: presentation and discoverability only. No frozen input,
+  scientific row, persisted report snapshot, inference result, claim, or
+  adjudication changed.
+
+- 2026-08-23T22:07:17Z — Refreshed the complete Drive run mirror after adding
+  the HTML and JSON presentation artifacts. Local and Drive
+  `ARTIFACT_INVENTORY.json` files are byte-identical at SHA-256
+  `951bf7c836ab7212588f03cd011dacf4c0d13e25bb6fa8428a88c0e51e2c5c03`.
+  Stable top-level Drive copies of the HTML, payload, handoff, and experiment
+  log were also refreshed for discoverability. Impact: durability only; the
+  frozen science and final SQL boundary remain unchanged.

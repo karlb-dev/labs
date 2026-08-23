@@ -17,6 +17,7 @@
     "mac:model": "node --import tsx scripts/mac-model.ts",
     "mac:eval": "node --import tsx scripts/mac-eval.ts",
     "mac:report": "node --import tsx scripts/mac-eval-report.ts",
+    "tier1:report": "node --import tsx scripts/tier1-html-report.ts",
     "models:sync": "node --import tsx scripts/sync-model-registry.ts",
     "model": "node --import tsx scripts/model-service.ts",
     "port:gate": "node --import tsx scripts/chat-port-gate.ts",

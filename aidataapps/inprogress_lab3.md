@@ -1,6 +1,6 @@
 # Lab 03 complete — LogWarden
 
-Last updated: 2026-08-23 21:35 UTC
+Last updated: 2026-08-23 22:06 UTC
 
 Read `/content/drive/MyDrive/aidataapps/resume.md` first for shared recovery
 rules. This is the authoritative Lab 3 handoff.
@@ -14,7 +14,7 @@ rules. This is the authoritative Lab 3 handoff.
 - Drive mirror:
   `/content/drive/MyDrive/aidataapps/lab03/runs/logwarden-smoke-20260823T031714Z`
 - Final mirrored artifact-inventory SHA-256:
-  `6be86a7777294ec3269c73a3001c008b9395837958a5ac3a903d97a7f48b5e26`
+  `951bf7c836ab7212588f03cd011dacf4c0d13e25bb6fa8428a88c0e51e2c5c03`
 - Source plan:
   `/content/drive/MyDrive/aidataapps/lab03/aidataapps_logwarden_lab_3_spec.md`
 - Governing addendum:
@@ -82,6 +82,19 @@ and included in the deterministic performance report.
   `runs/logwarden-smoke-20260823T031714Z/reports/PERFORMANCE_REPORT.md`.
 
 ## Results, persistence, and reproducibility
+
+- Self-contained interactive comparison report:
+  `runs/logwarden-smoke-20260823T031714Z/reports/LOGWARDEN_TIER1_REPORT.html`;
+  companion deterministic payload:
+  `runs/logwarden-smoke-20260823T031714Z/reports/LOGWARDEN_TIER1_REPORT_DATA.json`.
+  A convenience copy is also at
+  `/content/drive/MyDrive/aidataapps/lab03/LOGWARDEN_TIER1_REPORT.html` with
+  `/content/drive/MyDrive/aidataapps/lab03/LOGWARDEN_TIER1_REPORT_DATA.json`.
+  Payload receipt:
+  `b49a5b3860b54782d93cdb76a0ae24ed3c611fd382a3e929b9d208335e3de61b`.
+  The generator verifies all frozen scientific inputs and receipts before
+  publication; adding this post-closeout presentation did not mutate the
+  frozen campaign or final SQL boundary.
 
 - Report input: 85,596 rows from 17 deterministic SQL queries plus 33 signed
   evidence artifacts; manifest receipt
@@ -173,6 +186,7 @@ npm run check
 
 Start from these files:
 
+- `runs/logwarden-smoke-20260823T031714Z/reports/LOGWARDEN_TIER1_REPORT.html`
 - `runs/logwarden-smoke-20260823T031714Z/reports/LOGWARDEN_STATE_OF_RECORD.md`
 - `runs/logwarden-smoke-20260823T031714Z/reports/SCORECARD.md`
 - `runs/logwarden-smoke-20260823T031714Z/reports/VALIDATION.md`
