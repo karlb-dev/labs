@@ -4,6 +4,8 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir"
 # shellcheck disable=SC1091
 source scripts/runtime-env.sh
+# shellcheck disable=SC1091
+source scripts/container-storage.sh
 run_dir="$(node --import tsx -e 'import {resolveRunDirectory} from "./src/run.ts"; console.log(resolveRunDirectory())')"
 inventory="$run_dir/ARTIFACT_INVENTORY.json"
 [[ -f "$inventory" ]] || { echo "Missing $inventory; run npm run run:archive" >&2; exit 2; }
@@ -17,8 +19,8 @@ backup="$(find "$run_dir/database" -maxdepth 1 -type f -name '*.bak' -printf '%T
 [[ -n "$backup" && -f "$backup" ]] || { echo "No retained SQL backup" >&2; exit 2; }
 [[ -f "$backup.sha256" ]] && (cd "$(dirname "$backup")" && sha256sum -c "$(basename "$backup").sha256")
 sql_container="${SQL_CONTAINER_NAME:-aidataapps-rag-sqlserver-1}";token="$(sha256sum "$backup" | cut -c1-12)";target="ModelPrintRepro_${token}_$$";container_backup="/var/opt/mssql/data/${target}.bak"
-docker cp "$backup" "$sql_container:$container_backup"
-cleanup() { MSSQL_DATABASE=master node --import tsx scripts/restore-database.ts --target "$target" --drop >/dev/null 2>&1 || true; docker exec "$sql_container" rm -f "$container_backup" >/dev/null 2>&1 || true; }
+copy_to_container_file "$backup" "$sql_container" "$container_backup"
+cleanup() { MSSQL_DATABASE=master node --import tsx scripts/restore-database.ts --target "$target" --drop >/dev/null 2>&1 || true; remove_container_file "$sql_container" "$container_backup" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
 node --import tsx scripts/restore-database.ts --target "$target" --backup "$container_backup"
 expected_headline="$(mktemp)";cp "$run_dir/reports/HEADLINE.md" "$expected_headline"

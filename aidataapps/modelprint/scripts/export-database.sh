@@ -5,6 +5,8 @@ lab_dir="$(cd "$script_dir/.." && pwd)"
 cd "$lab_dir"
 # shellcheck disable=SC1091
 source "$script_dir/runtime-env.sh"
+# shellcheck disable=SC1091
+source "$script_dir/container-storage.sh"
 
 mode="${1:-backup}"
 run_dir="$(node --import tsx -e 'import {resolveRunDirectory} from "./src/run.ts"; console.log(resolveRunDirectory())')"
@@ -16,11 +18,12 @@ if [[ "$mode" == "backup" ]]; then
   result="$(node --import tsx scripts/database-backup.ts)"
   container_path="$(jq -r '.containerPath' <<<"$result")"
   file_name="$(jq -r '.fileName' <<<"$result")"
-  docker cp "$sql_container:$container_path" "$database_dir/$file_name"
+  copy_from_container_file "$sql_container" "$container_path" "$database_dir/$file_name"
   sha256sum "$database_dir/$file_name" >"$database_dir/$file_name.sha256"
   jq -n --arg mode backup --arg file "$file_name" --arg sha "$(sha256sum "$database_dir/$file_name" | awk '{print $1}')" \
     --arg createdAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{schemaVersion:1,mode:$mode,file:$file,sha256:$sha,createdAt:$createdAt,verified:true}' \
     >"$database_dir/$file_name.json"
+  remove_container_file "$sql_container" "$container_path"
   echo "$database_dir/$file_name"
 elif [[ "$mode" == "bacpac" ]]; then
   "$script_dir/install-sqlpackage.sh" >/dev/null
