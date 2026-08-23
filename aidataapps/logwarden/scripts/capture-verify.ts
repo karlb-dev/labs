@@ -135,7 +135,12 @@ try {
           INNER JOIN ingest.raw_events AS raw ON raw.raw_event_id=event.raw_event_id
           WHERE occurred_at_utc BETWEEN @start AND @finish
             AND source_kind=@source
-            AND (@event IS NULL OR source_event_name=@event)
+            AND (@event IS NULL OR source_event_name=@event
+              -- Whether a client statement completes as a batch or an RPC is a
+              -- driver transport detail (parameterized requests arrive as
+              -- sp_executesql), not scenario semantics: one evidence family.
+              OR (@event IN (N'sql_batch_completed', N'rpc_completed')
+                AND source_event_name IN (N'sql_batch_completed', N'rpc_completed')))
             AND (@error IS NULL OR error_number=@error)
           ORDER BY occurred_at_utc,canonical_event_id;
         `);
