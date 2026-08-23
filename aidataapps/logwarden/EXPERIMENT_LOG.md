@@ -1096,3 +1096,40 @@ place and receive a later disposition.
 - 2026-08-23T12:41:44.733Z — Scored 240 primary calibration predictions for muse-glimmer-30b across A-direct,A-rag,A-tools,A-router; receipt a9555119068794d857dcefaaa6bf6cbd21f472ecbb87b3f3ee41def3351f3741.
 
 - 2026-08-23T12:41:50.922Z — Fitted and hash-locked 4 calibration-only models for muse-glimmer-30b before test inference; receipt 61b5ccffadacffc05e6a97f0aced1a0db3a7acae25013e6f3c88c4252e5dcb16.
+
+- 2026-08-23T14:19:29.352Z — muse-glimmer-30b primary replay retained 1370 cells across test_id,test_variant_holdout,test_unknown and A-direct,A-rag,A-tools with 1249 decisions, 121 failures, and 2563 model requests; receipt 77c40337aac5ec4379845bcef8076bc5e43652790e65c0cf09daded52f6eaa9d.
+
+- 2026-08-23T14:23:01.778Z — B1 B1-rules-v1 produced 480 test_id,test_variant_holdout,test_unknown predictions at {"test_id":{"episodes":300,"resolved":300,"coverage":1},"test_variant_holdout":{"episodes":120,"resolved":120,"coverage":1},"test_unknown":{"episodes":60,"resolved":60,"coverage":1}}; receipt 8e6f8db71379ebd848d96eb108f83c54d59fa4fd608b0890c0d0b767c3b927b3.
+
+- 2026-08-23T14:23:33.128Z — Derived 480 predictions for A-router over test_id,test_variant_holdout,test_unknown and muse-glimmer-30b; receipt a90d2c7f59557cdac22037b75c829b6659d8bbb86a716f896629e5199c777830.
+
+- 2026-08-23T14:25:38.759Z — Scored 1850 primary test_id,test_variant_holdout,test_unknown predictions for muse-glimmer-30b across A-direct,A-rag,A-tools,A-router; receipt 538311178007a1b5b32e7c2a0ef9c357dd760ea4120d66a1c0923d4cc0eb6c02.
+
+- 2026-08-23T14:26:00Z — The protected Muse primary replay completed its
+  12:43:21–13:43:10 inference window and retained all 1,370 governed cells.
+  Its 16 workers each claimed 82–90 cells. Four workers encountered a
+  transient empty claim, and all four recovered after one instrumented retry
+  (20–32 ms), directly validating the post-calibration queue repair under the
+  protected load. vLLM served 2,563/2,563 successful HTTP requests with 2,562
+  stop finishes, one retained length finish, zero errors, zero preemptions,
+  4,675,075 prompt tokens, and 674,049 generation tokens. Verification found
+  1,370 terminal predictions, 2,563 linked turns/requests, 1,198 tool calls,
+  and zero leases, bad hashes, constrained transports, unsafe actions, open
+  spans/traces, or unlinked spans. The one length finish remains part of the
+  complete-case evidence; it did not prevent a terminal prediction. Receipt:
+  `77c40337aac5ec4379845bcef8076bc5e43652790e65c0cf09daded52f6eaa9d`.
+- 2026-08-23T14:26:00Z — The protected A-router derivation initially stopped
+  before inserting any router row because its deterministic B1 source had not
+  yet been generated for the test roles. Running the missing B1 prerequisite
+  after replay exposed an overly narrow B1 guard: it allowed test computation
+  only while campaign status was exactly `frozen`, although the first
+  authorized target replay advances that same frozen campaign to `running`.
+  The guard now accepts `frozen`, `running`, and `complete`, still rejects
+  `building`, and has a regression test; 38/38 test files and 135/135 tests
+  passed. B1 then produced 480/480 test rows, A-router derived 480/480 rows,
+  and all 1,850 protected Muse predictions were scored. Impact: deterministic
+  stage ordering and resumability only; no packet, frozen identity, model
+  request/output, prediction, calibration fit, threshold, or scoring rule was
+  changed. B1/router/score receipts: `8e6f8db71379ebd848d96eb108f83c54d59fa4fd608b0890c0d0b767c3b927b3`,
+  `a90d2c7f59557cdac22037b75c829b6659d8bbb86a716f896629e5199c777830`,
+  and `538311178007a1b5b32e7c2a0ef9c357dd760ea4120d66a1c0923d4cc0eb6c02`.

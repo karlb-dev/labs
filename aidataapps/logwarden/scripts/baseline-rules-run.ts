@@ -24,7 +24,7 @@ const root = await created.journal.startSpan("baseline.B1", {}, { armId, rulesPa
 
 try {
   const campaign = await campaignState();
-  if (campaign.status !== "frozen" && roles.some((role) => role.startsWith("test_"))) {
+  if (!(["frozen", "running", "complete"] as string[]).includes(campaign.status) && roles.some((role) => role.startsWith("test_"))) {
     throw new Error("Test-role B1 predictions are forbidden before campaign freeze");
   }
   await registerArm(campaign.status);
@@ -101,7 +101,7 @@ async function campaignState(): Promise<{ campaignId: number; status: string }> 
     INNER JOIN control.runs run ON run.campaign_id=campaign.campaign_id WHERE run.run_id=@run;
   `);
   const row = result.recordset[0];
-  if (row === undefined || !["building", "frozen", "running"].includes(row.status)) throw new Error("Run has no eligible campaign");
+  if (row === undefined || !["building", "frozen", "running", "complete"].includes(row.status)) throw new Error("Run has no eligible campaign");
   return { campaignId: Number(row.campaign_id), status: row.status };
 }
 

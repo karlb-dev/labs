@@ -31,6 +31,12 @@ describe("standard campaign schedule isolation", () => {
     expect(source).not.toContain("CONVERT(nvarchar(max),request.request_body)");
   });
 
+  it("allows a frozen deterministic baseline to resume after target replay starts", async () => {
+    const source = await readFile("scripts/baseline-rules-run.ts", "utf8");
+    expect(source).toContain('["frozen", "running", "complete"]');
+    expect(source).toContain('campaign.status) && roles.some((role) => role.startsWith("test_"))');
+  });
+
   it("evaluates resumed qwen pilots from the prediction-selected agent attempts", async () => {
     const source = await readFile("scripts/qwen-smoke-e2e.ts", "utf8");
     expect(source).toContain("WITH current_predictions AS");

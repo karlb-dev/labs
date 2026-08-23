@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 12:44 UTC
+Last manually updated: 2026-08-23 14:26 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -80,8 +80,9 @@ and its effect on the evidence ceiling must be recorded append-only in
   receipt:
   `0cb7233598d78ccb665d0df8cc06934741ee48eab70e82099b55da2b335eba73`;
   durable commit `1c471f6`.
-- Current source is clean and pushed; calibration evidence is durable through
-  `d0bccd5` and queue hardening through `1c471f6`.
+- Source and evidence are being checkpointed after protected Muse scoring;
+  calibration evidence is durable through `d0bccd5`, queue hardening through
+  `1c471f6`, and the watchdog has independently retained the protected replay.
   Foundry/Mac/report support is merged; Linux Foundry validation
   remains deferred until the four governed GPU profiles finish.
 - Muse calibration chronology is closed before test access: `A-router` derived
@@ -91,20 +92,26 @@ and its effect on the evidence ceiling must be recorded append-only in
   and four calibration-only models hash-locked with test authorization
   (receipt `61b5ccffadacffc05e6a97f0aced1a0db3a7acae25013e6f3c88c4252e5dcb16`).
   The guard confirmed zero Muse test predictions at fit time.
-- Muse protected primary replay is active in retained exec session `45836`,
-  invocation `78f6d391-e6d9-48e6-91c1-11e5d08c072d`. It opened all 480 frozen
-  test episodes together for `A-direct` and `A-tools`, plus the 410
-  preregistered retrieval-covered cells for `A-rag`: 1,370 cells total. All 16
-  worker journals started and vLLM showed 16 running / 0 waiting requests,
-  proving the post-calibration queue fix in the protected run. Do not launch a
-  duplicate while PID/session and active leases exist. After PASS: derive
-  `A-router`, score the four test arms, then run the three frozen Tier 1
-  inference controls before ending Muse residency.
+- Muse protected primary replay passed: all 1,370 governed cells completed,
+  with 1,249 decisions, 121 retained failures, and 2,563 successful model
+  requests. All 16 workers claimed 82–90 cells; four transient empty claims
+  each recovered after one 20–32 ms retry. vLLM recorded 2,562 stop finishes,
+  one retained length finish, zero errors/preemptions, 4,675,075 prompt tokens,
+  and 674,049 generation tokens. Receipt:
+  `77c40337aac5ec4379845bcef8076bc5e43652790e65c0cf09daded52f6eaa9d`.
+  Deterministic B1 was then completed for 480 protected rows after repairing a
+  post-freeze lifecycle guard (ordering/resumability only; no scientific input
+  or model output changed). A-router derived all 480 rows and scoring persisted
+  all 1,850 four-arm predictions plus 11,325 tool and 1,850 retrieval scores.
+  Score receipt:
+  `538311178007a1b5b32e7c2a0ef9c357dd760ea4120d66a1c0923d4cc0eb6c02`.
+  Next: run, score, and compare the three frozen Muse inference controls before
+  ending Muse residency. Do not relaunch the completed protected primary.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
 source scripts/runtime-env.sh
-npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_variant_holdout,test_unknown --arms A-direct,A-rag,A-tools --workers 16
+npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_unknown --arms A-tools --control error-number-mask-v1 --workers 16
 ```
 
 ## Historical setup context (superseded where conflicting)
@@ -369,16 +376,15 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 ## Active processes and checkpoints
 
 <!-- lab3-watchdog-status:start -->
-- Last watchdog checkpoint: 2026-08-23T13:59:46.724Z
-- Last watchdog Git head: `19c769c5439cc25135f04a6e2eb1073cdd6b01e2` on `aidataapps-logwarden`
-- Last watchdog disposition: clean source checkpoint
-- Last watchdog database receipt: `1264b16b7c775b4c2273672014f3a951a07926b0fb033e6a72950a6858394637`
+- Last watchdog checkpoint: 2026-08-23T14:20:41.207Z
+- Last watchdog Git head: `e5d43dd88ab452ede8a28896fb6a8df5f670275c` on `aidataapps-logwarden`
+- Last watchdog disposition: captured dirty recovery patch; no automatic source commit
+- Last watchdog database receipt: `0cf55f0b43dc81d76dd122c247d0fc8f7f9c12f4f0a00327f62d62cb5218e5d2`
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: the Muse calibration replay is the next
-  command shown below; if it is already running, inspect the selected Muse
-  calibration jobs and worker journals before launching another invocation.
+- Long-running scientific process: no replay is active at this checkpoint;
+  the next command is the first Muse frozen inference control shown above.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `muse-glimmer-30b-residency` whole-system sampler
@@ -420,12 +426,11 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job/work-item state, current Muse port-gate receipt, and Drive checkpoint
-before launching anything. The campaign is frozen and Muse is authorized. If
-no Muse calibration replay is active, run the exact calibration command in the
-authoritative state section. Do not open any Muse test role until calibration
-predictions are derived/scored and `campaign:calibrate --profile
-muse-glimmer-30b` writes a PASS receipt. Do not start another chat model while
-the Muse container is resident.
+before launching anything. The campaign is frozen/running and Muse is
+authorized; its calibration, protected primary, deterministic router, and
+protected scoring stages are complete. Resume with the next unfinished Muse
+control in the authoritative state section. Do not start another chat model
+while the Muse container is resident.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
