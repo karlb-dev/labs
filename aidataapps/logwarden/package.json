@@ -56,6 +56,7 @@
     "campaign:derive": "node --import tsx scripts/derive-campaign-arms.ts",
     "campaign:replay": "node --import tsx scripts/replay-campaign.ts",
     "campaign:score": "node --import tsx scripts/score-predictions.ts",
+    "campaign:calibrate": "node --import tsx scripts/fit-calibration.ts",
     "campaign:control-compare": "node --import tsx scripts/compare-controls.ts",
     "campaign:analyze": "node --import tsx scripts/analyze-campaign.ts",
     "gate:qwen-e2e": "node --import tsx scripts/qwen-smoke-e2e.ts",

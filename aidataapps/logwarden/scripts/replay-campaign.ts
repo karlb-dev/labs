@@ -234,8 +234,19 @@ async function assertGovernance(campaign: CampaignRow): Promise<void> {
   const targets = freeze.targetProfiles;
   if (!Array.isArray(targets) || !targets.includes(profileKey)) throw new Error(`Campaign freeze does not authorize ${profileKey}`);
   if (controlId === null) {
-    const configured = [...campaignConfig.qualityRoles].sort();
-    if (canonicalJson([...roles].sort()) !== canonicalJson(configured)) throw new Error("Primary target replay must cover every frozen quality role in one cell set");
+    const selected = [...roles].sort();
+    const calibration = ["calibration"];
+    const tests = campaignConfig.qualityRoles.filter((role) => role.startsWith("test_")).sort();
+    if (canonicalJson(selected) !== canonicalJson(calibration) && canonicalJson(selected) !== canonicalJson(tests)) {
+      throw new Error("Primary target replay must run calibration alone or every frozen test role as a second stage");
+    }
+    if (canonicalJson(selected) === canonicalJson(tests)) {
+      const calibrationReceipt = await validatedReceipt(`${runDirectory}/metrics/calibration-${safeName(profileKey)}.json`, "PASS");
+      if (calibrationReceipt.runId !== run.runId || calibrationReceipt.profileKey !== profileKey
+          || calibrationReceipt.fitRole !== "calibration" || calibrationReceipt.testInferenceAuthorized !== true) {
+        throw new Error(`Calibration receipt does not authorize test replay for ${profileKey}`);
+      }
+    }
   } else {
     if (canonicalJson(arms) !== canonicalJson(["A-tools"])) throw new Error("Tier 1 inference controls are restricted to A-tools");
     if (canonicalJson([...roles].sort()) !== canonicalJson(["test_id", "test_unknown"])) throw new Error("Tier 1 inference controls require the frozen test_id/test_unknown subset");
@@ -898,7 +909,7 @@ async function exportRawResponses(jobs: JobIdentity[]): Promise<Array<Record<str
       timingMs: { client: row.client_elapsed_ms, headersWait: row.headers_wait_ms, bodyRead: row.body_read_ms, parse: row.parse_ms },
     }));
     const body = lines.length === 0 ? "" : `${lines.join("\n")}\n`;
-    const path = `${runDirectory}/raw/model-responses-${safeName(profileKey)}-${safeName(arm)}${controlSuffix}.jsonl`;
+    const path = `${runDirectory}/raw/model-responses-${safeName(profileKey)}-${safeName(arm)}-${safeName(roles.join("-"))}${controlSuffix}.jsonl`;
     await atomicWrite(path, body, 0o600);
     output.push({ arm, path, rows: lines.length, bytes: Buffer.byteLength(body), sha256: sha256(body) });
   }
