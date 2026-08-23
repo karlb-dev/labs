@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 14:00 UTC
+Last manually updated: 2026-08-23 14:32 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed milestone: `58274ee`
+- recovery-state milestone: `0718613`; use `git rev-parse HEAD` for the live tip
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -74,8 +74,9 @@ also complete.
 
 Active jobs to adopt and never duplicate:
 
-- attribution probes/LOFO: session `65170`, PID 779300, 48 workers,
-  `--resume-completed`; unchanged 200 permutations and 1,000 bootstraps
+- attribution probes/LOFO: session `66804`, PID 857541, 48 workers,
+  `--resume-completed`; first representation is fully checkpointed, and the
+  restart retains all 200 eligible-family permutations plus 1,000 bootstraps
 - exact retrieval: session `62732`, PID 802811, six workers
 - exact chunk retrieval: session `81077`, PID 802867, six workers
 - checkpoint watchdog: session `16623`, PID 545189
