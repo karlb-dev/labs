@@ -9,6 +9,10 @@ import { STYLE_SCHEMA_HASH, styleVector } from "../src/style.js";
 const stage = valueAfter("--stage") ?? "all";
 if (!new Set(["segments", "style", "embeddings", "all"]).has(stage)) throw new Error(`Unknown stage ${stage}`);
 const embeddingProfile = valueAfter("--embedding-profile");
+const embeddingBatchSize = Number(valueAfter("--embedding-batch-size") ?? 64);
+if (!Number.isSafeInteger(embeddingBatchSize) || embeddingBatchSize < 1 || embeddingBatchSize > 512) {
+  throw new Error("--embedding-batch-size must be an integer from 1 through 512");
+}
 const runDirectory = resolveRunDirectory();
 const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`, "utf8")) as { campaignId: number; campaignHash: string };
 const robustness = await readFile(`${runDirectory}/manifests/robustness-freeze.json`, "utf8").then((value) => JSON.parse(value) as { campaignId: number }).catch(() => null);
@@ -135,7 +139,7 @@ async function embeddings() {
     const prompts = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: string; text: string }>(`
       SELECT DISTINCT v.prompt_variant_id AS id,v.rendered_text AS text FROM dbo.generation_jobs j JOIN dbo.prompt_variants v ON v.prompt_variant_id=j.prompt_variant_id
       WHERE j.campaign_id IN (${campaignSql}) AND NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=v.prompt_variant_id AND p.embedding_profile_id=@profile);`);
-    for (const rows of batch(prompts.recordset, 64)) {
+    for (const rows of batch(prompts.recordset, embeddingBatchSize)) {
       const vectors = await embedRows(selected, profile.modelId, profile.dimensions, rows, "prompt");
       await insertJson(rows.map((row, index) => ({ id: row.id, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
         INSERT dbo.prompt_embeddings(prompt_variant_id,embedding_profile_id,embedding,embedding_sha256)
@@ -148,7 +152,7 @@ async function embeddings() {
       JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id IN (${campaignSql}) AND NOT EXISTS
       (SELECT 1 FROM dbo.semantic_vectors v WHERE v.text_artifact_id=t.text_artifact_id AND v.embedding_profile_id=@profile AND v.representation_id=CONCAT('whole-',t.text_view_id));`);
     let embedded = 0;
-    for (const rows of batch(artifacts.recordset, 64)) {
+    for (const rows of batch(artifacts.recordset, embeddingBatchSize)) {
       const vectors = await embedRows(selected, profile.modelId, profile.dimensions, rows, "whole-output");
       await insertJson(rows.map((row, index) => ({ id: row.id, representation: `whole-${row.textView}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
         INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
@@ -170,7 +174,7 @@ async function embeddings() {
         (SELECT 1 FROM dbo.semantic_vectors v WHERE v.segment_id=s.segment_id AND v.embedding_profile_id=@profile
           AND v.representation_id=CONCAT('segment-',s.segmenter_id)) ORDER BY s.segment_id;`);
       let segmentEmbedded = 0;
-      for (const rows of batch(segments.recordset, 64)) {
+      for (const rows of batch(segments.recordset, embeddingBatchSize)) {
         const vectors = await embedRows(selected, profile.modelId, profile.dimensions, rows, "segment");
         await insertJson(rows.map((row, index) => ({ id: row.id, representation: `segment-${row.segmenter}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
           INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
@@ -188,6 +192,7 @@ async function embeddings() {
 try {
   const summary: Record<string, unknown> = { schemaVersion: 1, campaignIds, campaignHash: freeze.campaignHash, runId,
     embeddingProfile: embeddingProfile ?? null,
+    embeddingBatchSize,
     embeddingInputPolicies: {
       unicodeRepair: { unpairedSurrogateCodeUnits: "replace-with-U+FFFD" },
       "qwen3-embedding-0.6b": { truncation: null },

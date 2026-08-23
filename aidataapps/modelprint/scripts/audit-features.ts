@@ -4,6 +4,7 @@ import { loadConfig } from "../src/config.js";
 import { hashJson } from "../src/hash.js";
 import { resolveRunDirectory } from "../src/run.js";
 import { STYLE_SCHEMA_HASH } from "../src/style.js";
+import { repairUnpairedSurrogates } from "./embedding-compat.js";
 
 type CountRow = Record<string, number>;
 
@@ -55,6 +56,18 @@ try {
       SUM(CONVERT(bigint,s.is_primary_eligible)) AS eligibleSegments
     FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id
     GROUP BY s.segmenter_id ORDER BY s.segmenter_id;`);
+
+  const segmentUnicodeRows = await pool.request().query<{ id: number; segmenter: string; text: string }>(`
+    WITH raw AS (SELECT DISTINCT t.text_artifact_id FROM dbo.generations g
+      JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
+      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id
+      WHERE g.campaign_id IN (${campaignSql}) AND t.text_view_id='raw-final-v1')
+    SELECT s.segment_id AS id,s.segmenter_id AS segmenter,s.segment_text AS text
+    FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id WHERE s.is_primary_eligible=1 ORDER BY s.segment_id;`);
+  const unicodeInputRepairs = segmentUnicodeRows.recordset.flatMap((row) => {
+    const repaired = repairUnpairedSurrogates(row.text);
+    return repaired.replacedCodeUnits ? [{ segmentId: Number(row.id), segmenter: row.segmenter, replacedCodeUnits: repaired.replacedCodeUnits }] : [];
+  });
 
   const profiles = [] as Array<Record<string, unknown>>;
   for (const profile of ["qwen3-embedding-0.6b", "bge-large-en-v1.5"]) {
@@ -118,6 +131,7 @@ try {
       "qwen3-embedding-0.6b": { truncation: null },
       "bge-large-en-v1.5": { truncatePromptTokens: 512, truncationSide: "right" },
     },
+    unicodeInputRepairs,
   };
   const artifact = { ...summary, manifestHash: hashJson(summary) };
   await writeFile(`${runDirectory}/metrics/features-completeness.json`, `${JSON.stringify(artifact, null, 2)}\n`);
