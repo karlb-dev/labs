@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 11:38 UTC
+Last manually updated: 2026-08-23 12:20 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,8 +36,8 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline before this update: `e397b36` (run `git rev-parse HEAD`
-  because later watchdog-safe milestone commits supersede this prose)
+- latest pushed baseline before this update: `c5a96cf` (run `git rev-parse HEAD`
+  because later watchdog-safe milestone commits may supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -162,8 +162,16 @@ The prior-scorer cross-likelihood fill rotation is also complete:
 - all rotating chat engines are stopped and their exact re-downloadable caches
   are evicted; only embedding ports 8001 and 8002 remain on the GPU
 
-Features, analyses, reports, BACPAC, archive, mirror, and reproducibility run
-remain.
+Feature construction is active. The 42,004-generation reference-token/segment
+transaction and 81,176 style/scalar artifacts are complete. BGE completed
+2,937 prompt plus 81,176 whole-output embeddings at 12:16:56 UTC. Qwen prompt
+and 81,176 whole-output embeddings are complete; an idempotent Qwen-only pass
+is filling the 520,083 eligible segment vectors. It resumed with 435,219 rows
+missing after a SQL-native chunk ending in a split UTF-16 surrogate was
+isolated and handled by a logged U+FFFD input repair. Run
+`npm run features:audit` only after that process exits successfully. Controls,
+derived features, evaluations, reports, BACPAC, archive, mirror, and the final
+reproducibility run remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -227,10 +235,17 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Do not start a second OLMo generator if the command is alive. If it is absent,
-rerun the exact primary command above; `--resume` reconciles the frozen config
-hash and SQL state before selecting missing rows. Inspect processes,
-checkpoints, manifests, and SQL before resuming any later OLMo stage.
+Do not reload OLMo or any chat model. If a `build-features.ts` Qwen-only process
+is alive, adopt it and do not start a duplicate. If it is absent and the
+feature audit is not complete, resume idempotently with:
+
+```bash
+node --import tsx scripts/build-features.ts --stage embeddings \
+  --embedding-profile qwen3-embedding-0.6b
+```
+
+After it exits zero, run `npm run features:audit`. The audit must report
+`status=COMPLETE` before controls and evaluations begin.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -299,10 +314,10 @@ remain required for feature construction.
 
 ## Final analysis and archive
 
-After generation, robustness, and intended cross-likelihood cells are complete:
+The active embedding pass replaces the first command below. After it exits
+zero and `npm run features:audit` reports `COMPLETE`, continue with:
 
 ```bash
-npm run features:build
 npm run controls:build
 npm run derived:build
 npm run phrases:build
