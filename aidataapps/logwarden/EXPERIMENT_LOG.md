@@ -147,3 +147,31 @@ place and receive a later disposition.
   artifact inventory, and mirrored the run to Drive. It deliberately did not
   auto-commit concurrent source changes. The clean-tree auto-handoff/commit
   mode will be exercised after this implementation checkpoint is committed.
+- 2026-08-23T04:15:26Z — The watchdog clean-tree path passed after commit
+  `26900ff`: it updated both handoffs, committed only that tracked status block
+  as `de9ca40`, pushed, verified a new branch bundle, backed up both databases,
+  inventoried the run, and mirrored it to Drive. This closes the pre-long-run
+  durability primitive; recurring supervision is not started until a long job
+  exists.
+- 2026-08-23T04:15:26Z — Built ten development incident packets only from
+  verified injection-event links. Correlation tokens, disposable identities,
+  missing objects, and restricted paths are deterministically redacted; exact
+  model-visible packet hashes and separate evaluator-only truth hashes are in
+  SQL. The independent audit found zero protected keys/values, cross-role
+  scenario groups, shared canonical events, missing truth rows, or hash drift.
+  Build receipt
+  `06670cc91548962090843e921f0b72d0f58e38544f79b2fd0ffb9768fb749e11`;
+  audit receipt
+  `f6cc4310ac038a320106c94ad3d43912e9737fd840043c85b63ccc7a698fbd74`.
+  These smoke packets remain development-only and their tool manifest is
+  explicitly `tools-v1-building`, not a campaign freeze.
+- 2026-08-23T04:15:26Z — First full systems sampler pass persisted GPU, SQL,
+  queue, XE-pipeline, host, and raw availability snapshots for chat and both
+  embedding endpoints. The three model services were correctly unavailable
+  because none had been started; unavailable values remain null with reasons.
+  Sampler receipt
+  `f19f2884678a01d417f41dbe559f5be4416adc2a46012b0cde6cb3c4f4e89867`.
+  The file-first hash-chained journal ingester validated four records, inserted
+  three new records after the already committed foundation event, projected
+  spans, and updated per-epoch cursors; receipt
+  `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`.
