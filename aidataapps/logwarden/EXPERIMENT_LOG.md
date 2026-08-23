@@ -828,3 +828,10 @@ place and receive a later disposition.
   `interrupted` ends under a distinct recovery process epoch, and revalidated
   the closed journal; no prior record was edited. Recovery receipt:
   `7b3012a8155de982a8e011de5379787fffde3302d8cecdb7e39fe68cf92b9f66`.
+  The first retained-table recomputation then stopped on a hybrid nDCG check.
+  Diagnosis proved the persisted metric (`0.639945`) correct: the verifier's
+  JSON helper had removed duplicate runbook IDs before rescoring, shifting
+  relevant items from ranks 1/3/5 to 1/2/3 and producing `0.722727`. The parser
+  now preserves duplicate rank positions and the regression suite asserts that
+  contract. Impact: validation logic only; retained rankings and metrics were
+  not rewritten.

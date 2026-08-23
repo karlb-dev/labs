@@ -7,6 +7,14 @@ export interface RetrievalMetrics {
   relevantRunbooksReturned: string[];
 }
 
+export function parseRunbookRanking(source: string): string[] {
+  const value = JSON.parse(source) as unknown;
+  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string" && /^TSG-[A-Z]{3,5}-\d{2}$/.test(entry))) {
+    throw new Error("Runbook ranking JSON violates its protected contract");
+  }
+  return [...value];
+}
+
 /**
  * Score ranked runbook IDs while counting each returned runbook at most once.
  * Recall is set recall over all acceptable runbooks; MRR and nDCG use the

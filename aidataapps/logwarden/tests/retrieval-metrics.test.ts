@@ -1,4 +1,4 @@
-import { mean, percentile, scoreRunbookRetrieval } from "../src/retrieval-metrics.js";
+import { mean, parseRunbookRanking, percentile, scoreRunbookRetrieval } from "../src/retrieval-metrics.js";
 
 describe("retrieval metrics", () => {
   it("scores multi-guide retrieval without rewarding duplicate chunks", () => {
@@ -12,6 +12,12 @@ describe("retrieval metrics", () => {
     expect(score.ndcgAtK).toBeCloseTo((1 + 1 / Math.log2(4)) / (1 + 1 / Math.log2(3)));
     expect(score.relevantRunbooksReturned).toEqual(["TSG-LOG-01", "TSG-LOG-02"]);
     expect(score.noAnswerCorrect).toBeNull();
+  });
+
+  it("preserves duplicate rank positions when parsing retained results", () => {
+    expect(parseRunbookRanking('["TSG-LOG-01","TSG-LOG-01","TSG-LOG-02"]')).toEqual([
+      "TSG-LOG-01", "TSG-LOG-01", "TSG-LOG-02",
+    ]);
   });
 
   it("separates no-answer accuracy from relevance metrics", () => {

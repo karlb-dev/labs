@@ -8,7 +8,7 @@ import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { resolveEmbeddingProfile } from "../src/models.js";
 import { packetLeakageFindings } from "../src/packets.js";
 import { connect } from "../src/repository.js";
-import { mean, percentile, scoreRunbookRetrieval, type RetrievalMetrics } from "../src/retrieval-metrics.js";
+import { mean, parseRunbookRanking, percentile, scoreRunbookRetrieval, type RetrievalMetrics } from "../src/retrieval-metrics.js";
 import {
   canonicalRetrievalQuery,
   createRetrievalQueryEmbedding,
@@ -381,8 +381,8 @@ async function loadCompletedCells(episodeIds: string[]): Promise<BenchmarkCell[]
     WHERE score.run_id=@run ORDER BY score.split_role,truth.scenario_group_id,score.episode_id,score.retrieval_mode;
   `);
   return result.recordset.filter((row) => episodeSet.has(row.episode_id)).map((row) => {
-    const expectedRunbooks = parseRunbookArray(row.expected_runbooks_json);
-    const returnedRunbooks = parseRunbookArray(row.returned_runbooks_json);
+    const expectedRunbooks = parseRunbookRanking(row.expected_runbooks_json);
+    const returnedRunbooks = parseRunbookRanking(row.returned_runbooks_json);
     const metrics = scoreRunbookRetrieval(expectedRunbooks, returnedRunbooks, Number(row.requested_k));
     const drift = {
       recallAtK: Math.abs(metrics.recallAtK - Number(row.recall_at_k)),
@@ -490,11 +490,7 @@ function zeroEmbeddingDelta(before: ReturnType<typeof summarizeEmbeddingMetrics>
 }
 
 function parseRunbookArray(source: string): string[] {
-  const value = JSON.parse(source) as unknown;
-  if (!Array.isArray(value) || !value.every((entry) => typeof entry === "string" && /^TSG-[A-Z]{3,5}-\d{2}$/.test(entry))) {
-    throw new Error("Expected runbook JSON violates its protected contract");
-  }
-  return [...new Set(value)];
+  return parseRunbookRanking(source);
 }
 
 function roleArgument(): Array<typeof allowedRoles[number]> {
