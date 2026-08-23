@@ -72,3 +72,31 @@ place and receive a later disposition.
   could not complete the old SQL process stop, so the already-idle pre-schema
   process required an exact host PID kill after its grace period. Impact: no
   evidence or results; credentials remain ignored and are not mirrored.
+
+- 2026-08-23T03:17:15.609Z — LW-0 run initialized: logwarden-smoke-20260823T031714Z; manifest=3d45cfa2523f12dc6042b411750b1db9a442d045af2d82cb8b6caa2e47a94dd9.
+- 2026-08-23T03:30:07Z — Initial schema apply committed migrations 001–004,
+  then SQL Server rejected full-text catalog creation inside migration 005's
+  user transaction (error 574). Migration 005 rolled back and was not
+  recorded. Split full-text DDL into explicitly non-transactional, fully
+  guarded migration 011 while keeping the knowledge tables transactional.
+  The runner records migration mode and refuses hash drift. Impact: database
+  deployment mechanics only; no workload or scientific data exists yet and
+  the required full-text design is unchanged.
+- 2026-08-23T03:39:39Z — LW-0/LW-1 foundation capability gate passed on SQL
+  Server 17.0.4075.5: compatibility 170, RCSI, Query Store READ_WRITE with
+  1-minute intervals/60-second flush/ALL capture/waits, exact vector, native
+  JSON and vector-index metadata, full-text catalog/index, the five-event XE
+  session running with 2-second dispatch latency, and the Tier 1 permission
+  matrix. Optional SQL-native chunk and embedding helpers were not discovered
+  and remain deferred; application-owned pinned embeddings are the registered
+  primary path, so this does not lower Tier 1 claims.
+- 2026-08-23T03:39:39Z — Queue integration testing found that the initial
+  lease procedures only heartbeated or reclaimed rows while status was exactly
+  `leased`; a worker crash after packet/model/tool progress could therefore
+  strand a job. Forward migration 012 now heartbeats every active state,
+  reclaims expired active leases with a recorded transition, clears terminal
+  leases, and preserves retry timing. This pre-data correctness fix does not
+  change episode assignment or outcomes. The eight-case SQL integration suite
+  passed, including concurrent distinct claims, invalid-transition rejection,
+  expired mid-state recovery, negative permissions, constraint rejection,
+  full-text population, and exact 1024-dimensional vector retrieval.

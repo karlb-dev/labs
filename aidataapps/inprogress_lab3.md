@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 02:40 UTC
+Last manually updated: 2026-08-23 03:39 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -32,20 +32,26 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0 foundation and predecessor intake.
+- Phase: LW-0/LW-1 foundation and SQL control plane complete; beginning LW-2/LW-3 capture implementation.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
-- No Lab 3 source directory, database, container, run, or long process exists
-  yet.
+- The Lab 3 source tree, control/workload databases, initial smoke run, custom
+  XE capture session, Query Store configuration, and two-principal security
+  model exist and have passed their foundation gates.
 - No model weights have been downloaded and no GPU residency is active.
-- The Lab 3 spec/addendum are being read completely before implementation.
+- The complete spec/addendum and predecessor/reference inputs were read and
+  hashed before implementation.
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Next incomplete milestone: vendor the governing documents, record predecessor
-  hashes and frozen model-registry provenance, then scaffold the smallest
-  independently testable Tier 1 foundation.
+- Twelve hash-locked control migrations plus one workload and one server/XE
+  migration apply idempotently. `npm run doctor` passes all required probes;
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 5
+  test files and 11 unit tests.
+- Next incomplete milestone: implement the deterministic smoke scenario
+  catalog, safe injectors, XE/ERRORLOG cursor ingestion, verification/cleanup,
+  and frozen incident-packet builder before loading an embedding or chat model.
 
 ## Fresh-VM preflight
 
@@ -94,10 +100,13 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Long-running scientific process: none
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Watchdog: not yet implemented or running
-- SQL backup: none
-- Active run ID: none
-- Last durable Git checkpoint: `4571495` (`Scaffold LogWarden state of record`)
+- Watchdog: scaffold exists but has not yet passed its recovery/backup gate or
+  been launched
+- SQL backup: none (foundation schema only; backup path is next durability gate)
+- Active run ID: `logwarden-smoke-20260823T031714Z`
+- Capability snapshot: `72dd444ac65f7b1203c711c1383878e100f78cffd33fa2e4bc8b775a9f6d88e3` (`PASS`)
+- SQL integration receipt: `8ecaf7cd8f3693b96554b9fb3a0e2108fe698de301c0f5c7f649282ddd9a4ebd` (8/8 passed)
+- Last durable Git checkpoint: `3b42bbf` (`Harden LogWarden Colab runtime`); the verified schema checkpoint is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, implement and launch one
@@ -120,9 +129,9 @@ nvidia-smi
 ```
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
-SQL job state, and Drive checkpoint before launching anything. The next command
-at this checkpoint is to commit the verified runtime adaptation, then run
-`npm run run:init -- --campaign smoke`. If `docker info` fails, rerun
+SQL job state, and Drive checkpoint before launching anything. The next work at
+this checkpoint is LW-2/LW-3 scenario capture and ingestion; do not load a model
+until the observability gate and campaign freeze both pass. If `docker info` fails, rerun
 `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained cell.
 
 ## Completion rule currently in force

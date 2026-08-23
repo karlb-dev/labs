@@ -30,7 +30,7 @@ export function loadConfig(values: NodeJS.ProcessEnv = process.env) {
   const baseDatabase = {
     server: env.SQLSERVER_HOST,
     port: env.SQLSERVER_PORT,
-    options: { encrypt: false, trustServerCertificate: true },
+    options: { encrypt: false, trustServerCertificate: true, appName: "LogWarden" },
   } as const;
   return {
     host: env.HOST,
