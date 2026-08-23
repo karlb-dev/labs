@@ -8,7 +8,7 @@ import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { parsePrometheusExposition, sumPrometheusMetric, type PrometheusSample } from "../src/prometheus.js";
 import { connect } from "../src/repository.js";
 import { atomicWrite, resolveRunDirectory } from "../src/run.js";
-import { FileTelemetryJournal } from "../src/telemetry.js";
+import { createComponentTelemetryJournal } from "../src/telemetry.js";
 
 const config = loadConfig();
 const runDirectory = resolveRunDirectory();
@@ -16,7 +16,7 @@ const run = JSON.parse(await import("node:fs/promises").then(({ readFile }) => r
 const phase = argument("--phase") ?? "development";
 const watch = process.argv.includes("--watch");
 const epochId = randomUUID();
-const journal = await FileTelemetryJournal.open(`${runDirectory}/telemetry/journal.jsonl`, run.runId);
+const { journal, path: journalPath } = await createComponentTelemetryJournal(runDirectory, run.runId, "systems-sampler", epochId);
 
 do {
   await sampleOnce();
@@ -33,7 +33,7 @@ async function sampleOnce(): Promise<void> {
     ...config.databases.lab,
     options: { ...config.databases.lab.options, appName: "LogWarden-Telemetry" },
   }, config.databases.controlName);
-  const receipt: Record<string, unknown> = { schemaVersion: 1, runId: run.runId, epochId, phase, sampledAtUtc: sampledAt.toISOString() };
+  const receipt: Record<string, unknown> = { schemaVersion: 1, runId: run.runId, epochId, phase, journalPath, sampledAtUtc: sampledAt.toISOString() };
   try {
     const [gpu, sqlSample, queue, xe, host] = await Promise.all([
       collectGpu(), collectSql(pool), collectQueue(pool), collectXe(pool), collectHost(),
@@ -236,7 +236,6 @@ async function collectXe(pool: sql.ConnectionPool): Promise<Record<string, unkno
 
 async function collectHost(): Promise<Record<string, unknown>> {
   const disk = await statfs(runDirectory);
-  const journalPath = `${runDirectory}/telemetry/journal.jsonl`;
   const journalBytes = await stat(journalPath).then((value) => value.size).catch(() => 0);
   return { status: "available", load1m: os.loadavg()[0], memoryUsedBytes: os.totalmem() - os.freemem(), diskFreeBytes: Number(disk.bavail) * Number(disk.bsize), journalBytes };
 }

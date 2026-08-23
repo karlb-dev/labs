@@ -175,3 +175,42 @@ place and receive a later disposition.
   three new records after the already committed foundation event, projected
   spans, and updated per-epoch cursors; receipt
   `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`.
+- 2026-08-23T04:38:40Z — Adapted the pre-inference journal layout before any
+  model residency: every sampler/worker now owns a uniquely named hash-chained
+  JSONL file. The earlier single-file design was safe for sequential smoke
+  calls but would allow two processes to race on sequence/hash state during a
+  long run. SQL ingestion now discovers the retained journal set and commits
+  bounded batches with per-file/per-epoch cursors. Impact: concurrency and
+  recovery correctness only; no scientific packet or model result exists yet.
+- 2026-08-23T04:38:40Z — The telemetry crash/replay gate injected failure
+  after the first committed two-record batch, recovered the remaining four
+  records, then replayed all six as duplicates. Event IDs, terminal cursor
+  sequence/hash, spans, and traces reconciled exactly; receipt
+  `ac60e25a385f2ecfedc1bec6d4fd33dc92de9cbb78f6d0c5935bcda529d20660`.
+  Two separate sampler processes then produced distinct epochs, two unique
+  queue samples, six unique raw endpoint snapshots, and two closed traces;
+  restart receipt
+  `c30e80918b27592426a3657cb0e6c64fe97aa4a09057eda935deff97ba290218`.
+- 2026-08-23T04:38:40Z — The model-client integration gate passed nine
+  terminal routes: valid decision, retried 503 then success, malformed agent
+  JSON, malformed service envelope, empty output, schema rejection, exhausted
+  HTTP failure, timeout, and response-byte truncation. Exact request/response
+  bytes were durable before parse and matched SQL SHA-256 values; each attempt,
+  validation layer, job, work-item disposition, state event, trace, and span
+  reconciled. Receipt
+  `fdce92eeeb8344b52c02455a6d244ee9d9839bc57c2f556f01be5caae0f5d474`.
+  The first gate launch exposed only a development harness parameter-name bug
+  before inference; its one empty synthetic fixture was explicitly stopped and
+  marked `interrupted_gate` before the clean rerun. No scientific observation
+  or score was affected.
+- 2026-08-23T04:38:40Z — A 20+20 ABBA synthetic comparison measured the
+  complete file-first instrumentation path against the same HTTP/envelope/
+  contract parse without instrumentation. Mean added latency was 1.291 ms and
+  p95 added latency was 1.497 ms (instrumented p95 2.694 ms), below the frozen
+  100 ms development ceiling; receipt
+  `3888e28dbd673f71e75ef09bf34451e9b15c4d3196e8c0db2a4c66a2baa6efea`.
+  Global reconciliation then matched 246 journal rows, 66 exact raw artifacts,
+  all SQL events/cursors, and every closed trace/span. Its input-set and receipt
+  hashes are `f986c6132c3c7d344892d1263d55b54a35858ec676f966557225ee281e3f9dc3`
+  and `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
+  an immediate rebuild was byte-identical.

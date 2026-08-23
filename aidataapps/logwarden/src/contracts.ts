@@ -39,9 +39,18 @@ export const decisionSchema = z.object({
 export const agentResponseSchema = z.discriminatedUnion("kind", [toolRequestSchema, decisionSchema]);
 export type AgentResponse = z.infer<typeof agentResponseSchema>;
 export type RepairKind = "none" | "fence_strip" | "leading_text_strip";
+export type AgentResponseErrorClass = "empty_output" | "invalid_json" | "contract_schema";
+
+export class AgentResponseParseError extends Error {
+  constructor(readonly errorClass: AgentResponseErrorClass, message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "AgentResponseParseError";
+  }
+}
 
 export function parseAgentResponse(raw: string): { value: AgentResponse; repairKind: RepairKind; parsedText: string } {
   const trimmed = raw.trim();
+  if (trimmed.length === 0) throw new AgentResponseParseError("empty_output", "Agent response is empty");
   let candidate = trimmed;
   let repairKind: RepairKind = "none";
 
@@ -51,7 +60,7 @@ export function parseAgentResponse(raw: string): { value: AgentResponse; repairK
     repairKind = "fence_strip";
   } else if (!trimmed.startsWith("{")) {
     const firstBrace = trimmed.indexOf("{");
-    if (firstBrace < 0) throw new Error("Agent response does not contain a JSON object");
+    if (firstBrace < 0) throw new AgentResponseParseError("invalid_json", "Agent response does not contain a JSON object");
     candidate = trimmed.slice(firstBrace).trim();
     repairKind = "leading_text_strip";
   }
@@ -60,9 +69,21 @@ export function parseAgentResponse(raw: string): { value: AgentResponse; repairK
   try {
     decoded = JSON.parse(candidate);
   } catch (error) {
-    throw new Error(`Agent response is not valid JSON after ${repairKind}: ${(error as Error).message}`);
+    throw new AgentResponseParseError(
+      "invalid_json",
+      `Agent response is not valid JSON after ${repairKind}: ${(error as Error).message}`,
+      { cause: error },
+    );
   }
-  return { value: agentResponseSchema.parse(decoded), repairKind, parsedText: candidate };
+  const validated = agentResponseSchema.safeParse(decoded);
+  if (!validated.success) {
+    throw new AgentResponseParseError(
+      "contract_schema",
+      `Agent response violates the structured contract (${validated.error.issues.length} issue(s))`,
+      { cause: validated.error },
+    );
+  }
+  return { value: validated.data, repairKind, parsedText: candidate };
 }
 
 export const OPERATING_CONTRACT_VERSION = "logwarden-json-v1";

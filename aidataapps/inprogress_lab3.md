@@ -32,7 +32,7 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery, and base systems telemetry gates passed.
+- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery, and pre-inference observability gates passed except the real vLLM metrics canary.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -47,8 +47,8 @@ and its effect on the evidence ceiling must be recorded append-only in
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
 - Sixteen hash-locked control migrations and two versioned server/XE assets now
   apply idempotently. `npm run doctor` passes all required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 9
-  test files and 17 unit tests. The capture-specific XE predicate excludes
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 10
+  test files and 25 unit tests. The capture-specific XE predicate excludes
   agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -72,11 +72,23 @@ and its effect on the evidence ceiling must be recorded append-only in
   (sample) and
   `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`
   (journal ingest).
-- Next incomplete milestone: fake-gateway terminal-route and journal crash
-  tests, live sampler restart/reconciliation, ERRORLOG rotation/container
-  recovery, read-only tool procedures, then expand/freeze the supported
-  catalog. A small embedding or qwen-smoke port may load only after its real
-  `/metrics` port gate; no long chat campaign may load yet.
+- The pre-inference agent observability gates now pass: nine fake-gateway
+  terminal routes with exact raw-byte/SQL hashes
+  (`fdce92eeeb8344b52c02455a6d244ee9d9839bc57c2f556f01be5caae0f5d474`),
+  committed-batch crash/replay
+  (`ac60e25a385f2ecfedc1bec6d4fd33dc92de9cbb78f6d0c5935bcda529d20660`),
+  two-process sampler restart
+  (`c30e80918b27592426a3657cb0e6c64fe97aa4a09057eda935deff97ba290218`),
+  and p95 added synthetic instrumentation latency of 1.497 ms
+  (`3888e28dbd673f71e75ef09bf34451e9b15c4d3196e8c0db2a4c66a2baa6efea`).
+  Global journal/SQL/raw/trace reconciliation covers 246 events and 66 raw
+  artifacts with receipt
+  `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
+  the derived file rebuilt byte-for-byte.
+- Next incomplete milestone: ERRORLOG rotation/container recovery and the
+  least-privilege read-only tool procedures, followed by supported catalog and
+  runbook expansion/freeze. A small embedding or qwen-smoke port may then load
+  for the remaining real `/metrics` gate; no long chat campaign may load yet.
 
 ## Fresh-VM preflight
 
@@ -141,7 +153,7 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e` (`PASS`)
 - SQL integration receipt: `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156` (8/8 passed)
-- Last durable Git checkpoint: `de9ca40` (clean watchdog handoff); packet/telemetry implementation is being committed now
+- Last durable Git checkpoint: `762806d` (packet/base telemetry watchdog handoff); terminal-route/recovery instrumentation is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -165,9 +177,9 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the model-client fake-gateway/crash-replay/reconciliation
-gate followed by read-only tools and the standard catalog freeze; do not load a
-model until the remaining observability gates pass. If `docker info` fails,
+this checkpoint is ERRORLOG rotation/container recovery followed by read-only
+tools and the standard catalog/runbook freeze; do not load a model until the
+remaining real-service observability gate can run. If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
 
