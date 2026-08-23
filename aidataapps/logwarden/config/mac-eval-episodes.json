@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "name": "mac-eval-v1",
+  "description": "Frozen 16-episode incident-triage set for mac-plane model comparison. Byte-identical operating contract for every model (SPEC_ADDENDUM A-1/A-2 style); tool results are frozen snapshots. Development evidence only, never campaign rows.",
+  "decodeConfig": { "temperature": 0, "maxTokens": 512, "maxModelTurns": 4 },
+  "contract": "You are LogWarden, an incident-triage agent for a SQL Server estate. You communicate ONLY in JSON: every reply must be exactly one JSON object and nothing else - no prose, no markdown, no code fences.\n\nReply shapes:\n1. Tool request: {\"kind\":\"tool_request\",\"tool\":\"<tool name>\",\"arguments\":{...},\"callId\":\"<short id>\"}\n2. Decision: {\"kind\":\"decision\",\"incidentClass\":\"<class>\",\"severity\":\"<severity>\",\"action\":\"<action>\",\"rationale\":\"<max 20 words>\"}\n\nincidentClass is one of: log_full, blocking, deadlock, login_failure, backup_failure, io_corruption, no_incident, unknown.\nseverity is one of: low, medium, high.\naction is one of: open_work_item, escalate, no_action.\n\nSeverity rubric: high = data or availability at imminent risk (transaction log full or over 90 percent used, IO corruption, broken backup chain, authentication attack storm, recurring deadlocks); medium = a single deadlock, active blocking over 30 seconds, or suspicious-but-unconfirmed signals; low = transient or benign events, or events inside a declared maintenance window that have already recovered.\nAction rubric: escalate = io_corruption, suspected security attack, or unknown signals; no_action = no_incident, or benign/low events that have already recovered; open_work_item = every other actionable incident.\n\nTools (request one only when the packet's requiredDiagnostic names it and its result is not already present):\n- get_log_space, arguments {\"database\": string}: log size, percent used, autogrowth state.\n- get_blocking_snapshot, arguments {}: current blocking chains with head blocker session details.\n- get_backup_history, arguments {\"database\": string}: recent backup outcomes for the database.\n- get_deadlock_graph, arguments {}: summary of the most recent deadlock graph.\n\nAfter a tool result arrives (a user message shaped {\"kind\":\"tool_result\",...}), reply with your decision. If requiredDiagnostic is null, decide immediately from the evidence. If the evidence fits no listed class, use incidentClass \"unknown\" and escalate.",
+  "episodes": [
+    {
+      "episodeId": "ep01-log-full-active-tran",
+      "packet": {
+        "source": "xe:error_reported",
+        "evidence": "Error 9002, Severity 17, State 4: The transaction log for database 'LW_orders' is full due to 'ACTIVE_TRANSACTION'. Occurred 3 times in the last 2 minutes.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "log_full", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep02-single-deadlock",
+      "packet": {
+        "source": "xe:xml_deadlock_report",
+        "evidence": "One deadlock reported at 04:12:09 in database 'LW_sales'. Victim: session 63 (app 'OrderSync'). Survivor: session 58. Lock: KEY on LW_sales.dbo.order_lines. No further deadlocks in the last hour.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "deadlock", "severity": "medium", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep03-active-blocking",
+      "packet": {
+        "source": "xe:blocked_process_report",
+        "evidence": "Blocked process report: session 84 blocked for 42 seconds by head blocker session 71 (login 'etl_svc', open transaction) in database 'LW_orders'. Blocking is ongoing.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "blocking", "severity": "medium", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep04-benign-login-failure",
+      "packet": {
+        "source": "errorlog",
+        "evidence": "Login failed for user 'app_svc'. Reason: Password did not match. Error 18456, Severity 14, State 8. One occurrence at 04:02:11, during the declared credential-rotation maintenance window; subsequent logins for 'app_svc' succeed.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "login_failure", "severity": "low", "action": "no_action" }
+    },
+    {
+      "episodeId": "ep05-login-storm",
+      "packet": {
+        "source": "errorlog",
+        "evidence": "Login failed for user 'sa'. Error 18456, Severity 14, State 8: 47 occurrences within 5 minutes from client host 203.0.113.88, which is not a known application host.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "login_failure", "severity": "high", "action": "escalate" }
+    },
+    {
+      "episodeId": "ep06-backup-failure-disk",
+      "packet": {
+        "source": "xe:error_reported",
+        "evidence": "Error 3041, Severity 16: BACKUP failed to complete the command BACKUP LOG LW_finance. Operating system error 112 (There is not enough space on the disk). Log backups for 'LW_finance' have failed for 4 consecutive runs.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "backup_failure", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep07-torn-page",
+      "packet": {
+        "source": "xe:error_reported",
+        "evidence": "Error 824, Severity 24: SQL Server detected a logical consistency-based I/O error: torn page (expected signature 0xaaaaaaaa) during a read in database 'LW_archive', file 1, page (1:20894).",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "io_corruption", "severity": "high", "action": "escalate" }
+    },
+    {
+      "episodeId": "ep08-tempdb-log-full",
+      "packet": {
+        "source": "xe:error_reported",
+        "evidence": "Error 9002, Severity 17: The transaction log for database 'tempdb' is full due to 'ACTIVE_TRANSACTION'. New requests receiving error 9002; several application batches aborted.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "log_full", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep09-deadlock-recurrence",
+      "packet": {
+        "source": "xe:xml_deadlock_report",
+        "evidence": "Six deadlocks in the last 10 minutes in database 'LW_sales', all with the same resource pattern (KEY on dbo.inventory_units) and the same two applications ('OrderSync', 'StockTake'). Recurrence is ongoing.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "deadlock", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep10-maintenance-blocking",
+      "packet": {
+        "source": "xe:blocked_process_report",
+        "evidence": "Blocked process report: session 91 blocked for 6 seconds by session 90 during the declared index-maintenance window on database 'LW_archive'. The block cleared at 03:41:22 and has not recurred.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "blocking", "severity": "low", "action": "no_action" }
+    },
+    {
+      "episodeId": "ep11-tool-log-space",
+      "packet": {
+        "source": "app:monitor",
+        "evidence": "Monitoring alert: transaction log for database 'LW_orders' reported at 92 percent used 10 minutes ago; autogrowth state unknown. No 9002 errors captured yet.",
+        "requiredDiagnostic": "get_log_space"
+      },
+      "toolResult": {
+        "tool": "get_log_space",
+        "result": { "database": "LW_orders", "log_size_mb": 4096, "percent_used": 97.4, "autogrowth": "disabled", "active_transactions_holding_log": 1, "oldest_active_transaction_minutes": 58 }
+      },
+      "expectedTool": { "tool": "get_log_space", "arguments": { "database": "LW_orders" } },
+      "expected": { "incidentClass": "log_full", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep12-tool-blocking-snapshot",
+      "packet": {
+        "source": "app:monitor",
+        "evidence": "Application 'OrderSync' reports sustained lock waits on database 'LW_orders' for the past 8 minutes. No blocked process report captured yet.",
+        "requiredDiagnostic": "get_blocking_snapshot"
+      },
+      "toolResult": {
+        "tool": "get_blocking_snapshot",
+        "result": { "chains": [{ "head_blocker_session": 71, "login": "etl_svc", "status": "sleeping", "open_transaction_minutes": 34, "blocked_sessions": [84, 92, 97], "wait_resource": "KEY: LW_orders.dbo.order_lines" }] }
+      },
+      "expectedTool": { "tool": "get_blocking_snapshot", "arguments": {} },
+      "expected": { "incidentClass": "blocking", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep13-tool-backup-history",
+      "packet": {
+        "source": "app:monitor",
+        "evidence": "Recovery-point alert: the recovery point objective for database 'LW_finance' may be violated; the age of the most recent backup is unknown.",
+        "requiredDiagnostic": "get_backup_history"
+      },
+      "toolResult": {
+        "tool": "get_backup_history",
+        "result": { "database": "LW_finance", "last_full_backup_hours_ago": 26, "last_log_backup_hours_ago": 9, "recent_outcomes": [{ "type": "log", "at": "02:00", "outcome": "failed", "error": 3041 }, { "type": "log", "at": "03:00", "outcome": "failed", "error": 3041 }] }
+      },
+      "expectedTool": { "tool": "get_backup_history", "arguments": { "database": "LW_finance" } },
+      "expected": { "incidentClass": "backup_failure", "severity": "high", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep14-tool-deadlock-graph",
+      "packet": {
+        "source": "app:errors",
+        "evidence": "Application 'StockTake' logged error 1205 (chosen as deadlock victim) twice in the last 15 minutes against database 'LW_sales'. No deadlock graph has been examined yet.",
+        "requiredDiagnostic": "get_deadlock_graph"
+      },
+      "toolResult": {
+        "tool": "get_deadlock_graph",
+        "result": { "victim_session": 63, "processes": [{ "session": 63, "app": "StockTake", "isolation": "serializable" }, { "session": 58, "app": "OrderSync", "isolation": "read committed" }], "resources": ["KEY: LW_sales.dbo.inventory_units"], "statement_hashes": ["0x8f21", "0x1c77"] }
+      },
+      "expectedTool": { "tool": "get_deadlock_graph", "arguments": {} },
+      "expected": { "incidentClass": "deadlock", "severity": "medium", "action": "open_work_item" }
+    },
+    {
+      "episodeId": "ep15-unknown-custom-error",
+      "packet": {
+        "source": "xe:error_reported",
+        "evidence": "Error 51321, Severity 16: Widget reconciliation drift detected for tenant 4417 (application-defined message). No further context captured.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "unknown", "severity": "medium", "action": "escalate" }
+    },
+    {
+      "episodeId": "ep16-clean-checkdb",
+      "packet": {
+        "source": "errorlog",
+        "evidence": "DBCC CHECKDB (LW_orders) executed by the scheduled maintenance job completed without errors at 03:15:44. Informational message only.",
+        "requiredDiagnostic": null
+      },
+      "expected": { "incidentClass": "no_incident", "severity": "low", "action": "no_action" }
+    }
+  ]
+}

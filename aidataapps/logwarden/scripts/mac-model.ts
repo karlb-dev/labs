@@ -1,12 +1,18 @@
-import { execFileSync, spawn } from "node:child_process";
-import { existsSync } from "node:fs";
 import { sha256 } from "../src/hash.js";
 import {
   loadMacModelRegistry,
   resolveMacEmbeddingProfile,
   resolveMacProfile,
 } from "../src/models-mac.js";
-import { LAB_ROOT, atomicWrite, resolveRunDirectory, valueAfter } from "../src/run.js";
+import { atomicWrite, resolveRunDirectory, valueAfter } from "../src/run.js";
+import {
+  ensureServer,
+  foundry,
+  openAiBaseUrl,
+  resolveVariantId,
+  serverStatus,
+  unloadModel,
+} from "./foundry-runtime.js";
 
 // Drives Azure Foundry Local as the mac-profile serving plane (docs/MAC_PROFILE.md).
 // One Foundry endpoint serves chat and embeddings; the lab pins it to CHAT_PORT
@@ -17,59 +23,7 @@ import { LAB_ROOT, atomicWrite, resolveRunDirectory, valueAfter } from "../src/r
 //   npm run mac:model -- up --profile qwen3-embedding-0.6b-foundry
 //   npm run mac:model -- down
 
-const port = Number(process.env.CHAT_PORT ?? 8010);
-const baseUrl = `http://127.0.0.1:${port}/v1`;
 const command = process.argv[2] ?? "status";
-
-interface ServerStatus {
-  running: boolean;
-  state: string;
-  pid?: number;
-  webUrls?: string[];
-}
-
-function foundry(args: string[], timeout = 600_000): string {
-  return execFileSync("foundry", args, { encoding: "utf8", timeout });
-}
-
-function serverStatus(): ServerStatus {
-  try {
-    return JSON.parse(foundry(["server", "status", "-o", "json"], 30_000)) as ServerStatus;
-  } catch {
-    return { running: false, state: "unknown" };
-  }
-}
-
-async function ensureServer(): Promise<ServerStatus> {
-  let status = serverStatus();
-  const onPinnedPort = (candidate: ServerStatus) =>
-    (candidate.webUrls ?? []).some((url) => url.endsWith(`:${port}`));
-  if (status.running && onPinnedPort(status)) return status;
-  if (status.running) {
-    console.log(`Foundry daemon is on ${status.webUrls?.join(", ")}; restarting on :${port}`);
-    spawn("foundry", ["server", "restart", "-p", String(port)], { detached: true, stdio: "ignore" }).unref();
-  } else {
-    console.log(`Starting Foundry daemon on :${port}`);
-    spawn("foundry", ["server", "start", "-p", String(port)], { detached: true, stdio: "ignore" }).unref();
-  }
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 2_000));
-    status = serverStatus();
-    if (status.running && status.state === "ready" && onPinnedPort(status)) return status;
-  }
-  throw new Error(`Foundry daemon did not become ready on :${port}`);
-}
-
-function resolveVariantId(alias: string, pinned: string): string {
-  const info = JSON.parse(foundry(["model", "info", alias, "-o", "json"], 60_000)) as {
-    model: { id: string; cached: boolean };
-  };
-  if (pinned && info.model.id !== pinned) {
-    console.warn(`Pinned variant ${pinned} differs from catalog default ${info.model.id}; using the pin.`);
-    return pinned;
-  }
-  return pinned || info.model.id;
-}
 
 interface CanaryResult {
   kind: "chat" | "embedding";
@@ -81,7 +35,7 @@ interface CanaryResult {
 
 async function chatCanary(variantId: string): Promise<CanaryResult> {
   const startedAt = Date.now();
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await fetch(`${openAiBaseUrl}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -131,7 +85,7 @@ async function chatCanary(variantId: string): Promise<CanaryResult> {
 
 async function embeddingCanary(variantId: string, expectedDimensions: number): Promise<CanaryResult> {
   const startedAt = Date.now();
-  const response = await fetch(`${baseUrl}/embeddings`, {
+  const response = await fetch(`${openAiBaseUrl}/embeddings`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -187,12 +141,12 @@ if (command === "status") {
     recordedAt: new Date().toISOString(),
     platform: registry.platform,
     foundryVersion: foundry(["--version"], 30_000).trim(),
-    server: { ...status, baseUrl },
+    server: { ...status, baseUrl: openAiBaseUrl },
     profileKey,
     profile,
     canary,
   };
-  console.log(JSON.stringify({ profileKey, variantId, baseUrl, canary }, null, 2));
+  console.log(JSON.stringify({ profileKey, variantId, baseUrl: openAiBaseUrl, canary }, null, 2));
   await writeEvidence(profileKey, evidence);
   if (!canary.ok) {
     console.error("Canary failed; the serving plane is not usable for this profile.");
@@ -203,7 +157,7 @@ if (command === "status") {
     ...Object.values(registry.profiles).map((profile) => profile.foundryAlias),
     ...Object.values(registry.embeddingProfiles).map((profile) => profile.foundryAlias),
   ])) {
-    try { foundry(["model", "unload", alias], 120_000); } catch { /* not loaded */ }
+    unloadModel(alias);
   }
   foundry(["server", "stop"], 120_000);
   console.log("Foundry daemon stopped.");
@@ -211,6 +165,3 @@ if (command === "status") {
   console.error(`Unknown command ${JSON.stringify(command)}; use status | up | down.`);
   process.exitCode = 2;
 }
-
-// Keep LAB_ROOT referenced for tooling parity with sibling scripts.
-void existsSync(LAB_ROOT);

@@ -28,17 +28,40 @@
       "executionProvider": "WebGpuExecutionProvider",
       "contextLength": 40960,
       "fileSizeMb": 2939,
-      "role": "agent"
+      "role": "agent",
+      "promptPrefix": "/no_think "
     },
     "qwen3-8b-foundry": {
       "description": "Larger mac agent candidate if 4B quality is insufficient and decode speed allows.",
       "family": "qwen",
       "foundryAlias": "qwen3-8b",
-      "foundryVariantId": "",
+      "foundryVariantId": "qwen3-8b-generic-gpu:2",
       "executionProvider": "WebGpuExecutionProvider",
       "contextLength": 40960,
       "fileSizeMb": 6000,
+      "role": "agent",
+      "promptPrefix": "/no_think "
+    },
+    "olmo-3-7b-foundry": {
+      "description": "OLMo 3 7B Instruct from the Foundry catalog; closest available to the frozen registry's OLMo family (catalog has no OLMo 3.1).",
+      "family": "olmo",
+      "foundryAlias": "olmo-3-7b-instruct",
+      "foundryVariantId": "olmo-3-7b-instruct-generic-gpu:1",
+      "executionProvider": "WebGpuExecutionProvider",
+      "contextLength": 65536,
+      "fileSizeMb": 5644,
       "role": "agent"
+    },
+    "muse-glimmer-30b-foundry": {
+      "description": "Karl's Muse Glimmer 30B INT4 ONNX conversion (visible-channel 8k profile) served from the mac_bundle custom cache; slow but the only 30B-class candidate.",
+      "family": "muse",
+      "foundryAlias": "muse-glimmer-30b-webgpu-int4-q4b-8k-visible",
+      "foundryVariantId": "muse-glimmer-30b-webgpu-int4-q4b-8k-visible:1",
+      "executionProvider": "WebGpuExecutionProvider",
+      "contextLength": 8192,
+      "fileSizeMb": 19570,
+      "role": "agent",
+      "cacheDir": "/Users/karl/repos/foundary/gdrive/mac_bundle/model"
     }
   },
   "embeddingProfiles": {

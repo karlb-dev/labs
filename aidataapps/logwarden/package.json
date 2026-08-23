@@ -11,6 +11,7 @@
     "test:sql": "node --import tsx scripts/sql-integration.ts",
     "run:init": "node --import tsx scripts/run-init.ts",
     "mac:model": "node --import tsx scripts/mac-model.ts",
+    "mac:eval": "node --import tsx scripts/mac-eval.ts",
     "models:sync": "node --import tsx scripts/sync-model-registry.ts",
     "doctor": "node --import tsx scripts/doctor.ts",
     "db:setup": "node --import tsx scripts/setup-database.ts",

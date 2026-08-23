@@ -15,6 +15,13 @@ const macProfileSchema = z.object({
   contextLength: z.number().int().positive(),
   fileSizeMb: z.number().int().positive(),
   role: z.enum(["plumbing", "agent"]),
+  // Analog of the frozen registry's chatTemplateKwargs: a disclosed per-model
+  // prompt knob (e.g. Qwen3's /no_think soft switch). Recorded in results.
+  promptPrefix: z.string().optional(),
+  // Custom Foundry cache directory for models outside the default cache
+  // (e.g. the Muse Glimmer ONNX bundle). The harness switches the daemon's
+  // cache to this directory for the residency and restores it afterwards.
+  cacheDir: z.string().optional(),
 });
 
 const macEmbeddingSchema = z.object({
