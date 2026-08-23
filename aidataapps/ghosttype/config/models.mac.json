@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "platform": "mac-mlx-local",
+  "comparability": "Frozen MLX servings of the spec section-40 base models. Never comparable rows with the Colab vLLM registry in config/models.json; the frozen request packets are shared, the campaigns are distinct.",
+  "runtime": {
+    "textServer": "mlx_lm.server",
+    "vlmServer": "mlx_vlm.server >= 0.6.15 (Muse DFlash drafter)",
+    "note": "One resident large model at a time; servers swap the resident on request."
+  },
+  "targetProfiles": ["qwen-3.8-27b-mlx", "muse-glimmer-30b-mlx", "gemma-4-26b-a4b-mlx", "olmo-3.1-32b-mlx"],
+  "batchVehicleProfile": "gemma-4-e4b-mlx",
+  "profiles": {
+    "qwen-3.8-27b-mlx": {
+      "family": "qwen",
+      "baseModelId": "Qwen/Qwen3.8-27B",
+      "servedModelId": "mlx-community/Qwen3.8-27B-4bit",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "quantization": "mlx-4bit",
+      "reasoningPolicy": { "promptPrefixEveryUserTurn": "/no_think" },
+      "notes": "MTP drafter variant exists (mlx-community/Qwen3.8-27B-MTP-4bit) for Tier-3 speculation."
+    },
+    "muse-glimmer-30b-mlx": {
+      "family": "muse",
+      "baseModelId": "meta-models/Muse-Glimmer-30B",
+      "servedModelId": "mlx-community/Muse-Glimmer-30B-4bit",
+      "baseUrl": "http://127.0.0.1:8021/v1",
+      "quantization": "mlx-4bit",
+      "draftModel": "meta-models/Muse-Glimmer-30B-assistant",
+      "serverArgs": ["--draft-model", "meta-models/Muse-Glimmer-30B-assistant"],
+      "reasoningPolicy": { "serverField": "reasoning_content", "note": "mlx-vlm 0.6.15 splits the channel; reasoning never enters insertText." }
+    },
+    "gemma-4-26b-a4b-mlx": {
+      "family": "gemma",
+      "baseModelId": "google/gemma-4-26B-A4B-it",
+      "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "quantization": "optiq-4bit",
+      "reasoningPolicy": { "serverField": "reasoning", "note": "mlx_lm.server splits the MoE reasoning channel." }
+    },
+    "olmo-3.1-32b-mlx": {
+      "family": "olmo",
+      "baseModelId": "allenai/Olmo-3.1-32B-Instruct",
+      "servedModelId": "lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "quantization": "mlx-4bit",
+      "reasoningPolicy": { "none": true, "note": "Direct answerer; no reasoning channel observed on the Lab 03 bench." }
+    },
+    "gemma-4-e4b-mlx": {
+      "family": "gemma",
+      "role": "batch-vehicle-and-dev",
+      "baseModelId": "google/gemma-4-e4b-it",
+      "servedModelId": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "quantization": "optiq-4bit",
+      "reasoningPolicy": { "inlineChannel": "<|channel>thought ... <channel|>" }
+    }
+  },
+  "embeddingProfiles": {
+    "qwen3-embedding-0.6b": {
+      "servedModelId": "qwen3-embedding-0.6b-generic-gpu:1",
+      "host": "foundry-local",
+      "baseUrl": "http://127.0.0.1:8010/v1",
+      "dimensions": 1024,
+      "note": "Primary embedding family per addendum C-14; VECTOR(1024) frozen across retrieval tables."
+    }
+  },
+  "pinsPendingPortGate": "Exact HF revisions, tokenizer hashes, server versions, and effective decode settings are recorded per profile by the port gate (GT-11) before any campaign row."
+}

@@ -1,0 +1,10 @@
+# Mac profile overlay (Docker Desktop + Rosetta x86 emulation), Lab 03 pattern.
+# SQL Server 2025 ships amd64-only; timings under emulation are DEV-tagged.
+services:
+  sqlserver:
+    platform: linux/amd64
+    environment:
+      MSSQL_MEMORY_LIMIT_MB: "4096"
+    healthcheck:
+      start_period: 120s
+      retries: 120

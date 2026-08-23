@@ -12,3 +12,10 @@
   sequential mac replay reference with E4B as the batch vehicle, Colab
   lift-and-shift as the second campaign. Addendum §12 defaults adopted;
   ScriptDom pinned to latest 170.x at GT-3.
+
+- 2026-08-23 — GT-0.5 scaffold: repository layout per spec section 74;
+  compose with the Lab 03 FTS image pattern (SQL port 1435, container
+  aidataapps-ghosttype-sqlserver-1, mac overlay); env/runtime scripts ported
+  from Lab 03; package.json command surface mirroring the spec section 76
+  contract; config/models.mac.json freezes the mac target registry shape
+  (final pins land at the port gate). No science yet; foundation only.

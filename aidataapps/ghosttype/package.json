@@ -1,0 +1,49 @@
+{
+  "name": "@labs/aidataapps-ghosttype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GhostType: SQL completion, semantic validation, and inference-serving laboratory",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run build && npm test",
+    "test": "vitest run",
+    "test:sql": "node --import tsx scripts/sql-integration.ts",
+    "run:init": "node --import tsx scripts/run-init.ts",
+    "db:setup": "node --import tsx scripts/setup-database.ts",
+    "dataset:import": "node --import tsx scripts/import-dataset.ts",
+    "dataset:validate": "node --import tsx scripts/validate-dataset.ts",
+    "fixtures:build": "node --import tsx scripts/build-fixtures.ts",
+    "catalog:snapshot": "node --import tsx scripts/snapshot-catalog.ts",
+    "oracles:validate": "node --import tsx scripts/validate-oracles.ts",
+    "baselines:evaluate": "node --import tsx scripts/evaluate-baselines.ts",
+    "retrieval:build": "node --import tsx scripts/build-retrieval.ts",
+    "campaign:freeze": "node --import tsx scripts/freeze-campaign.ts",
+    "port:gate": "node --import tsx scripts/port-gate.ts",
+    "quality:run": "node --import tsx scripts/run-quality.ts",
+    "simulate:single-user": "node --import tsx scripts/run-single-user.ts",
+    "load:run": "node --import tsx scripts/run-load.ts",
+    "doctor": "node --import tsx scripts/doctor.ts",
+    "reports": "./scripts/python.sh analysis/build_reports.py",
+    "evaluate:quality": "./scripts/python.sh analysis/evaluate_quality.py",
+    "db:backup": "./scripts/export-database.sh backup",
+    "db:bacpac": "./scripts/export-database.sh bacpac",
+    "run:archive": "node --import tsx scripts/archive-run.ts",
+    "repro": "./repro.sh"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mssql": "^12.7.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}
