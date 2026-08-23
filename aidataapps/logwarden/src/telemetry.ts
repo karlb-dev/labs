@@ -1,0 +1,163 @@
+import { randomUUID } from "node:crypto";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { performance } from "node:perf_hooks";
+import { canonicalJson, hashJson } from "./hash.js";
+
+export interface TelemetryContext {
+  runId: string;
+  jobId?: number;
+  episodeId?: string;
+  attemptId?: number;
+  traceId?: string;
+  spanId?: string;
+  parentSpanId?: string;
+}
+
+export interface TelemetryRecord extends TelemetryContext {
+  schemaVersion: 1;
+  processEpochId: string;
+  sequence: number;
+  eventId: string;
+  eventKind: "point" | "span_start" | "span_end" | "metric" | "raw_snapshot";
+  name: string;
+  atUtc: string;
+  monotonicMs: number;
+  durationMs?: number;
+  status?: string;
+  attributes: Record<string, unknown>;
+  previousRecordSha256: string | null;
+  payloadSha256: string;
+}
+
+export interface StartedSpan {
+  traceId: string;
+  spanId: string;
+  parentSpanId?: string;
+  name: string;
+  startedMonotonicMs: number;
+  context: TelemetryContext;
+}
+
+export class FileTelemetryJournal {
+  private sequence = 0;
+  private previousRecordSha256: string | null = null;
+  private writes: Promise<void> = Promise.resolve();
+  private readonly processEpochId = randomUUID();
+
+  private constructor(readonly path: string, readonly runId: string) {}
+
+  static async open(path: string, runId: string): Promise<FileTelemetryJournal> {
+    await mkdir(dirname(path), { recursive: true });
+    const journal = new FileTelemetryJournal(path, runId);
+    try {
+      const lines = (await readFile(path, "utf8")).split("\n").filter((line) => line.trim().length > 0);
+      let previousRecordSha256: string | null = null;
+      for (const [index, line] of lines.entries()) {
+        let record: TelemetryRecord;
+        try {
+          record = JSON.parse(line) as TelemetryRecord;
+        } catch (error) {
+          throw new Error(`Telemetry journal has invalid JSON at sequence ${index + 1}: ${path}`, { cause: error });
+        }
+        const { payloadSha256, ...payload } = record;
+        const expectedSequence = index + 1;
+        if (
+          record.runId !== runId ||
+          record.sequence !== expectedSequence ||
+          record.previousRecordSha256 !== previousRecordSha256 ||
+          payloadSha256 !== hashJson(payload)
+        ) {
+          throw new Error(`Telemetry journal integrity check failed at sequence ${expectedSequence}: ${path}`);
+        }
+        previousRecordSha256 = payloadSha256;
+      }
+      journal.sequence = lines.length;
+      journal.previousRecordSha256 = previousRecordSha256;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") throw error;
+    }
+    return journal;
+  }
+
+  async record(
+    eventKind: TelemetryRecord["eventKind"],
+    name: string,
+    context: Omit<TelemetryContext, "runId"> = {},
+    attributes: Record<string, unknown> = {},
+    fields: Pick<TelemetryRecord, "durationMs" | "status"> = {},
+  ): Promise<TelemetryRecord> {
+    const sequence = ++this.sequence;
+    const base = {
+      schemaVersion: 1 as const,
+      processEpochId: this.processEpochId,
+      sequence,
+      eventId: randomUUID(),
+      eventKind,
+      name,
+      atUtc: new Date().toISOString(),
+      monotonicMs: Number(performance.now().toFixed(3)),
+      runId: this.runId,
+      ...defined(context),
+      ...defined(fields),
+      attributes,
+      previousRecordSha256: this.previousRecordSha256,
+    };
+    const record: TelemetryRecord = { ...base, payloadSha256: hashJson(base) };
+    this.previousRecordSha256 = record.payloadSha256;
+    const line = `${canonicalJson(record)}\n`;
+    this.writes = this.writes.then(async () => appendFile(this.path, line, { encoding: "utf8", flag: "a" }));
+    await this.writes;
+    return record;
+  }
+
+  async startSpan(
+    name: string,
+    context: Omit<TelemetryContext, "runId" | "traceId" | "spanId"> & { traceId?: string; parentSpanId?: string } = {},
+    attributes: Record<string, unknown> = {},
+  ): Promise<StartedSpan> {
+    const traceId = context.traceId ?? randomUUID().replaceAll("-", "");
+    const spanId = randomUUID().replaceAll("-", "").slice(0, 16);
+    const startedMonotonicMs = performance.now();
+    const cleanContext = defined({ ...context, traceId, spanId });
+    await this.record("span_start", name, cleanContext, attributes);
+    return {
+      traceId,
+      spanId,
+      ...(context.parentSpanId === undefined ? {} : { parentSpanId: context.parentSpanId }),
+      name,
+      startedMonotonicMs,
+      context: { runId: this.runId, ...cleanContext },
+    };
+  }
+
+  async endSpan(span: StartedSpan, status: string, attributes: Record<string, unknown> = {}): Promise<TelemetryRecord> {
+    return this.record(
+      "span_end",
+      span.name,
+      {
+        ...defined({
+          jobId: span.context.jobId,
+          episodeId: span.context.episodeId,
+          attemptId: span.context.attemptId,
+          parentSpanId: span.parentSpanId,
+        }),
+        traceId: span.traceId,
+        spanId: span.spanId,
+      },
+      attributes,
+      { durationMs: Number((performance.now() - span.startedMonotonicMs).toFixed(3)), status },
+    );
+  }
+
+  async flush(): Promise<void> {
+    await this.writes;
+  }
+}
+
+function defined<T extends object>(value: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
+  return Object.fromEntries(Object.entries(value).filter(([, child]) => child !== undefined)) as {
+    [K in keyof T]?: Exclude<T[K], undefined>;
+  };
+}

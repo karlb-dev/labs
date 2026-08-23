@@ -40,6 +40,9 @@ and its effect on the evidence ceiling must be recorded append-only in
   yet.
 - No model weights have been downloaded and no GPU residency is active.
 - The Lab 3 spec/addendum are being read completely before implementation.
+- A user-directed pre-inference observability gate now promotes detailed
+  agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
+  any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
 - Next incomplete milestone: vendor the governing documents, record predecessor
   hashes and frozen model-registry provenance, then scaffold the smallest
   independently testable Tier 1 foundation.

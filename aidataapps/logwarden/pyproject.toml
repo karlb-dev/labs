@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logwarden-analysis"
+version = "0.1.0"
+description = "Row-only analysis and report reconstruction for LogWarden"
+requires-python = ">=3.11"
+dependencies = [
+  "matplotlib>=3.9,<4",
+  "numpy>=2.1,<3",
+  "pandas>=2.2,<3",
+  "pyarrow>=18,<24",
+  "scikit-learn>=1.6,<2",
+  "scipy>=1.14,<2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<10"]
+
+[tool.setuptools.packages.find]
+where = ["analysis"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/python"]

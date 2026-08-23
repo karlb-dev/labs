@@ -1,0 +1,37 @@
+{
+  "name": "@labs/aidataapps-logwarden",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SQL-native incident capture and reproducible local-LLM agent benchmark",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "npm run build && npm test",
+    "test": "vitest run",
+    "test:sql": "node --import tsx scripts/sql-integration.ts",
+    "run:init": "node --import tsx scripts/run-init.ts",
+    "models:sync": "node --import tsx scripts/sync-model-registry.ts",
+    "doctor": "node --import tsx scripts/doctor.ts",
+    "db:setup": "node --import tsx scripts/setup-database.ts",
+    "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
+    "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",
+    "run:archive": "node --import tsx scripts/archive-run.ts",
+    "run:mirror": "./scripts/mirror-run.sh",
+    "repro": "./repro.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "mssql": "^12.7.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/mssql": "^12.3.0",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

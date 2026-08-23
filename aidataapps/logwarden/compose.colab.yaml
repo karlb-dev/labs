@@ -1,0 +1,78 @@
+# Nested-rootless Colab override. The outer notebook is itself a container, so
+# services use host namespaces and NVIDIA CDI rather than Docker's legacy GPU
+# hook. Lab 3's SQL Server listens on its reserved port inside the container.
+services:
+  sqlserver:
+    network_mode: host
+    pid: host
+    ipc: host
+    cgroup: host
+    ports: !reset []
+    security_opt: ["seccomp=unconfined", "apparmor=unconfined"]
+    volumes:
+      - /proc:/proc:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+
+  embedding-qwen:
+    network_mode: host
+    pid: host
+    ipc: host
+    cgroup: host
+    ports: !reset []
+    gpus: !reset []
+    devices: ["nvidia.com/gpu=all"]
+    security_opt: ["seccomp=unconfined", "apparmor=unconfined"]
+    environment:
+      LD_LIBRARY_PATH: /usr/lib64-nvidia:/usr/local/cuda/lib64:/usr/local/nvidia/lib64
+    volumes:
+      - /proc:/proc:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command:
+      - --model
+      - Qwen/Qwen3-Embedding-0.6B
+      - --revision
+      - 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+      - --served-model-name
+      - Qwen/Qwen3-Embedding-0.6B
+      - --runner
+      - pooling
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.06"
+      - --max-num-seqs
+      - "64"
+      - --port
+      - ${EMBEDDING_PORT:-8011}
+
+  embedding-bge:
+    network_mode: host
+    pid: host
+    ipc: host
+    cgroup: host
+    ports: !reset []
+    gpus: !reset []
+    devices: ["nvidia.com/gpu=all"]
+    security_opt: ["seccomp=unconfined", "apparmor=unconfined"]
+    environment:
+      LD_LIBRARY_PATH: /usr/lib64-nvidia:/usr/local/cuda/lib64:/usr/local/nvidia/lib64
+    volumes:
+      - /proc:/proc:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command:
+      - --model
+      - BAAI/bge-large-en-v1.5
+      - --revision
+      - d4aa6901d3a41ba39fb536a557fa166f842b0e09
+      - --served-model-name
+      - BAAI/bge-large-en-v1.5
+      - --runner
+      - pooling
+      - --max-model-len
+      - "512"
+      - --gpu-memory-utilization
+      - "0.06"
+      - --max-num-seqs
+      - "64"
+      - --port
+      - ${SECOND_EMBEDDING_PORT:-8012}

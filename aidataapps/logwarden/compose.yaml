@@ -1,0 +1,109 @@
+name: ${COMPOSE_PROJECT_NAME:-aidataapps-logwarden}
+
+services:
+  sqlserver:
+    build:
+      context: .
+      dockerfile: docker/mssql-fts/Dockerfile
+      args:
+        SQLSERVER_BASE_IMAGE: ${SQLSERVER_BASE_IMAGE:-mcr.microsoft.com/mssql/server@sha256:4bab24f36c1ecd48e85f7d37df26e6bf301641d84c3fe652f9a0dcc947d512e1}
+    image: ${SQLSERVER_FTS_IMAGE:-aidataapps-logwarden-mssql-fts:cu8}
+    labels:
+      ai.labs.lab: logwarden
+      ai.labs.role: sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}
+      MSSQL_MEMORY_LIMIT_MB: "8192"
+      MSSQL_TCP_PORT: ${SQLSERVER_INTERNAL_PORT:-1434}
+    ports:
+      - "${SQLSERVER_PORT:-1434}:${SQLSERVER_INTERNAL_PORT:-1434}"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+      - run-exports:/var/opt/mssql/exports
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S "localhost,$$MSSQL_TCP_PORT" -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 90
+      start_period: 30s
+    restart: unless-stopped
+
+  embedding-qwen:
+    profiles: ["embedding"]
+    image: vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967
+    labels:
+      ai.labs.lab: logwarden
+      ai.labs.role: embedding-qwen
+    command:
+      - --model
+      - Qwen/Qwen3-Embedding-0.6B
+      - --revision
+      - 97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3
+      - --served-model-name
+      - Qwen/Qwen3-Embedding-0.6B
+      - --runner
+      - pooling
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.06"
+      - --max-num-seqs
+      - "64"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      VLLM_ENABLE_CUDA_COMPATIBILITY: "1"
+    ports:
+      - "${EMBEDDING_PORT:-8011}:8000"
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
+      - vllm-cache:/root/.cache/vllm
+    gpus: all
+    ipc: host
+    restart: unless-stopped
+
+  embedding-bge:
+    profiles: ["embedding-secondary"]
+    image: vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967
+    labels:
+      ai.labs.lab: logwarden
+      ai.labs.role: embedding-bge
+    command:
+      - --model
+      - BAAI/bge-large-en-v1.5
+      - --revision
+      - d4aa6901d3a41ba39fb536a557fa166f842b0e09
+      - --served-model-name
+      - BAAI/bge-large-en-v1.5
+      - --runner
+      - pooling
+      - --max-model-len
+      - "512"
+      - --gpu-memory-utilization
+      - "0.06"
+      - --max-num-seqs
+      - "64"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      VLLM_ENABLE_CUDA_COMPATIBILITY: "1"
+    ports:
+      - "${SECOND_EMBEDDING_PORT:-8012}:8000"
+    volumes:
+      - huggingface-cache:/root/.cache/huggingface
+      - vllm-cache:/root/.cache/vllm
+    gpus: all
+    ipc: host
+    restart: unless-stopped
+
+volumes:
+  huggingface-cache:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-logwarden}-huggingface-cache
+  sqlserver-data:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-logwarden}-sqlserver-data
+  vllm-cache:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-logwarden}-vllm-cache
+  run-exports:
+    name: ${COMPOSE_PROJECT_NAME:-aidataapps-logwarden}-run-exports
