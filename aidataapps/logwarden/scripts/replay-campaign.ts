@@ -8,6 +8,7 @@ import { loadConfig } from "../src/config.js";
 import { loadTier1ControlPolicy, maskErrorNumbersAndSignatures, parseInferenceControlId, type InferenceControlId } from "../src/controls.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { resolveEmbeddingProfile, resolveModelProfile } from "../src/models.js";
+import { claimWithAvailabilityRetry, defaultClaimRetryPolicy } from "../src/queue-claim.js";
 import { connect } from "../src/repository.js";
 import {
   buildReplayCells,
@@ -63,6 +64,10 @@ interface WorkerExecution {
   claimed: number;
   decisions: number;
   failures: number;
+  emptyClaimCount: number;
+  claimRetryCount: number;
+  claimAvailabilityCheckCount: number;
+  claimRetryWaitMs: number;
   links: SpanLink[];
 }
 interface FrozenControlRow { episodeId: string; splitRole: ReplayRole; family: string; regime: string }
@@ -100,8 +105,9 @@ const controlSuffix = controlId === null ? "" : `-${safeName(controlId)}`;
 const receiptPath = `${runDirectory}/metrics/replay-${safeName(profileKey)}-${safeName(roles.join("-"))}${controlSuffix}.json`;
 const rawRoot = `${runDirectory}/raw/replay/${safeName(profileKey)}/${controlId ?? "primary"}/${invocationId}`;
 const embeddingProfile = resolveEmbeddingProfile(campaignConfig.embeddingProfile);
-const control = await connect(config.databases.lab, config.databases.controlName, 600_000);
-const agent = await connect(config.databases.agent, config.databases.controlName, 600_000);
+const replayPoolMax = Math.max(10, workerCount + 2);
+const control = await connect(config.databases.lab, config.databases.controlName, 600_000, replayPoolMax);
+const agent = await connect(config.databases.agent, config.databases.controlName, 600_000, replayPoolMax);
 let controlAssignments: ControlAssignmentEvidence[] = [];
 
 try {
@@ -160,6 +166,7 @@ try {
     controlId,
     controlPolicySha256: controlId === null ? null : controlPolicySha256,
     workerCount,
+    workerClaimPolicy: { ...defaultClaimRetryPolicy, replayPoolMax },
     runKind,
     decodeConfigId,
     decodeConfigSha256: hashJson(decodeConfig),
@@ -561,16 +568,38 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
   const episodeMap = new Map(episodes.map((episode) => [episode.episodeId, episode]));
   const jobMap = new Map(jobs.map((job) => [job.jobId, job]));
   const agentControl = agentControlOptions();
+  const selectedJobIdsJson = JSON.stringify(jobs.map((job) => job.jobId));
   let claimed = 0;
   let decisions = 0;
   let failures = 0;
+  let emptyClaimCount = 0;
+  let claimRetryCount = 0;
+  let claimAvailabilityCheckCount = 0;
+  let claimRetryWaitMs = 0;
   await created.journal.record("point", "replay.worker.started", {}, { invocationId, workerId, profileKey, roles, arms, controlId, runKind });
   while (true) {
-    const leaseToken = randomUUID();
-    const claim = await control.request().input("worker_id", sql.VarChar(120), workerId)
-      .input("lease_token", sql.UniqueIdentifier, leaseToken).input("lease_seconds", sql.Int, 300)
-      .execute<ClaimedWork>("ops.usp_claim_work_item");
-    const work = claim.recordset[0];
+    let leaseToken = randomUUID();
+    const claimResult = await claimWithAvailabilityRetry({
+      workerIndex: index,
+      claim: async () => {
+        leaseToken = randomUUID();
+        const claim = await control.request().input("worker_id", sql.VarChar(120), workerId)
+          .input("lease_token", sql.UniqueIdentifier, leaseToken).input("lease_seconds", sql.Int, 300)
+          .execute<ClaimedWork>("ops.usp_claim_work_item");
+        return claim.recordset[0];
+      },
+      countClaimableSelected: () => selectedClaimableWorkCount(selectedJobIdsJson),
+      onRetry: async (observation) => {
+        await created.journal.record("point", "replay.worker.claim.retry", {}, {
+          invocationId, workerId, controlId, ...observation,
+        });
+      },
+    });
+    emptyClaimCount += claimResult.emptyClaimCount;
+    claimRetryCount += claimResult.retryCount;
+    claimAvailabilityCheckCount += claimResult.availabilityCheckCount;
+    claimRetryWaitMs += claimResult.retryWaitMs;
+    const work = claimResult.work;
     if (work === undefined) break;
     claimed += 1;
     const job = jobMap.get(Number(work.job_id));
@@ -630,9 +659,30 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
       }, { status: "failed" });
     }
   }
-  await created.journal.record("point", "replay.worker.finished", {}, { invocationId, workerId, controlId, claimed, decisions, failures }, { status: "success" });
+  await created.journal.record("point", "replay.worker.finished", {}, {
+    invocationId, workerId, controlId, claimed, decisions, failures,
+    emptyClaimCount, claimRetryCount, claimAvailabilityCheckCount, claimRetryWaitMs,
+  }, { status: "success" });
   await created.journal.flush();
-  return { workerId, journalPath: created.path, processEpochId: created.processEpochId, claimed, decisions, failures, links };
+  return {
+    workerId, journalPath: created.path, processEpochId: created.processEpochId, claimed, decisions, failures,
+    emptyClaimCount, claimRetryCount, claimAvailabilityCheckCount, claimRetryWaitMs, links,
+  };
+}
+
+async function selectedClaimableWorkCount(selectedJobIdsJson: string): Promise<number> {
+  const result = await control.request().input("ids", sql.NVarChar(sql.MAX), selectedJobIdsJson)
+    .query<{ claimable_count: number }>(`
+      WITH selected AS (SELECT CONVERT(bigint,value) job_id FROM OPENJSON(@ids))
+      SELECT COUNT(*) claimable_count
+      FROM ops.work_items item INNER JOIN selected ON selected.job_id=item.job_id
+      WHERE item.next_attempt_at_utc<=SYSUTCDATETIME()
+        AND (item.status IN ('pending','retryable_failure','lease_expired') OR
+          (item.status IN ('leased','packet_loaded','model_requested','tool_requested','tool_completed',
+            'decision_received','validated','persisted','proposed_action_recorded')
+           AND item.leased_until_utc<SYSUTCDATETIME()));
+    `);
+  return Number(result.recordset[0]?.claimable_count ?? 0);
 }
 
 async function startAttempt(job: JobIdentity, workerId: string, leaseToken: string): Promise<AttemptIdentity> {

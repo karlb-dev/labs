@@ -8,13 +8,21 @@ export function sqlIdentifier(value: string): string {
   return `[${value}]`;
 }
 
-export async function connect(connection: Connection, database: string, timeoutMs = 600_000): Promise<sql.ConnectionPool> {
+export async function connect(
+  connection: Connection,
+  database: string,
+  timeoutMs = 600_000,
+  maxPoolSize = 10,
+): Promise<sql.ConnectionPool> {
+  if (!Number.isSafeInteger(maxPoolSize) || maxPoolSize < 1 || maxPoolSize > 128) {
+    throw new Error(`Invalid SQL connection-pool maximum: ${maxPoolSize}`);
+  }
   return new sql.ConnectionPool({
     ...connection,
     database,
     requestTimeout: timeoutMs,
     connectionTimeout: 30_000,
-    pool: { min: 0, max: 10, idleTimeoutMillis: 30_000 },
+    pool: { min: 0, max: maxPoolSize, idleTimeoutMillis: 30_000 },
   }).connect();
 }
 

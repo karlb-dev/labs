@@ -1054,3 +1054,39 @@ place and receive a later disposition.
   `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
   The cold-start result remains the separately retained pre-request tokenizer
   race; the settled-cache repeat establishes the usable governed residency.
+
+- 2026-08-23T12:36:04.086Z — muse-glimmer-30b primary replay retained 180 cells across calibration and A-direct,A-rag,A-tools with 166 decisions, 14 failures, and 319 model requests; receipt 8a6cb7cba39bec1cc934b2aa2721ec1d783f636b3577b62c0fe057f07c51f982.
+- 2026-08-23T12:37:00Z — The first governed Muse calibration replay was
+  configured for 16 workers, but its retained worker journals and receipt show
+  that only workers 00, 03, and 12 claimed work (60, 61, and 59 cells);
+  the other 13 workers each received an empty initial `READPAST` result and
+  exited while 177 selected cells were still pending. Live vLLM evidence
+  independently showed exactly three running requests and zero waiting
+  throughout the replay. The cause is a client termination bug: a transient
+  empty skip-locked claim can occur while concurrent claim transactions hold
+  page locks, but the worker treated the first empty result as proof that the
+  queue was drained. The replay itself passed all row/hash/trace/lease checks:
+  180 terminal predictions, 319/319 successful stop-finished HTTP requests,
+  zero length/error/preemption outcomes, and zero open or unlinked evidence.
+  Impact: calibration quality inputs and outputs are unchanged, but its
+  11:51:35–12:31:29 performance window represents effective concurrency 3 and
+  must not be compared as a 16-worker throughput result. No protected test
+  prediction had been opened. Before protected replay, workers now probe the
+  selected queue through RCSI and use bounded, instrumented deterministic
+  backoff when a claim is transiently empty; a truly drained selected queue
+  still exits immediately, persistent claim anomalies fail loudly, and replay
+  SQL pools are sized above the frozen worker count. Unit and 16-way SQL claim
+  gates will be retained before test inference.
+- 2026-08-23T12:39:48Z — Post-fix validation passed 38/38 unit-test files and
+  134/134 tests, then passed all 8 SQL integration cases. The widened queue
+  gate launched 16 claim loops through one replay-sized pool against 17
+  isolated high-priority fixtures and returned 16 distinct leases in 189.12
+  ms. It directly reproduced three transient empty claims; all three workers
+  observed selected claimable work, retried, and acquired distinct leases
+  after 82 aggregate deterministic backoff milliseconds. State-transition,
+  heartbeat, stale-token, expired-lease recovery, permission, full-text, and
+  exact-vector checks also passed, and fixtures were removed. Receipt:
+  `0cb7233598d78ccb665d0df8cc06934741ee48eab70e82099b55da2b335eba73`.
+  Impact: this is operational queue hardening after freeze, not a scientific
+  input change; it prevents silent worker retirement and adds explicit claim
+  contention measurements for protected replay and later model residencies.

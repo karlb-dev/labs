@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
+import { claimWithAvailabilityRetry } from "../src/queue-claim.js";
 import { connect } from "../src/repository.js";
 import { atomicWrite, resolveRunDirectory } from "../src/run.js";
 
@@ -23,12 +24,14 @@ const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as RunManifest;
 const suffix = randomUUID().replaceAll("-", "").slice(0, 16);
 const prefix = `sqlit-${suffix}`;
+const queueClaimWorkers = 16;
 const cases: CaseResult[] = [];
 const cleanupWorkItemIds: number[] = [];
 const cleanupJobIds: number[] = [];
+let queueConcurrencyEvidence: Record<string, unknown> | null = null;
 
 const admin = await connect(config.databases.admin, config.databases.controlName);
-const agentA = await connect(config.databases.agent, config.databases.controlName);
+const agentA = await connect(config.databases.agent, config.databases.controlName, 600_000, queueClaimWorkers + 2);
 const agentB = await connect(config.databases.agent, config.databases.controlName);
 
 try {
@@ -90,46 +93,69 @@ try {
   const campaignId = campaign.recordset[0]?.campaign_id;
   assert.ok(campaignId !== undefined, "foundation campaign is missing");
 
-  const queueRows = await seedQueueItems(3, campaignId);
+  const queueRows = await seedQueueItems(queueClaimWorkers + 1, campaignId);
   cleanupJobIds.push(...queueRows.map((row) => row.job_id));
   cleanupWorkItemIds.push(...queueRows.map((row) => row.work_item_id));
 
-  await test("queue_concurrent_claims_are_distinct", async () => {
-    const tokenA = randomUUID();
-    const tokenB = randomUUID();
-    const [claimA, claimB] = await Promise.all([
-      claim(agentA, `${prefix}-worker-a`, tokenA),
-      claim(agentB, `${prefix}-worker-b`, tokenB),
-    ]);
-    assert.ok(claimA.work_item_id !== undefined);
-    assert.ok(claimB.work_item_id !== undefined);
-    assert.notEqual(claimA.work_item_id, claimB.work_item_id);
-    assert.deepEqual(new Set([Number(claimA.work_item_id), Number(claimB.work_item_id)]), new Set(queueRows.slice(0, 2).map((row) => row.work_item_id)));
+  await test("queue_sixteen_worker_claims_are_distinct", async () => {
+    const selectedWorkItemIds = queueRows.map((row) => row.work_item_id);
+    const claims = await Promise.all(Array.from({ length: queueClaimWorkers }, async (_, workerIndex) => {
+      const token = randomUUID();
+      const result = await claimWithAvailabilityRetry({
+        workerIndex,
+        claim: async () => {
+          const value = await claim(agentA, `${prefix}-worker-${String(workerIndex).padStart(2, "0")}`, token);
+          return value.work_item_id === undefined ? undefined : value;
+        },
+        countClaimableSelected: () => countClaimableSelected(agentA, selectedWorkItemIds),
+      });
+      assert.ok(result.work !== undefined, `worker ${workerIndex} did not receive a fixture claim`);
+      return { token, work: result.work, retry: result };
+    }));
+    const claimedIds = claims.map((entry) => Number(entry.work.work_item_id));
+    assert.equal(new Set(claimedIds).size, queueClaimWorkers);
+    assert.deepEqual(new Set(claimedIds), new Set(queueRows.slice(0, queueClaimWorkers).map((row) => row.work_item_id)));
+    queueConcurrencyEvidence = {
+      configuredWorkers: queueClaimWorkers,
+      distinctClaims: new Set(claimedIds).size,
+      workersWithTransientEmptyClaims: claims.filter((entry) => entry.retry.emptyClaimCount > 0).length,
+      totalEmptyClaims: claims.reduce((total, entry) => total + entry.retry.emptyClaimCount, 0),
+      totalRetries: claims.reduce((total, entry) => total + entry.retry.retryCount, 0),
+      totalRetryWaitMs: claims.reduce((total, entry) => total + entry.retry.retryWaitMs, 0),
+    };
 
-    await transition(agentA, Number(claimA.work_item_id), tokenA, "packet_loaded");
-    await heartbeat(agentA, Number(claimA.work_item_id), tokenA);
-    await expectSqlError(agentA, 51201, () => transition(agentA, Number(claimA.work_item_id), tokenA, "validated"));
+    const claimA = claims[0]!;
+    const claimB = claims[1]!;
+
+    await transition(agentA, Number(claimA.work.work_item_id), claimA.token, "packet_loaded");
+    await heartbeat(agentA, Number(claimA.work.work_item_id), claimA.token);
+    await expectSqlError(agentA, 51201, () => transition(agentA, Number(claimA.work.work_item_id), claimA.token, "validated"));
     for (const state of ["model_requested", "decision_received", "validated", "persisted", "complete"])
-      await transition(agentA, Number(claimA.work_item_id), tokenA, state);
+      await transition(agentA, Number(claimA.work.work_item_id), claimA.token, state);
 
     await agentB.request()
-      .input("work_item_id", sql.BigInt, claimB.work_item_id)
-      .input("lease_token", sql.UniqueIdentifier, tokenB)
+      .input("work_item_id", sql.BigInt, claimB.work.work_item_id)
+      .input("lease_token", sql.UniqueIdentifier, claimB.token)
       .execute("ops.usp_complete_work_item");
-    await expectSqlError(agentB, 51001, () => heartbeat(agentB, Number(claimB.work_item_id), tokenB));
+    await expectSqlError(agentB, 51001, () => heartbeat(agentB, Number(claimB.work.work_item_id), claimB.token));
+    await Promise.all(claims.slice(2).map((entry) => agentA.request()
+      .input("work_item_id", sql.BigInt, entry.work.work_item_id)
+      .input("lease_token", sql.UniqueIdentifier, entry.token)
+      .execute("ops.usp_complete_work_item")));
   });
 
   await test("expired_active_lease_is_recoverable", async () => {
     const firstToken = randomUUID();
     const secondToken = randomUUID();
     const firstClaim = await claim(agentA, `${prefix}-crash-worker`, firstToken);
-    assert.equal(Number(firstClaim.work_item_id), queueRows[2]!.work_item_id);
+    const recoveryRow = queueRows[queueClaimWorkers]!;
+    assert.equal(Number(firstClaim.work_item_id), recoveryRow.work_item_id);
     await transition(agentA, Number(firstClaim.work_item_id), firstToken, "packet_loaded");
     await admin.request()
       .input("id", sql.BigInt, firstClaim.work_item_id)
       .query("UPDATE ops.work_items SET leased_until_utc = DATEADD(SECOND,-1,SYSUTCDATETIME()) WHERE work_item_id = @id;");
     const recovered = await claim(agentB, `${prefix}-recovery-worker`, secondToken);
-    assert.equal(Number(recovered.work_item_id), queueRows[2]!.work_item_id);
+    assert.equal(Number(recovered.work_item_id), recoveryRow.work_item_id);
     assert.equal(Number(recovered.attempt_count), 2);
     await agentB.request()
       .input("work_item_id", sql.BigInt, recovered.work_item_id)
@@ -216,6 +242,7 @@ const receiptBody = {
   schemaVersion: 1,
   runId: run.runId,
   cases,
+  queueConcurrencyEvidence,
   passed: cases.filter((entry) => entry.status === "pass").length,
   failed: cases.filter((entry) => entry.status === "fail").length,
 };
@@ -280,6 +307,21 @@ async function claim(pool: sql.ConnectionPool, worker: string, token: string): P
     .input("lease_seconds", sql.Int, 120)
     .execute("ops.usp_claim_work_item");
   return (result.recordset[0] ?? {}) as Record<string, unknown>;
+}
+
+async function countClaimableSelected(pool: sql.ConnectionPool, workItemIds: number[]): Promise<number> {
+  const result = await pool.request().input("ids", sql.NVarChar(sql.MAX), JSON.stringify(workItemIds))
+    .query<{ claimable_count: number }>(`
+      WITH selected AS (SELECT CONVERT(bigint,value) work_item_id FROM OPENJSON(@ids))
+      SELECT COUNT(*) claimable_count
+      FROM ops.work_items item INNER JOIN selected ON selected.work_item_id=item.work_item_id
+      WHERE item.next_attempt_at_utc<=SYSUTCDATETIME()
+        AND (item.status IN ('pending','retryable_failure','lease_expired') OR
+          (item.status IN ('leased','packet_loaded','model_requested','tool_requested','tool_completed',
+            'decision_received','validated','persisted','proposed_action_recorded')
+           AND item.leased_until_utc<SYSUTCDATETIME()));
+    `);
+  return Number(result.recordset[0]?.claimable_count ?? 0);
 }
 
 async function heartbeat(pool: sql.ConnectionPool, workItemId: number, token: string): Promise<void> {
