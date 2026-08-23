@@ -21,4 +21,18 @@ describe("standard campaign schedule isolation", () => {
     expect(source).toContain("COALESCE(job.completed_at_utc,SYSUTCDATETIME())");
     expect(source).toContain("COALESCE(item.completed_at_utc,SYSUTCDATETIME())");
   });
+
+  it("projects worker telemetry serially after parallel model execution", async () => {
+    const source = await readFile("scripts/replay-campaign.ts", "utf8");
+    expect(source).toContain("for (const execution of workerExecutions)");
+    expect(source).toContain("execution.journalPath");
+    expect(source).toContain("replay workers failed: ${details.join");
+  });
+
+  it("evaluates resumed qwen pilots from the prediction-selected agent attempts", async () => {
+    const source = await readFile("scripts/qwen-smoke-e2e.ts", "utf8");
+    expect(source).toContain("WITH current_predictions AS");
+    expect(source).toContain("prediction.agent_run_id=agent_run.agent_run_id");
+    expect(source).toContain("prediction.agent_run_id=turn.agent_run_id");
+  });
 });

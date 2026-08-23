@@ -56,6 +56,7 @@
     "baseline:B1": "node --import tsx scripts/baseline-rules-run.ts",
     "campaign:derive": "node --import tsx scripts/derive-campaign-arms.ts",
     "campaign:replay": "node --import tsx scripts/replay-campaign.ts",
+    "qwen:retry-pilot": "node --import tsx scripts/retry-qwen-smoke-pilot.ts",
     "campaign:score": "node --import tsx scripts/score-predictions.ts",
     "campaign:calibrate": "node --import tsx scripts/fit-calibration.ts",
     "campaign:control-compare": "node --import tsx scripts/compare-controls.ts",

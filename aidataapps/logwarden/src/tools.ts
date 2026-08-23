@@ -24,6 +24,16 @@ const schemas = {
   get_deadlock_graph: z.object({ maxRows: z.number().int().min(1).max(20).default(5) }).strict(),
 } as const;
 
+const promptExamples = {
+  runbook_search: { query: "deadlock victim error 1205", topK: 5, corpusId: "primary-v1" },
+  get_recent_incident_counts: { incidentClass: null, windowMinutes: 60 },
+  get_blocking_snapshot: { databaseName: "LogWardenWorkload", maxRows: 20 },
+  get_log_space: { databaseName: "LogWardenWorkload" },
+  get_active_transactions: { databaseName: "LogWardenWorkload", maxRows: 20 },
+  get_backup_history: { databaseName: "LogWardenWorkload", maxRows: 20 },
+  get_deadlock_graph: { maxRows: 5 },
+} as const satisfies Record<keyof typeof schemas, Record<string, unknown>>;
+
 export type ToolName = keyof typeof schemas;
 export const toolNames = Object.freeze(Object.keys(schemas).sort() as ToolName[]);
 
@@ -66,16 +76,28 @@ export function isToolName(value: string): value is ToolName {
 export function promptToolSchemas(
   registry = loadToolRegistry(),
   allowed: readonly ToolName[] = toolNames,
-): Array<{ name: ToolName; arguments: string[]; modes: string[]; mutates: false }> {
+): Array<{
+  name: ToolName;
+  argumentNames: string[];
+  argumentsJsonSchema: Record<string, unknown>;
+  exampleArguments: Record<string, unknown>;
+  modes: string[];
+  mutates: false;
+}> {
   const allowedSet = new Set(allowed);
   return toolNames
     .filter((name) => allowedSet.has(name))
-    .map((name) => ({
-      name,
-      arguments: [...registry.tools[name]!.arguments],
-      modes: [...registry.tools[name]!.modes],
-      mutates: false as const,
-    }));
+    .map((name) => {
+      const { $schema: _schema, ...argumentsJsonSchema } = z.toJSONSchema(schemas[name]) as Record<string, unknown>;
+      return {
+        name,
+        argumentNames: [...registry.tools[name]!.arguments],
+        argumentsJsonSchema,
+        exampleArguments: canonicalToolArguments(name, promptExamples[name]),
+        modes: [...registry.tools[name]!.modes],
+        mutates: false as const,
+      };
+    });
 }
 
 export function canonicalToolArguments(name: ToolName, input: unknown): Record<string, unknown> {

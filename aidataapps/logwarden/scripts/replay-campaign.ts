@@ -56,6 +56,15 @@ interface SpanLink {
   modelRequestId?: number;
   toolInvocationId?: number;
 }
+interface WorkerExecution {
+  workerId: string;
+  journalPath: string;
+  processEpochId: string;
+  claimed: number;
+  decisions: number;
+  failures: number;
+  links: SpanLink[];
+}
 interface FrozenControlRow { episodeId: string; splitRole: ReplayRole; family: string; regime: string }
 interface ControlAssignmentEvidence {
   controlId: InferenceControlId;
@@ -116,8 +125,18 @@ try {
   const metricsBefore = await retainChatMetrics("before");
   const settledWorkers = await Promise.allSettled(Array.from({ length: workerCount }, (_, index) => runWorker(index, campaign, jobs, episodes)));
   const rejectedWorkers = settledWorkers.filter((result): result is PromiseRejectedResult => result.status === "rejected");
-  if (rejectedWorkers.length > 0) throw new AggregateError(rejectedWorkers.map((result) => result.reason), `${rejectedWorkers.length} replay workers failed`);
-  const workerResults = settledWorkers.map((result) => (result as PromiseFulfilledResult<Record<string, unknown>>).value);
+  if (rejectedWorkers.length > 0) {
+    const details = rejectedWorkers.map((result) => safeError(result.reason));
+    throw new AggregateError(rejectedWorkers.map((result) => result.reason), `${rejectedWorkers.length} replay workers failed: ${details.join(" | ")}`);
+  }
+  const workerExecutions = settledWorkers.map((result) => (result as PromiseFulfilledResult<Awaited<ReturnType<typeof runWorker>>>).value);
+  const workerResults: Array<Record<string, unknown>> = [];
+  for (const execution of workerExecutions) {
+    const ingestion = await ingestTelemetryJournal(control, run.runId, execution.journalPath, { batchSize: 250 });
+    await linkTelemetry(execution.links);
+    const { links: _links, ...summary } = execution;
+    workerResults.push({ ...summary, ingestion });
+  }
   await linkTelemetryByEvidence(jobs);
   for (const job of jobs) await materializePrediction(job, null);
   const verification = await verifyReplay(jobs);
@@ -533,7 +552,7 @@ async function assertQueueIsolation(jobs: JobIdentity[]): Promise<void> {
   if (Number(result.recordset[0]?.unexpected ?? 0) !== 0) throw new Error("Replay queue contains claimable work outside the selected cell set");
 }
 
-async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity[], episodes: ReplayEpisode[]): Promise<Record<string, unknown>> {
+async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity[], episodes: ReplayEpisode[]): Promise<WorkerExecution> {
   const workerId = `replay-${safeName(profileKey)}-${invocationId.slice(0, 8)}-${String(index).padStart(2, "0")}`.slice(0, 120);
   const created = await createComponentTelemetryJournal(runDirectory, run.runId, `replay-${profileKey}-${controlId ?? "primary"}-worker-${index}`);
   const links: SpanLink[] = [];
@@ -611,9 +630,7 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
   }
   await created.journal.record("point", "replay.worker.finished", {}, { invocationId, workerId, controlId, claimed, decisions, failures }, { status: "success" });
   await created.journal.flush();
-  const ingestion = await ingestTelemetryJournal(control, run.runId, created.path, { batchSize: 250 });
-  await linkTelemetry(links);
-  return { workerId, journalPath: created.path, processEpochId: created.processEpochId, claimed, decisions, failures, ingestion };
+  return { workerId, journalPath: created.path, processEpochId: created.processEpochId, claimed, decisions, failures, links };
 }
 
 async function startAttempt(job: JobIdentity, workerId: string, leaseToken: string): Promise<AttemptIdentity> {

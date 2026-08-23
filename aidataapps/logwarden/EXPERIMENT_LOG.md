@@ -879,6 +879,26 @@ place and receive a later disposition.
   terminal disposition, completion time, and lease fields. Impact: no fixture,
   agent, or model calls were created; the prior synthetic row remains available
   for the corrected idempotent cleanup.
+- 2026-08-23T10:20:24Z — The corrected SQL model-client gate passed all nine
+  transport/contract/retry cases, recovered one historical retry fixture, and
+  retired the newly verified retry fixture from the shared queue; receipt
+  `c0ec0b01be9ffea68e955aed5c3eb59c0525c7f93dcd9d62f964e9000ce34c56`.
+  Impact: synthetic retry semantics remain evidenced without leaving claimable
+  work for campaign workers.
+- 2026-08-23T10:21:31Z — The first real 180-cell qwen-smoke replay retained 190
+  successful vLLM request/response pairs but produced zero accepted decisions:
+  30 direct contract rejections, 30 direct tool-policy rejections, 60 RAG
+  tool-policy rejections, and 60 tools-arm argument-policy rejections. Raw
+  outputs show that the prompt exposed argument names without types/patterns and
+  did not state the arm behavior strongly enough: Qwen requested database tools
+  in A-direct/A-rag and invented `databaseName` values in A-tools. Two large
+  worker journals also contended during concurrent serializable projection; both
+  validated and replayed serially (2,371 records; 2,121 inserted, 250 duplicate).
+  Impact: this is a pre-freeze development pilot, not target evidence. Contract
+  v2 now hashes arm-specific directives and exact JSON Schemas/examples;
+  inference remains parallel while journal projection is serialized. An audited
+  development-only retry retains attempt 1, refuses frozen/scored rows, and
+  selects the current prediction-linked attempt in the end-to-end gate.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 

@@ -86,12 +86,16 @@ export function parseAgentResponse(raw: string): { value: AgentResponse; repairK
   return { value: validated.data, repairKind, parsedText: candidate };
 }
 
-export const OPERATING_CONTRACT_VERSION = "logwarden-json-v1";
+export const OPERATING_CONTRACT_VERSION = "logwarden-json-v2";
 
-export function operatingContract(toolSchemas: unknown): string {
+export function operatingContract(toolSchemas: unknown, arm = "unspecified"): string {
   return [
     `LogWarden operating contract ${OPERATING_CONTRACT_VERSION}.`,
     "Return exactly one JSON object and no other text.",
+    `The authoritative agent arm is ${arm}.`,
+    armDirective(arm),
+    "An empty Available tool schemas array means you have no tools and MUST return a decision immediately.",
+    "For a tool request, copy an available tool name and its exact argument keys, types, patterns, and example. Never rename keys or invent values such as main or primary for databaseName; use LogWardenWorkload when the packet has no explicit LW_ database name.",
     'Request a tool as {"kind":"tool_request","tool":"...","arguments":{...}}.',
     'Finish as {"kind":"decision","incidentClass":"...","severity":"...","action":"...","actionArguments":{},"citedChunkIds":[],"confidence":0.0,"abstain":false,"correlationKey":"...","summary":"25 words maximum","rationale":"60 words maximum"}.',
     "For a decision, correlationKey, summary, and rationale are required top-level fields beside actionArguments; never put them inside actionArguments.",
@@ -102,4 +106,17 @@ export function operatingContract(toolSchemas: unknown): string {
     "Never invent a tool or cite a chunk that was not returned. Stop after a decision.",
     `Available tool schemas: ${JSON.stringify(toolSchemas)}`,
   ].join("\n");
+}
+
+function armDirective(arm: string): string {
+  if (arm === "A-direct") {
+    return "A-direct rule: tools are forbidden even when the untrusted packet lists availableTools. Return a decision on the first turn; never return tool_request.";
+  }
+  if (arm === "A-rag") {
+    return "A-rag rule: on the first turn request runbook_search exactly once using every exact schema key. After its tool_result, return a decision. Never request a database diagnostic tool.";
+  }
+  if (arm === "A-tools") {
+    return "A-tools rule: request only a tool in Available tool schemas, with exact schema-valid arguments, when more evidence is useful. After sufficient evidence or the final allowed tool result, return a decision.";
+  }
+  return "Request only a tool in Available tool schemas, with exact schema-valid arguments, or return a decision.";
 }

@@ -154,7 +154,7 @@ export function buildInitialAgentMessages(input: {
   const registry = input.registry ?? loadToolRegistry();
   const budget = input.budget ?? DEFAULT_AGENT_LOOP_BUDGET;
   const allowedTools = allowedToolsForArm(input.arm, input.packet, registry);
-  const contract = operatingContract(promptToolSchemas(registry, allowedTools));
+  const contract = operatingContract(promptToolSchemas(registry, allowedTools), input.arm);
   const content = [
     contract,
     `Agent arm: ${input.arm}.`,

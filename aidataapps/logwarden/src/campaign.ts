@@ -126,7 +126,7 @@ export function frozenArmIdentities(registry = loadAgentArmRegistry()): FrozenAr
     const allowedTools = arm.allowedTools as ToolName[];
     const promptSchemas = promptToolSchemas(tools, allowedTools);
     const promptTemplate = arm.kind === "agent" || arm.kind === "derived"
-      ? operatingContract(promptSchemas)
+      ? operatingContract(promptSchemas, arm.armId)
       : `${arm.armId} has no model prompt`;
     const derivedPolicy = arm.armId === derived.majority.armId ? derived.majority
       : derived.retrievalOnly.arms.some((value) => value.armId === arm.armId) ? {
