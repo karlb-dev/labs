@@ -251,6 +251,7 @@ canvas
 .vscode
 *scratch*
 *checkpoint*
+!aidataapps/modelprint/scripts/checkpoint-watchdog.sh
 *.orig*
 *BACKUP*
 *BASE*

@@ -44,6 +44,8 @@
     "db:bacpac": "./scripts/export-database.sh bacpac",
     "run:archive": "node --import tsx scripts/archive-run.ts",
     "run:mirror": "./scripts/mirror-run.sh",
+    "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
+    "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",
     "repro": "./repro.sh",
     "start": "node --import tsx src/server.ts",
     "dev": "node --watch --import tsx src/server.ts"
