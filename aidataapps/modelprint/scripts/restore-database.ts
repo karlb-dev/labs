@@ -3,7 +3,8 @@ import { loadConfig } from "../src/config.js";
 import { valueAfter } from "../src/run.js";
 
 const target=valueAfter("--target");const backup=valueAfter("--backup");const drop=process.argv.includes("--drop");
-if (!target || !/^ModelPrintRepro_[A-Za-z0-9_]+$/.test(target)) throw new Error("--target must match ModelPrintRepro_[A-Za-z0-9_]+");
+if (!target || (target!=="ModelPrint" && !/^ModelPrintRepro_[A-Za-z0-9_]+$/.test(target))) throw new Error("--target must be ModelPrint or match ModelPrintRepro_[A-Za-z0-9_]+");
+if (target==="ModelPrint" && drop) throw new Error("Refusing --drop for the primary ModelPrint database");
 const config=loadConfig().database;const pool=await new sql.ConnectionPool({server:config.server,port:config.port,user:config.user,password:config.password,database:"master",
  options:{encrypt:false,trustServerCertificate:true},requestTimeout:3_600_000}).connect();
 try {

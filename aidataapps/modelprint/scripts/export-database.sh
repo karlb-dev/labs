@@ -7,6 +7,8 @@ cd "$lab_dir"
 source "$script_dir/runtime-env.sh"
 # shellcheck disable=SC1091
 source "$script_dir/container-storage.sh"
+# shellcheck disable=SC1091
+source "$script_dir/portable-sha256.sh"
 
 mode="${1:-backup}"
 run_dir="$(node --import tsx -e 'import {resolveRunDirectory} from "./src/run.ts"; console.log(resolveRunDirectory())')"
@@ -19,8 +21,8 @@ if [[ "$mode" == "backup" ]]; then
   container_path="$(jq -r '.containerPath' <<<"$result")"
   file_name="$(jq -r '.fileName' <<<"$result")"
   copy_from_container_file "$sql_container" "$container_path" "$database_dir/$file_name"
-  sha256sum "$database_dir/$file_name" >"$database_dir/$file_name.sha256"
-  jq -n --arg mode backup --arg file "$file_name" --arg sha "$(sha256sum "$database_dir/$file_name" | awk '{print $1}')" \
+  write_sha256_sidecar "$database_dir/$file_name"
+  jq -n --arg mode backup --arg file "$file_name" --arg sha "$(sha256_file "$database_dir/$file_name")" \
     --arg createdAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '{schemaVersion:1,mode:$mode,file:$file,sha256:$sha,createdAt:$createdAt,verified:true}' \
     >"$database_dir/$file_name.json"
   remove_container_file "$sql_container" "$container_path"
@@ -31,8 +33,8 @@ elif [[ "$mode" == "bacpac" ]]; then
   target="$database_dir/ModelPrint-$stamp.bacpac"
   connection="Server=${SQLSERVER_HOST:-127.0.0.1},${SQLSERVER_PORT:-1433};Initial Catalog=${MSSQL_DATABASE:-ModelPrint};User ID=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False;TrustServerCertificate=True;Connection Timeout=60"
   "$lab_dir/tools/sqlpackage/sqlpackage" /Action:Export /SourceConnectionString:"$connection" /TargetFile:"$target" /p:CommandTimeout=3600 /p:LongRunningCommandTimeout=0
-  sha256sum "$target" >"$target.sha256"
-  jq -n --arg mode bacpac --arg file "$(basename "$target")" --arg sha "$(sha256sum "$target" | awk '{print $1}')" \
+  write_sha256_sidecar "$target"
+  jq -n --arg mode bacpac --arg file "$(basename "$target")" --arg sha "$(sha256_file "$target")" \
     --arg version "$("$lab_dir/tools/sqlpackage/sqlpackage" /Version | tail -n1)" --arg createdAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     '{schemaVersion:1,mode:$mode,file:$file,sha256:$sha,sqlpackageVersion:$version,createdAt:$createdAt}' >"$target.json"
   echo "$target"
