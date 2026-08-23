@@ -91,7 +91,7 @@ FROM dbo.generations g JOIN dbo.likelihood_scores l ON l.generation_id=g.generat
 WHERE g.campaign_id IN ({campaign_sql}) AND JSON_VALUE((SELECT config_json FROM dbo.decode_configs d WHERE d.decode_config_id=g.decode_config_id),'$.key') IN ('det','nat-0','nat-1')""", conn)
 likelihood_rows = 0
 if not likelihood.empty:
-    likelihood["channel"] = likelihood.scoring_model_profile_id + likelihood.prompted.map({1: "-prompted", 0: "-unprompted"})
+    likelihood["channel"] = likelihood.scoring_model_profile_id + np.where(likelihood.prompted.astype(bool), "-prompted", "-unprompted")
     expected = [f"{model}-prompted" for model in models] + [f"{model}-unprompted" for model in models]
     wide = likelihood.pivot_table(index=["generation_id", "campaign_id", "split"], columns="channel", values="bits_per_char", aggfunc="first").reset_index()
     if all(column in wide for column in expected):
