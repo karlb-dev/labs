@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 13:08 UTC
+Last manually updated: 2026-08-23 14:00 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed milestone: `78ae375`
+- latest pushed milestone: `58274ee`
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -51,6 +51,46 @@ All exact revisions and vLLM image digests are pinned in
 with a similarly named release during this frozen campaign.
 
 ## Live state at this update
+
+This snapshot supersedes any process IDs or pending-stage language in the
+historical detail below.
+
+All governed generation and likelihood work is complete for Qwen 3.8 27B,
+Muse Glimmer 30B, Gemma 4 31B, and OLMo 3.1 32B: 40,000 primary and 2,004
+robustness generations have zero failures. SQL contains all 127,760 prompted
+scorer/output cells and 127,590 unprompted cells. The 170 unavailable
+unprompted cells are audited one-token outputs without a first-token
+distribution; 64 empty-final Muse rows are separately unavailable. No value
+was imputed. Port 8000 is free; only embedding ports 8001/8002 use the GPU.
+
+Features and provenance audit are complete: 520,083 eligible Qwen segment
+embeddings, 559,964 segment records, 81,176 artifact/style/scalar/whole-vector
+rows, and 42,004 generation references. Six UTF-16 boundary splits were
+repaired only at embedding input; source text is unchanged. Audit status is
+`COMPLETE`. The frozen search-corpus hash is
+`5880b91e53ff0c102ef156f564b668de8c2a38a66377001685f82b566d59e8f0`.
+Controls, derived features, phrases, geometry, pairwise, and clustering are
+also complete.
+
+Active jobs to adopt and never duplicate:
+
+- attribution probes/LOFO: session `65170`, PID 779300, 48 workers,
+  `--resume-completed`; unchanged 200 permutations and 1,000 bootstraps
+- exact retrieval: session `62732`, PID 802811, six workers
+- exact chunk retrieval: session `81077`, PID 802867, six workers
+- checkpoint watchdog: session `16623`, PID 545189
+
+The exact evaluators now bind scans to `MAXDOP 1`; their SQL grants are healthy.
+ANN is intentionally paused until both exact evaluators finish. Its preview DDL
+and scratch schema are corrected, including the legacy ANN requirement for a
+single four-byte `INT` clustered identity key. Run ANN alone afterward.
+
+Remaining order: complete probes and exact retrieval, run OOD after probes,
+run ANN after exact scans, render reports, verify API/tests, create final native
+backup and BACPAC, archive/mirror, restore/reproduce, then commit/push/tag. The
+four dirty root reports are partial generated output and must be regenerated.
+
+## Historical detailed state (superseded where noted above)
 
 Qwen is complete:
 
@@ -245,17 +285,12 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Do not reload OLMo or any chat model. If a `build-features.ts` Qwen-only process
-is alive, adopt it and do not start a duplicate. If it is absent and the
-feature audit is not complete, resume idempotently with:
-
-```bash
-node --import tsx scripts/build-features.ts --stage embeddings \
-  --embedding-profile qwen3-embedding-0.6b --embedding-batch-size 256
-```
-
-After it exits zero, run `npm run features:audit`. The audit must report
-`status=COMPLETE` before controls and evaluations begin.
+Do not reload OLMo or any chat model. Feature construction and audit are
+complete. Adopt the live evaluator processes listed in the current snapshot;
+inspect their output and SQL evidence before starting a replacement. If the VM
+reclaimed them, each evaluator is idempotent/resumable, but run exact retrieval
+and chunk evaluation before ANN and never overlap ANN with exact SQL scans.
+Run OOD only after attribution probes have finished.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -324,11 +359,10 @@ remain required for feature construction.
 
 ## Final analysis and archive
 
-The active embedding pass replaces the first command below. After it exits
-zero and `npm run features:audit` reports `COMPLETE`, continue with:
+Feature audit and search freeze are complete. Resume only stages without a
+finished metric/database record, in this dependency order:
 
 ```bash
-npm run search:freeze
 npm run evaluate:retrieval
 npm run evaluate:chunks
 npm run evaluate:ood
