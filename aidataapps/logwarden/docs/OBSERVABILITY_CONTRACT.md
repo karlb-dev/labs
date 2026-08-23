@@ -66,6 +66,20 @@ Replay remains non-streaming, so request-level TTFT is null unless the server
 exposes it; service histograms are not misrepresented as per-request values.
 The live plane may use streaming and measures first content chunk client-side.
 
+The embedding port gate additionally requires the exact pinned image, model,
+revision, served name, and pooling runner; health and model-list evidence; an
+active GPU process and allocation; exact raw request bytes durable before send;
+exact raw response bytes durable before parse; ordered vector count, index,
+dimension, finiteness, unit-norm, and server-usage validation; cold, warm, and
+batch timings; and before/midpoint/after metric snapshots. Prometheus may omit
+a labeled HTTP route series before its first request; when the metric family is
+present, that state is recorded as an exact zero baseline. GPU kernel warmup is
+not assumed bitwise deterministic: cold-to-warm drift is retained and bounded
+at cosine similarity >= 0.9999 and maximum component delta <= 0.001, while two
+warmed requests for the same input must match byte-for-byte. The corpus build
+may start only after request, successful-item, prompt-token, and latency
+counters advance consistently with zero error and preemption deltas.
+
 ## Agent and tool evidence
 
 Every semantic operation is an `agent.agent_steps` row and a trace span. Raw

@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 06:15 UTC
+Last manually updated: 2026-08-23 06:35 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -33,16 +33,18 @@ and its effect on the evidence ceiling must be recorded append-only in
 ## Current state
 
 - Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
-  agent-observability, least-privilege tools, real eight-family injectors, and
-  exact-correlation/context-snapshot gates passed. The real vLLM metrics
-  canary, embeddings/hybrid retrieval, freeze, and standard capture remain.
+  agent-observability, least-privilege tools, real eight-family injectors,
+  exact-correlation/context-snapshot gates, and the real Qwen embedding vLLM
+  port gate passed. Corpus embedding, hybrid retrieval, freeze, chat-model
+  canary, and standard capture remain.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
 - The Lab 3 source tree, control/workload databases, initial smoke run, custom
   XE capture session, Query Store configuration, and two-principal security
   model exist and have passed their foundation gates.
-- No model weights have been downloaded and no GPU residency is active.
+- The pinned Qwen 0.6B embedding weights are downloaded and vLLM is resident
+  on GPU at port 8011. No chat-model weights are loaded.
 - The complete spec/addendum and predecessor/reference inputs were read and
   hashed before implementation.
 - A user-directed pre-inference observability gate now promotes detailed
@@ -51,7 +53,7 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Twenty-five hash-locked control migrations and seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 16 test files and 44 unit tests. The capture-specific
+  `npm run check` passes 17 test files and 57 unit tests. The capture-specific
   XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -108,6 +110,18 @@ and its effect on the evidence ceiling must be recorded append-only in
   and `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
   The corpus remains unfrozen pending Qwen embeddings, hybrid retrieval, and
   the standard scenario leakage audit.
+- The live Qwen embedding port gate passed with receipt
+  `90e15a999165c2848e000d25069884b9f453d0a416bd667ba344c9423140e36b`.
+  It proved exact image/model/revision/runner identity, health/model listing,
+  four HTTP calls and six ordered finite normalized 1024-dimensional outputs,
+  exact warmed-repeat identity, raw request/response durability, 32
+  journal-to-SQL records, and before/midpoint/after vLLM plus GPU snapshots.
+  Counter deltas were 4 HTTP, 6 success, 108 prompt tokens, 6 latency, 0 error,
+  and 0 preemption; midpoint GPU evidence showed the EngineCore at 6,047 MiB
+  and 3% utilization. Two fail-closed development attempts are retained: an
+  uninstantiated pre-request Prometheus route series is now correctly treated
+  as zero while its metric family remains required, and measured first-CUDA
+  cold/warm drift is explicitly bounded while warmed repeats remain exact.
 - The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
   group-isolated templates and 600 deterministic variants across all ten
   incident families and all five regimes. Exact role allocation is 60 dev, 60
@@ -147,15 +161,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   merged. Their platform-separated Foundry/MLX registry, Apple Silicon
   Docker/Rosetta setup, 16-episode dev harness, six-model retained results, and
   report generator coexist with the Colab path. Colab Compose validation,
-  doctor, SQL, security, backup/restore, and all 44 unit tests pass; the
+  doctor, SQL, security, backup/restore, and all pre-merge tests pass; the
   committed 6 x 16 HTML report rebuilds byte-for-byte from retained data and
   its template. Foundry is absent on this Linux VM and, by user direction,
   remains a post-governed-model validation lane with non-comparable results.
-- Next incomplete milestone: build Qwen embeddings, hybrid retrieval, and the
-  bounded agent loop. A small embedding or
-  qwen-smoke service may then load for the remaining real `/metrics` gate; no
-  long chat campaign may load until that gate passes. Foundry model validation
-  is deliberately deferred until after the governed local models.
+- Next incomplete milestone: build and validate all 480 Qwen chunk embeddings,
+  then implement/freeze hybrid retrieval and the bounded agent loop. The
+  qwen-smoke chat service may load only for its separate real `/metrics` gate;
+  no long chat campaign may start until that gate passes. Foundry model
+  validation is deliberately deferred until after the governed local models.
 
 ## Fresh-VM preflight
 
@@ -175,14 +189,16 @@ Observed at `2026-08-23T02:40:15Z` from the launch shell:
   push)
 - Docker: Engine 29.7.2, Compose 5.5.0, rootless `fuse-overlayfs`
 - NVIDIA Container Toolkit: 1.20.0; generated CDI spec
-- GPU/service ownership: Lab 3 rootless Docker daemon active; no vLLM,
-  EngineCore, generator, watchdog, or Lab 2 service process is present
+- GPU/service ownership: Lab 3 rootless Docker daemon active; Qwen embedding
+  vLLM/EngineCore is resident on port 8011; no chat vLLM, generator, watchdog,
+  or Lab 2 service process is present
 - SQL Server: 2025 RTM-CU8 `17.0.4075.5`, healthy on reserved port 1434;
   exact FTS package `17.0.4075.5-1`, `IsFullTextInstalled=1`; derived image
   `sha256:eb4ee252ae0ff6a18b5b40e05eea283e251ee69fbe8926e28def6d0adb43f95f`
 
-The real CUDA allocation/synchronization hard gate passed. Container-level CUDA
-and model port gates remain required before model-scale work.
+The real CUDA allocation/synchronization hard gate and Qwen embedding model
+port gate passed. A separate chat-model port gate remains required before
+chat-model-scale work.
 
 ## Planned isolated resources
 
@@ -209,7 +225,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: none
+- Long-running scientific process: none; the Qwen embedding service is an
+  idle, detached infrastructure service
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Watchdog: dirty-tree recovery and clean-tree handoff/commit modes both passed
@@ -220,8 +237,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe` (`PASS`)
 - SQL integration receipt: `0334583c0d376b53776a0e65b2892d0ef6d4d372d2d22f8b4bae262908a151d2` (8/8 passed)
-- Last durable Git checkpoint: `b659af7` (governed real injectors); the
-  Mac/Foundry/report integration merge is being validated and committed now
+- Last durable Git checkpoint: `171c393` (clean post-Mac-merge watchdog);
+  embedding gate source and evidence documentation are pending the next commit
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested

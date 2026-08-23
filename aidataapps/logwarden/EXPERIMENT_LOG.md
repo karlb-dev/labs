@@ -489,3 +489,36 @@ place and receive a later disposition.
   canary follows the governed local-model campaign and remains a distinct,
   non-comparable development plane. Before such a run, its harness must meet
   the same raw-response and phase telemetry gate as vLLM.
+- 2026-08-23T06:35:00Z — Started the pinned Qwen embedding plane on the Colab
+  GPU: `Qwen/Qwen3-Embedding-0.6B` at revision
+  `97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3`, vLLM 0.27.1 image
+  `vllm/vllm-openai@sha256:0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967`,
+  pooling runner, and port 8011. Added a fail-closed client and live port gate
+  that durably stores the exact request before send and response before parse,
+  hash-chain spans, client phase timings, usage, vector identities/norms, raw
+  service logs, model/health identity, GPU snapshots, and exact Prometheus
+  expositions before/midpoint/after. The first gate stopped before inference
+  because Prometheus does not instantiate the `/v1/embeddings` labeled HTTP
+  series until its first request (failed receipt
+  `fa0ab4aa4a508914695e0cece338cfbe77f8c50e4e525755ca9bc3e8180b1bf4`).
+  The metric family remains mandatory, but this valid startup state is now an
+  explicit zero baseline. The second gate stopped after canaries because the
+  first-ever CUDA result differed from its warm repeat by max component
+  0.0007367311 and cosine 0.9999658542 (failed receipt
+  `ad48a6bdd0ac5591de6cf073da58740bc41844b171c5705b1e086dd035be889a`).
+  The contract now retains and bounds cold-to-warm drift at cosine >=0.9999 and
+  max delta <=0.001 while requiring two warmed repeats to be byte-identical.
+  Impact: this exposes rather than erases GPU warmup variance; model/revision,
+  raw vectors, and hashes remain available for every result, and a tolerance
+  breach still blocks the corpus.
+- 2026-08-23T06:35:00Z — The corrected live embedding port gate passed with
+  receipt `90e15a999165c2848e000d25069884b9f453d0a416bd667ba344c9423140e36b`.
+  Four HTTP calls covering six inputs produced ordered finite unit-normalized
+  1024-dimensional vectors. Cold, warm, and warm-repeat hashes were identical
+  on the warmed service. Exact counter deltas were four embedding HTTP
+  requests, six successful vLLM items, 108 prompt tokens, six latency
+  observations, zero errors, and zero preemptions. The midpoint GPU sample
+  showed `VLLM::EngineCore` resident with 6,047 MiB and 3% utilization; all 32
+  gate journal records were hash-validated and inserted into SQL. The full
+  suite now passes 17 files and 57 tests. This gate authorizes the bounded
+  Qwen corpus embedding build, not a long chat-model campaign.

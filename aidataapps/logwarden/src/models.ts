@@ -35,6 +35,7 @@ const registrySchema = z.object({
 });
 
 export type ModelProfile = z.infer<typeof profileSchema> & { key: string };
+export type EmbeddingProfile = z.infer<typeof embeddingSchema> & { key: string };
 export type ModelRegistry = z.infer<typeof registrySchema>;
 
 const defaultPath = fileURLToPath(new URL("../config/models.json", import.meta.url));
@@ -54,5 +55,11 @@ export function loadModelRegistry(path = defaultPath): ModelRegistry {
 export function resolveModelProfile(key: string, registry = loadModelRegistry()): ModelProfile {
   const profile = registry.profiles[key];
   if (!profile) throw new Error(`Unknown profile ${JSON.stringify(key)}`);
+  return { key, ...profile };
+}
+
+export function resolveEmbeddingProfile(key: string, registry = loadModelRegistry()): EmbeddingProfile {
+  const profile = registry.embeddingProfiles[key];
+  if (!profile) throw new Error(`Unknown embedding profile ${JSON.stringify(key)}`);
   return { key, ...profile };
 }
