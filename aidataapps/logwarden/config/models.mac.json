@@ -101,6 +101,18 @@
       "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
       "maxTokensOverride": 1400
     },
+    "olmo-3.1-32b-mlx": {
+      "description": "OLMo 3.1 32B Instruct (lmstudio-community MLX 4-bit) via mlx_lm.server; the same base model family as the frozen campaign target olmo-3.1-32b-instruct, though a different served artifact (quant + runtime), so still mac-plane evidence only.",
+      "family": "olmo",
+      "foundryAlias": "lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit",
+      "foundryVariantId": "",
+      "executionProvider": "MLX-Metal",
+      "contextLength": 65536,
+      "fileSizeMb": 18100,
+      "role": "agent",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "servedModelId": "lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit"
+    },
     "muse-glimmer-30b-mlx": {
       "description": "Muse Glimmer 30B via mlx-vlm server (mlx-community 4-bit) with the official DFlash block-diffusion drafter for speculative decoding; the platform-native serving of the same base model as the Foundry ONNX bundle. Requires mlx-vlm (image-text model type), not mlx-lm.",
       "draftModel": "meta-models/Muse-Glimmer-30B-assistant",

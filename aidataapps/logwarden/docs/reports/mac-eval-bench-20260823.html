@@ -178,7 +178,7 @@ a { color: inherit; }
 
 <script>
 const DATA = {
- "generatedAt": "2026-08-23T08:31:21.235Z",
+ "generatedAt": "2026-08-23T08:54:20.747Z",
  "runId": "logwarden-smoke-20260823T041027Z",
  "episodeSet": "mac-eval-v1",
  "meta": [
@@ -269,23 +269,23 @@ const DATA = {
    "dec": "1/16"
   },
   {
-   "key": "muse-glimmer-30b-foundry",
-   "name": "Muse 30B (Foundry)",
+   "key": "olmo-3.1-32b-mlx",
+   "name": "OLMo 3.1 32B",
    "slot": 5,
-   "runtime": "Foundry ONNX (custom cache)",
-   "gb": 19.6,
+   "runtime": "MLX 4-bit",
+   "gb": 18.1,
    "cls": 1,
    "sev": 0.875,
    "act": 1,
    "triple": 0.875,
-   "fp": 0,
+   "fp": 0.8,
    "legal": 1,
    "toolFirst": 1,
    "args": 1,
    "spur": 0,
-   "tps": 16.4,
-   "lat": 52.1,
-   "load": 54.5,
+   "tps": 19.8,
+   "lat": 8.1,
+   "load": null,
    "dec": "16/16"
   },
   {
@@ -346,6 +346,26 @@ const DATA = {
    "tps": 36.9,
    "lat": 23.9,
    "load": null,
+   "dec": "16/16"
+  },
+  {
+   "key": "muse-glimmer-30b-foundry",
+   "name": "Muse 30B (Foundry)",
+   "slot": 0,
+   "runtime": "Foundry ONNX (retired serving)",
+   "gb": 19.6,
+   "cls": 1,
+   "sev": 0.875,
+   "act": 1,
+   "triple": 0.875,
+   "fp": 0,
+   "legal": 1,
+   "toolFirst": 1,
+   "args": 1,
+   "spur": 0,
+   "tps": 16.4,
+   "lat": 52.1,
+   "load": 54.5,
    "dec": "16/16"
   }
  ],
@@ -504,10 +524,7 @@ const DATA = {
    "none",
    "wrong"
   ],
-  "muse-glimmer-30b-foundry": [
-   "triple",
-   "triple",
-   "triple",
+  "olmo-3.1-32b-mlx": [
    "triple",
    "triple",
    "triple",
@@ -518,7 +535,10 @@ const DATA = {
    "triple",
    "class",
    "triple",
+   "triple",
    "class",
+   "triple",
+   "triple",
    "triple",
    "triple"
   ],
@@ -575,12 +595,30 @@ const DATA = {
    "class",
    "triple",
    "triple"
+  ],
+  "muse-glimmer-30b-foundry": [
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "class",
+   "triple",
+   "class",
+   "triple",
+   "triple"
   ]
  },
  "narrative": {
   "eyebrow": "aidataapps · lab 03 · mac plane · development evidence",
   "title": "LogWarden Mac Bench",
-  "subtitle": "Eight local model servings auditioning for LogWarden's incident-triage agent on an M4 Max — Foundry Local ONNX arms, Karl's Muse Glimmer conversion in both its ONNX and MLX servings, and MLX-served Gemma 4 variants including the 26B-A4B MoE — scored on sixteen frozen SQL Server incident episodes under the lab's structured-JSON transport.",
+  "subtitle": "Nine local model servings auditioning for LogWarden's incident-triage agent on an M4 Max — Foundry Local ONNX arms, Karl's Muse Glimmer conversion in two servings, MLX-served Gemma 4 variants, and the campaign-family OLMo 3.1 32B — scored on sixteen frozen SQL Server incident episodes under the lab's structured-JSON transport.",
   "meta": [
    "2026-08-22 · MacBook Pro M4 Max · 48 GB",
    "foundry local 0.10.3 · :8010 · mlx_lm 0.31.3 / mlx-vlm 0.6.15 · :8020",
@@ -613,10 +651,10 @@ const DATA = {
     "runtime": "Foundry ONNX"
    },
    {
-    "profileKey": "muse-glimmer-30b-foundry",
-    "name": "Muse 30B (Foundry)",
+    "profileKey": "olmo-3.1-32b-mlx",
+    "name": "OLMo 3.1 32B",
     "slot": 5,
-    "runtime": "Foundry ONNX (custom cache)"
+    "runtime": "MLX 4-bit"
    },
    {
     "profileKey": "gemma-4-e4b-mlx",
@@ -635,28 +673,34 @@ const DATA = {
     "name": "Muse 30B (MLX)",
     "slot": 8,
     "runtime": "MLX 4-bit (mlx-vlm)"
+   },
+   {
+    "profileKey": "muse-glimmer-30b-foundry",
+    "name": "Muse 30B (Foundry)",
+    "slot": 0,
+    "runtime": "Foundry ONNX (retired serving)"
    }
   ],
   "verdict": [
-   "<strong><span class=\"chip\" style=\"background:var(--s7)\"></span>The Gemma 4 26B-A4B MoE holds the bench's best-decisions crown — now as a three-way tie it shares with Muse Glimmer in both of its servings.</strong> All three score 100% on incident class, 100% on the action rubric, 87.5% exact-triple with flawless tools and correct unknown-abstention — and all three miss the <em>same two</em> severity judgment calls (ep12, ep14), which settles those as ground-truth ambiguity. The MoE stays the primary arm on speed: 70 tok/s and 13.8 s per episode.",
-   "The serving-stack experiment answered emphatically: <span class=\"chip\" style=\"background:var(--s8)\"></span><strong>Muse 30B via mlx-vlm with its official DFlash drafter</strong> reproduces the <span class=\"chip\" style=\"background:var(--s5)\"></span><strong>Foundry ONNX bundle's</strong> decisions episode-for-episode while decoding 2.2× faster — 36.9 vs 16.4 tok/s, 24 vs 52 s per episode, with block-diffusion speculation contributing +63% over plain MLX decode and changing nothing about the output. The MLX+DFlash serving is the Muse reference arm. Behind the leaders: <span class=\"chip\" style=\"background:var(--s6)\"></span><strong>Gemma 4 E4B</strong> as the fast arm (75% triple at 4.5 s, but it dismissed the unknown-abstention episode), <span class=\"chip\" style=\"background:var(--s2)\"></span><strong>qwen3-8b</strong> / <span class=\"chip\" style=\"background:var(--s3)\"></span><strong>OLMo 3 7B</strong> as catalog alternates, <span class=\"chip\" style=\"background:var(--s1)\"></span><strong>qwen3-4b</strong> for smoke, <span class=\"chip\" style=\"background:var(--s4)\"></span><strong>qwen2.5-0.5b</strong> as the floor. Gemma 4 12B remains blocked on the unsupported <span class=\"mono\">gemma4_unified</span> architecture.",
-   "The cross-model pattern stands, now over eight servings: reasoning-channel models (Muse twice, the MoE) follow the action rubric perfectly and abstain correctly on unknowns; direct-answer models over-escalate and, in E4B's case, guess at what they don't recognize. The reasoning tax is real (~870–970 tokens per episode against E4B's ~51), but it buys exactly the failure modes an incident agent can't afford — and it survives quantization and serving-stack changes untouched."
+   "<strong>The 87.5% exact-triple crown is now a four-way tie — and the newest member wins the economics.</strong> <span class=\"chip\" style=\"background:var(--s5)\"></span><strong>OLMo 3.1 32B</strong> (MLX 4-bit; the same base family as the frozen campaign's own target profile) posts 100% class, 100% action, flawless tools, and a correct unknown-abstention <em>as a direct answerer</em>: ~161 tokens per episode, 8.1 s — no reasoning channel at all. <span class=\"chip\" style=\"background:var(--s7)\"></span><strong>The Gemma 4 26B-A4B MoE</strong> and <span class=\"chip\" style=\"background:var(--s8)\"></span><strong>Muse in both servings</strong> match the headline with reasoning budgets of ~870–970 tokens.",
+   "The recommended lineup: <span class=\"chip\" style=\"background:var(--s5)\"></span><strong>OLMo 3.1 32B as primary mac agent arm</strong> (best episode economics at leader quality, and the closest thing this plane has to the Colab campaign's own target), <span class=\"chip\" style=\"background:var(--s7)\"></span><strong>the MoE</strong> as the reasoning alternate, <span class=\"chip\" style=\"background:var(--s6)\"></span><strong>Gemma 4 E4B</strong> as the fast arm (75% triple at 4.5 s, but it dismissed the unknown-abstention episode), and <span class=\"chip\" style=\"background:var(--s8)\"></span><strong>Muse via mlx-vlm + DFlash</strong> (36.9 tok/s, 2.2× its Foundry ONNX bundle — now shown as a retired serving in gray) as the cross-architecture reference. <span class=\"chip\" style=\"background:var(--s2)\"></span>qwen3-8b and <span class=\"chip\" style=\"background:var(--s3)\"></span>OLMo 3 7B stay catalog alternates; <span class=\"chip\" style=\"background:var(--s1)\"></span>qwen3-4b for smoke; <span class=\"chip\" style=\"background:var(--s4)\"></span>qwen2.5-0.5b is the floor. Gemma 4 12B remains blocked on <span class=\"mono\">gemma4_unified</span>.",
+   "OLMo 3.1 32B also revises the bench's cleanest pattern: rubric fidelity and honest abstention come from reasoning <em>or</em> sufficient scale — a 32B direct answerer follows the action rubric the small direct models break. And a ground-truth flag: ep12 (a 34-minute sleeping head blocker, authored as severity high) is now undercalled to medium by all four leaders independently — that call should be reviewed before these episodes seed a larger catalog."
   ],
   "tiles": [
    {
-    "lab": "Best judgment (3-way tie)",
+    "lab": "Best judgment (4-way tie)",
     "val": "87.5%",
-    "sub": "<span class=\"chip\" style=\"background:var(--s7)\"></span>Gemma 4 MoE, <span class=\"chip\" style=\"background:var(--s5)\"></span><span class=\"chip\" style=\"background:var(--s8)\"></span>Muse in both servings — 100% class and action, same two severity misses"
+    "sub": "<span class=\"chip\" style=\"background:var(--s5)\"></span>OLMo 3.1 32B, <span class=\"chip\" style=\"background:var(--s7)\"></span>Gemma 4 MoE, <span class=\"chip\" style=\"background:var(--s8)\"></span><span class=\"chip\" style=\"background:var(--baseline)\"></span>Muse ×2 — all 100% class and action"
    },
    {
     "lab": "Primary arm economics",
-    "val": "13.8 s",
-    "sub": "<span class=\"chip\" style=\"background:var(--s7)\"></span>MoE per episode at 70 tok/s — Muse-grade decisions at 3–4× Muse's pace"
+    "val": "8.1 s",
+    "sub": "<span class=\"chip\" style=\"background:var(--s5)\"></span>OLMo 3.1 32B per episode — leader quality with direct answers (~161 tokens), no reasoning tax"
    },
    {
     "lab": "Serving-stack dividend",
     "val": "2.2×",
-    "sub": "<span class=\"chip\" style=\"background:var(--s8)\"></span>Muse via mlx-vlm + official DFlash drafter vs <span class=\"chip\" style=\"background:var(--s5)\"></span>the Foundry ONNX bundle — identical decisions in every serving"
+    "sub": "<span class=\"chip\" style=\"background:var(--s8)\"></span>Muse via mlx-vlm + official DFlash drafter vs <span class=\"chip\" style=\"background:var(--baseline)\"></span>the retired Foundry ONNX serving — identical decisions"
    }
   ],
   "scoreboard": {
@@ -665,18 +709,25 @@ const DATA = {
   },
   "quality": {
    "title": "Where each model's judgment holds and slips",
-   "lede": "Class = what happened; severity = how bad; action = what to do about it. Reasoning-channel models (Muse in both servings, the 26B-A4B MoE) follow the action rubric perfectly; E4B tracks it closely; the Foundry catalog models over-escalate severity-high incidents where the rubric reserves escalation for corruption, security, and unknowns."
+   "lede": "Class = what happened; severity = how bad; action = what to do about it. The action rubric is followed perfectly by the reasoners (Muse, the MoE) and by the 32B-scale direct answerer (OLMo 3.1 32B); the small direct models over-escalate where the rubric reserves escalation for corruption, security, and unknowns. Episode ep12's severity ground truth is flagged: all four leaders undercall it the same way."
   },
   "scatter": {
    "title": "Quality has a price axis",
-   "lede": "Exact-triple accuracy against decode speed (log scale). Point area tracks on-disk model size. The 87.5% row holds three points: the Foundry Muse bundle, its MLX+DFlash serving at 2.2× the pace, and the MoE. E4B holds the direct-answer frontier; the 0.5B proves speed alone is worthless."
+   "lede": "Exact-triple accuracy against decode speed (log scale). Point area tracks on-disk model size; the gray point is the retired Foundry Muse serving. Four servings hold the 87.5% row; OLMo 3.1 32B reaches it with direct answers, so its episodes cost 8.1 s despite 19.8 tok/s decode. The 0.5B proves speed alone is worthless."
   },
   "grid": {
-   "title": "Sixteen episodes, eight servings",
+   "title": "Sixteen episodes, nine servings",
    "lede": "✓ exact triple · ◐ right class, wrong severity or action · ✗ wrong class · ∅ no decision produced. ⚙ marks episodes requiring a tool round-trip before deciding."
   },
   "dossierTitle": "Signature behaviors, verbatim",
   "dossiers": [
+   {
+    "key": "olmo-3.1-32b-mlx",
+    "title": "OLMo 3.1 32B — leader quality, no reasoning tax",
+    "facts": "17 GB · lmstudio-community MLX 4-bit · 19.8 tok/s · 8.1 s/episode · campaign-family",
+    "body": "The same base family as the frozen campaign's olmo-3.1-32b-instruct target, and the first direct answerer to reach the leaders' 87.5%: 100% class, 100% action, perfect tools, correct abstention, 80% first-pass-clean JSON — at ~161 tokens per episode where the reasoners spend ~900. Its two severity misses are medium-undercalls (ep09, ep12), one shared with every other leader. A different served artifact than the campaign profile (4-bit MLX vs digest-pinned vLLM), so mac-plane evidence only — but the most campaign-adjacent signal this bench can produce.",
+    "snip": "{\"kind\":\"decision\",\"incidentClass\":\"unknown\",\"severity\":\"medium\",\n \"action\":\"escalate\",\"rationale\":\"Unidentified application error,\n potential data drift.\"}  ← ep15 abstention, first-pass, 15 tokens"
+   },
    {
     "key": "gemma-4-26b-a4b-mlx",
     "title": "Gemma 4 26B-A4B — the MoE that ties Muse",
@@ -757,7 +808,7 @@ const DATA = {
    "<strong>Disclosed per-model knobs.</strong> Qwen3 profiles carry a <span class=\"mono\">/no_think</span> prefix on every user turn (the Foundry API has no chat-template kwargs; the prefix lapsing after tool results was itself a bench finding). Muse carries the §A-8 max-tokens override to 1400 and a final-channel parser (<span class=\"mono\">to=user&lt;|message|&gt;</span>).",
    "<strong>Repair ladder.</strong> think/channel/fence/leading-text strips count as legal transport repairs; rescuing a JSON object embedded in prose (<span class=\"mono\">balanced_extract</span>) counts as a contract failure even when the rescued decision is right.",
    "<strong>Mac-plane evidence only.</strong> Foundry serves Microsoft-published ONNX builds (Muse: Karl's conversion) on WebGPU/Metal — different artifacts from the digest-pinned vLLM campaign profiles; nothing here is a frozen-campaign row. One run per model, one seed, 16 hand-authored episodes with authored ground truth; treat gaps under ~10 points as noise, not signal.",
-   "<strong>Substitutions and runtimes.</strong> The Foundry catalog has no Gemma at any size, so all Gemma 4 profiles are mlx-community OptiQ 4-bit conversions served by <span class=\"mono\">mlx_lm.server</span>; Muse 30B (MLX) is the mlx-community 4-bit conversion served by <span class=\"mono\">mlx_vlm.server</span> 0.6.15 with the official DFlash block-diffusion drafter (<span class=\"mono\">meta-models/Muse-Glimmer-30B-assistant</span>) for speculative decoding; Muse is multimodal, so its MLX arch lives in mlx-vlm, not mlx-lm — four runtimes on the bench, disclosed per dossier. mlx_lm.server splits the 26B-A4B MoE's reasoning into a separate <span class=\"mono\">message.reasoning</span> field (legal repair); mlx-vlm 0.6.15 splits Muse's reasoning into <span class=\"mono\">reasoning_content</span> (legal repair); speculation was verified lossless — plain and speculated runs produced identical decisions. Gemma 4 12B is blocked: every conversion declares <span class=\"mono\">gemma4_unified</span>, unsupported by mlx-lm 0.31.3. OLMo ships as OLMo 3 7B Instruct, not the frozen registry's OLMo 3.1 family.",
+   "<strong>Substitutions and runtimes.</strong> The Foundry catalog has no Gemma at any size, so all Gemma 4 profiles are mlx-community OptiQ 4-bit conversions served by <span class=\"mono\">mlx_lm.server</span>; Muse 30B (MLX) is the mlx-community 4-bit conversion served by <span class=\"mono\">mlx_vlm.server</span> 0.6.15 with the official DFlash block-diffusion drafter (<span class=\"mono\">meta-models/Muse-Glimmer-30B-assistant</span>) for speculative decoding; Muse is multimodal, so its MLX arch lives in mlx-vlm, not mlx-lm — four runtimes on the bench, disclosed per dossier. mlx_lm.server splits the 26B-A4B MoE's reasoning into a separate <span class=\"mono\">message.reasoning</span> field (legal repair); mlx-vlm 0.6.15 splits Muse's reasoning into <span class=\"mono\">reasoning_content</span> (legal repair); speculation was verified lossless — plain and speculated runs produced identical decisions. Gemma 4 12B is blocked: every conversion declares <span class=\"mono\">gemma4_unified</span>, unsupported by mlx-lm 0.31.3. The Foundry catalog's OLMo is OLMo 3 7B Instruct; OLMo 3.1 32B runs as the lmstudio-community MLX 4-bit conversion — the frozen campaign target's base family, but a different served artifact, so never a campaign row. The retired Foundry Muse serving renders gray: the validated palette has eight categorical slots, and retirement keeps a ninth series honest.",
    "<strong>Reproduce:</strong> <span class=\"mono\">npm run mac:eval -- --profile &lt;key&gt;</span> then <span class=\"mono\">npm run mac:report</span> on branch <span class=\"mono\">aidataapps-logwarden-mac</span>; rows, metrics, and this page land in the run directory."
   ],
   "scatterLabelOffsets": {
@@ -779,17 +830,21 @@ const DATA = {
    ],
    "muse-glimmer-30b-foundry": [
     -8,
-    22
+    24
    ],
    "gemma-4-e4b-mlx": [
     10,
     18
    ],
    "gemma-4-26b-a4b-mlx": [
-    -10,
-    -14
+    12,
+    5
    ],
    "muse-glimmer-30b-mlx": [
+    -8,
+    22
+   ],
+   "olmo-3.1-32b-mlx": [
     8,
     -14
    ]
@@ -818,7 +873,10 @@ const DATA = {
 const N = DATA.narrative;
 const fmtPct = v => v === null || v === undefined ? "—" : (v * 100).toFixed(v === 0 || v === 1 ? 0 : 1).replace(/\.0$/, "") + "%";
 const fmt = (v, s = "") => v === null || v === undefined ? "—" : v + s;
-const slotVar = m => `--s${m.slot}`;
+// slot 0 = deliberately recessive: a retired/superseded serving kept for the
+// record. The validated categorical palette has eight slots; retirement is
+// how a ninth series stays honest instead of inventing a hue.
+const slotVar = m => m.slot === 0 ? "--baseline" : `--s${m.slot}`;
 const chip = m => `<span class="chip" style="background:var(${slotVar(m)})"></span>`;
 const byKey = Object.fromEntries(DATA.models.map(m => [m.key, m]));
 const tip = document.getElementById("tip");
