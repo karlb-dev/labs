@@ -927,3 +927,11 @@ place and receive a later disposition.
   repeat rate 1.0, and 81,952 MiB resident GPU memory; receipt
   `49fa3bd3e0afa5dd27d3ee935fb4c929a2bdbb0b5e421f5a98feb8f7644dfee6`.
 - 2026-08-23T10:35:51.429Z — Retained the failed qwen-smoke attempt-1 grid and its 190 raw model request/response hashes at /content/worktrees/aidataapps-logwarden/aidataapps/logwarden/runs/logwarden-smoke-20260823T031714Z/manifests/qwen-smoke-pilot-retained-20260823T103551249Z.json; reset exactly 180 development-only cells for prompt-contract v2 attempt 2, receipt 51ec9210c54de714a70a3588908dec4988da90cf1566bda800350ddd75848e1b.
+
+- 2026-08-23T10:44:51.160Z — qwen-smoke primary replay retained 180 cells across dev and A-direct,A-rag,A-tools with 129 decisions, 51 failures, and 607 model requests; receipt 068919dc7799c0d5cdb4e763151ae8f016ed573557df0a1ba49a00a0109fceaa.
+
+- 2026-08-23T10:45:13.791Z — Scored 240 primary dev predictions for qwen-smoke across B1-rules-v1,A-direct,A-rag,A-tools; receipt 63bfe6ed838cc1c4dc813f4358966ce12a15b1a13e96011b43f8a85c258eeb2b.
+
+- 2026-08-23T10:45:33.363Z — Real qwen-smoke end-to-end replay gate passed 180 dev agent cells plus 60 B1 rows with complete raw/SQL/trace/service/GPU provenance; empirical power pairs 9b9969df74b938ce730cf5e60728a16db0b4ce304c10b0d12c7256e40f2ea8ba, gate c82e47987f78e6093691939b0370199dad9ddee1b37f8fc7b7da276be47d760c.
+
+- 2026-08-23T10:46:04.439Z — Paired grouped power simulation completed with PASS disposition; receipt 1190731ab7ea182043522d123726a67efc0e21e8d0ff98ba899431cbe208335c.
