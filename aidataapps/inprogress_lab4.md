@@ -33,7 +33,7 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 | GT-7 replay runner + extraction | DONE — runner live; E4B full pass IN PROGRESS (background) |
 | Port gates (4 MLX profiles) | ready (scripts/port-gate.ts) — run AFTER E4B pass (canaries would evict the resident model) |
 | Mac quality campaign (4 profiles × eligible rows) | pending — the long stage; resumable per request |
-| Scoring + reports + repro | pending |
+| Scoring + reports + repro | TOOLING DONE — metrics:compute, reports (7 Tier-1 docs), repro.sh rows, db:backup all live; final numbers land as campaigns complete |
 
 ## Next command
 
@@ -49,7 +49,8 @@ npm run quality:run -- --profile gemma-4-e4b-mlx --arm M1-packaged --campaign cp
 #    npm run quality:run -- --profile gemma-4-26b-a4b-mlx --arm M1-packaged --campaign mac-quality
 #    npm run quality:run -- --profile olmo-3.1-32b-mlx  --arm M1-packaged --campaign mac-quality
 #    npm run quality:run -- --profile muse-glimmer-30b-mlx --arm M1-packaged --campaign mac-quality
-# 5. anytime: npm run metrics:compute  (idempotent aggregate + claims)
+# 5. anytime: npm run metrics:compute && npm run reports   (idempotent)
+# 6. stage boundaries only: npm run db:backup
 ```
 
 ## Notes
