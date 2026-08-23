@@ -225,7 +225,7 @@ async function recoverIncompleteGateFixtures(pool: sql.ConnectionPool): Promise<
     DECLARE @recovered TABLE(work_item_id bigint NOT NULL,from_state varchar(40) NOT NULL);
     UPDATE item
     SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL,
-        next_attempt_at_utc=NULL,completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
+        completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
     OUTPUT INSERTED.work_item_id,DELETED.status INTO @recovered(work_item_id,from_state)
     FROM ops.work_items AS item
     INNER JOIN control.jobs AS job ON job.job_id=item.job_id
@@ -254,7 +254,7 @@ async function retireVerifiedGateRetries(pool: sql.ConnectionPool): Promise<numb
     DECLARE @retired TABLE(work_item_id bigint NOT NULL,from_state varchar(40) NOT NULL);
     UPDATE item
     SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL,
-        next_attempt_at_utc=NULL,completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
+        completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
     OUTPUT INSERTED.work_item_id,DELETED.status INTO @retired(work_item_id,from_state)
     FROM ops.work_items AS item
     INNER JOIN control.jobs AS job ON job.job_id=item.job_id

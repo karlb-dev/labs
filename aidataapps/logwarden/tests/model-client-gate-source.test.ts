@@ -6,5 +6,6 @@ describe("model-client SQL gate queue hygiene", () => {
     expect(source).toContain("await retireVerifiedGateRetries(pool)");
     expect(source).toContain("item.status='retryable_failure'");
     expect(source).toContain("synthetic fixture retired from shared queue");
+    expect(source).not.toContain("next_attempt_at_utc=NULL");
   });
 });

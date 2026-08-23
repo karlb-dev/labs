@@ -873,6 +873,12 @@ place and receive a later disposition.
   Impact: zero qwen-smoke model calls in this invocation; the 180 pending replay
   cells remain unchanged, while synthetic gate evidence and its state transition
   history remain retained.
+- 2026-08-23T10:20:00Z — The first queue-hygiene gate invocation stopped during
+  startup recovery because `ops.work_items.next_attempt_at_utc` is non-nullable.
+  Retirement now preserves that historical retry timestamp and changes only the
+  terminal disposition, completion time, and lease fields. Impact: no fixture,
+  agent, or model calls were created; the prior synthetic row remains available
+  for the corrected idempotent cleanup.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 
