@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 05:05 UTC
+Last manually updated: 2026-08-23 05:18 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -47,11 +47,11 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twenty hash-locked control migrations and six versioned
+- Twenty-two hash-locked control migrations and six versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 11
-  test files and 28 unit tests. The capture-specific XE predicate excludes
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 12
+  test files and 31 unit tests. The capture-specific XE predicate excludes
   agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -98,13 +98,24 @@ and its effect on the evidence ceiling must be recorded append-only in
   registry hash:
   `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
   The registry remains marked building/unfrozen until standard runbooks close.
+- The deterministic `primary-v1` knowledge corpus now contains 60 original
+  MIT-licensed guides and 480 heading-aware chunks across all ten classes, with
+  exact source/body/chunk hashes and zero lab-identifier leakage findings.
+  Full-text indexes both headings and content; all 11 restricted-agent lexical
+  canaries retrieved the intended family. Manifest/build/gate hashes are
+  `b734ba4c05ff3e548b779b1f9718e8956e4f0f9bb45a8246492664f88a0e66df`,
+  `d8b6b81aff2811460fdee6a5469ceb69540381720ceaf9f961af7c149e2f2d79`,
+  and `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
+  The corpus remains unfrozen pending Qwen embeddings, hybrid retrieval, and
+  the standard scenario leakage audit.
 - Current doctor snapshot:
-  `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34`
+  `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`
   (`PASS`); SQL integration receipt:
-  `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655`
+  `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`
   (8/8).
-- Next incomplete milestone: supported incident catalog and runbook
-  expansion/freeze, then the read-only tool gateway and bounded agent loop. A
+- Next incomplete milestone: the 60-template/600-variant supported incident
+  catalog and its missing deadlock/blocking/log-full injectors, followed by
+  Qwen embeddings, hybrid retrieval, and the bounded agent loop. A
   small embedding or qwen-smoke port may then load
   for the remaining real `/metrics` gate; no long chat campaign may load yet.
 
@@ -169,10 +180,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34` (`PASS`)
-- SQL integration receipt: `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655` (8/8 passed)
-- Last durable Git checkpoint: `7607761` (ERRORLOG rotation watchdog handoff);
-  restart recovery and the least-privilege tool layer are being committed now
+- Capability snapshot: `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db` (`PASS`)
+- SQL integration receipt: `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae` (8/8 passed)
+- Last durable Git checkpoint: `9b9d570` (recovery/tool security watchdog
+  handoff); the lexical runbook layer is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -196,8 +207,9 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the supported incident catalog and runbook freeze followed
-by the bounded tool gateway/agent loop; do not load a long-running model until
+this checkpoint is the supported incident catalog and missing injectors,
+followed by Qwen embeddings and the bounded tool gateway/agent loop; do not
+load a long-running model until
 the remaining real-service observability gate can run. If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.

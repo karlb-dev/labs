@@ -1,0 +1,1606 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "primary-v1",
+  "corpusVersion": "runbooks-v1",
+  "corpusKind": "primary",
+  "license": "MIT",
+  "sourceCheckedAt": "2026-08-23T00:00:00.000Z",
+  "runbooks": [
+    {
+      "runbookId": "TSG-DLK-01",
+      "title": "Deadlock: recognition and first response",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-02\n- TSG-DLK-03\n- TSG-DLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "first_response",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DLK-02",
+      "title": "Deadlock: recurrence and rate context",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-01\n- TSG-DLK-03\n- TSG-DLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "recurrence",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DLK-03",
+      "title": "Deadlock: diagnostic discriminators",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-01\n- TSG-DLK-02\n- TSG-DLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "discrimination",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DLK-04",
+      "title": "Deadlock: safe stabilization policy",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-01\n- TSG-DLK-02\n- TSG-DLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "stabilization",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DLK-05",
+      "title": "Deadlock: escalation evidence package",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-01\n- TSG-DLK-02\n- TSG-DLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "escalation",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DLK-06",
+      "title": "Deadlock: near misses and no-action boundary",
+      "incidentClass": "deadlock",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-deadlocks-guide?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Deadlock: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers cyclic lock dependencies in which SQL Server selects a victim so other work can continue. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- an xml_deadlock_report with a closed resource cycle.\n- error 1205 on a participating request.\n- the same statements or resources recur in multiple graphs.\n\n## Signals that contradict this diagnosis\n\n- a one-way blocking chain with no cycle.\n- a client timeout without a deadlock graph.\n- deadlock-like words only in application text.\n\n## Safe diagnostic steps\n\n1. summarize the graph and identify the victim, processes, resources, isolation levels, and statement hashes.\n2. compare recurrence counts before treating one victim as a storm.\n3. confirm retry behavior and transaction ordering from application telemetry.\n\n## Recommended action policy\n\n- retry only the failed transaction with bounded backoff when the operation is idempotent.\n- make competing transactions access resources in a consistent order.\n- shorten transactions and add only evidence-supported indexing or query changes.\n\n## Escalation conditions\n\n- graphs recur after an application or query change.\n- victim selection affects critical or non-idempotent work.\n\n## What not to do\n\n- killing every session named in a historical graph.\n- assuming all blocking is a deadlock.\n\n## Related runbooks\n\n- TSG-DLK-01\n- TSG-DLK-02\n- TSG-DLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "deadlock",
+        "angle": "near_miss",
+        "keywords": [
+          "deadlock",
+          "victim",
+          "cycle",
+          "lock",
+          "1205",
+          "xml_deadlock_report",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-01",
+      "title": "Blocking and waits: recognition and first response",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-02\n- TSG-BLK-03\n- TSG-BLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "first_response",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-02",
+      "title": "Blocking and waits: recurrence and rate context",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-01\n- TSG-BLK-03\n- TSG-BLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "recurrence",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-03",
+      "title": "Blocking and waits: diagnostic discriminators",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-01\n- TSG-BLK-02\n- TSG-BLK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "discrimination",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-04",
+      "title": "Blocking and waits: safe stabilization policy",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-01\n- TSG-BLK-02\n- TSG-BLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "stabilization",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-05",
+      "title": "Blocking and waits: escalation evidence package",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-01\n- TSG-BLK-02\n- TSG-BLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "escalation",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BLK-06",
+      "title": "Blocking and waits: near misses and no-action boundary",
+      "incidentClass": "blocking",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/understand-resolve-blocking",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Blocking and waits: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers lock waits where one head blocker delays one or more sessions without a resource cycle. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- blocked-process evidence or a nonzero blocking_session_id.\n- waiters remain behind the same head blocker beyond the threshold.\n- an open or sleeping transaction retains locks.\n\n## Signals that contradict this diagnosis\n\n- brief blocking below the governed threshold.\n- CPU-bound execution with no blocker.\n- a closed deadlock cycle with a selected victim.\n\n## Safe diagnostic steps\n\n1. capture the bounded blocking chain and locate the head blocker.\n2. inspect open-transaction state and request age without exposing arbitrary SQL text.\n3. distinguish an active long query from an idle session retaining a transaction.\n\n## Recommended action policy\n\n- let a known short transaction finish when impact is bounded.\n- shorten the transaction or correct application fetch and commit behavior.\n- tune the evidenced head-blocking query after preserving diagnostics.\n\n## Escalation conditions\n\n- blocking is sustained, widespread, or repeatedly breaches the objective.\n- terminating a session would risk business consistency.\n\n## What not to do\n\n- terminating a blocker from one snapshot alone.\n- treating normal short lock waits as incidents.\n\n## Related runbooks\n\n- TSG-BLK-01\n- TSG-BLK-02\n- TSG-BLK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "blocking_waits",
+        "angle": "near_miss",
+        "keywords": [
+          "blocking",
+          "head blocker",
+          "waiter",
+          "LCK_M",
+          "open transaction",
+          "timeout",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-01",
+      "title": "Transaction log space: recognition and first response",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-02\n- TSG-LOG-03\n- TSG-LOG-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "first_response",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-02",
+      "title": "Transaction log space: recurrence and rate context",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-01\n- TSG-LOG-03\n- TSG-LOG-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "recurrence",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-03",
+      "title": "Transaction log space: diagnostic discriminators",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-01\n- TSG-LOG-02\n- TSG-LOG-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "discrimination",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-04",
+      "title": "Transaction log space: safe stabilization policy",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-01\n- TSG-LOG-02\n- TSG-LOG-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "stabilization",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-05",
+      "title": "Transaction log space: escalation evidence package",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-01\n- TSG-LOG-02\n- TSG-LOG-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "escalation",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-LOG-06",
+      "title": "Transaction log space: near misses and no-action boundary",
+      "incidentClass": "transaction_log_full",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-9002-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Transaction log space: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers transaction log exhaustion, growth pressure, and truncation holdup diagnosis including error 9002. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 9002 names a database and log reuse cause.\n- active log percentage is near the configured file limit.\n- log truncation is held by an active transaction, backup, replica, or recovery condition.\n\n## Signals that contradict this diagnosis\n\n- data-file growth without log pressure.\n- healthy log usage with no 9002 or sustained growth.\n- a generic disk warning for another service.\n\n## Safe diagnostic steps\n\n1. read bounded log size and truncation-holdup state for the named database.\n2. inspect active transactions when ACTIVE_TRANSACTION holds reuse.\n3. check backup history when LOG_BACKUP is the reuse reason.\n\n## Recommended action policy\n\n- restore truncation by resolving the evidenced holdup.\n- take a governed log backup when the recovery model and policy require one.\n- plan capacity or controlled file growth after immediate pressure is safe.\n\n## Escalation conditions\n\n- the log cannot grow and write availability is affected.\n- the holdup involves availability, replication, recovery, or an unknown long transaction.\n\n## What not to do\n\n- shrinking the log as a routine fix.\n- switching recovery models or deleting log files without an approved recovery plan.\n\n## Related runbooks\n\n- TSG-LOG-01\n- TSG-LOG-02\n- TSG-LOG-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "transaction_log_space",
+        "angle": "near_miss",
+        "keywords": [
+          "transaction log",
+          "9002",
+          "log full",
+          "log reuse wait",
+          "active transaction",
+          "log backup",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-01",
+      "title": "Authentication and database access: recognition and first response",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-02\n- TSG-AUT-03\n- TSG-AUT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "first_response",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-02",
+      "title": "Authentication and database access: recurrence and rate context",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-01\n- TSG-AUT-03\n- TSG-AUT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "recurrence",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-03",
+      "title": "Authentication and database access: diagnostic discriminators",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-01\n- TSG-AUT-02\n- TSG-AUT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "discrimination",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-04",
+      "title": "Authentication and database access: safe stabilization policy",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-01\n- TSG-AUT-02\n- TSG-AUT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "stabilization",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-05",
+      "title": "Authentication and database access: escalation evidence package",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-01\n- TSG-AUT-02\n- TSG-AUT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "escalation",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-AUT-06",
+      "title": "Authentication and database access: near misses and no-action boundary",
+      "incidentClass": "authentication_failure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-18456-database-engine-error?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Authentication and database access: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers rejected login and database-access attempts, including error 18456 state context. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- error 18456 appears in Extended Events and the SQL error log.\n- the protected error-log state narrows the rejection stage.\n- many accounts or clients fail within a short interval.\n\n## Signals that contradict this diagnosis\n\n- a successful login or completed recovery message.\n- a query permission denial after authentication.\n- a connection timeout before a server login response.\n\n## Safe diagnostic steps\n\n1. count recent failures by bounded class and time window.\n2. compare the state and client pattern without returning secrets.\n3. check whether the intended database is online and the login mapping is valid.\n\n## Recommended action policy\n\n- correct the credential, authentication mode, default database, or user mapping indicated by evidence.\n- rotate or unlock credentials through the authorized identity workflow.\n- treat broad bursts as a security signal and preserve source context.\n\n## Escalation conditions\n\n- failures span many accounts or originate from an unexpected client pattern.\n- the state is unavailable, conflicting, or suggests a system-wide access problem.\n\n## What not to do\n\n- returning passwords, hashes, or full connection strings.\n- granting broad roles merely to clear a login failure.\n\n## Related runbooks\n\n- TSG-AUT-01\n- TSG-AUT-02\n- TSG-AUT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "authentication_access",
+        "angle": "near_miss",
+        "keywords": [
+          "login failed",
+          "18456",
+          "authentication",
+          "state",
+          "default database",
+          "credential",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-01",
+      "title": "Integrity signals: recognition and first response",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-02\n- TSG-INT-03\n- TSG-INT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "first_response",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-02",
+      "title": "Integrity signals: recurrence and rate context",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-01\n- TSG-INT-03\n- TSG-INT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "recurrence",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-03",
+      "title": "Integrity signals: diagnostic discriminators",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-01\n- TSG-INT-02\n- TSG-INT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "discrimination",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-04",
+      "title": "Integrity signals: safe stabilization policy",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-01\n- TSG-INT-02\n- TSG-INT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "stabilization",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-05",
+      "title": "Integrity signals: escalation evidence package",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-01\n- TSG-INT-02\n- TSG-INT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "escalation",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-INT-06",
+      "title": "Integrity signals: near misses and no-action boundary",
+      "incidentClass": "integrity_signal",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-checkdb-transact-sql?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Integrity signals: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers credible consistency, allocation, checksum, or corruption-like evidence that requires conservative handling. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a logged engine integrity error or repeatable CHECKDB finding.\n- page, allocation, or checksum evidence identifies a concrete database.\n- independent storage or I/O evidence supports the signal.\n\n## Signals that contradict this diagnosis\n\n- warning-like text in user data.\n- one lab-authored ambiguous message without engine evidence.\n- a clean read-only consistency check for the same database.\n\n## Safe diagnostic steps\n\n1. preserve the exact error and affected database before any change.\n2. run only approved read-only consistency diagnostics or restore verification.\n3. check backup viability and related I/O evidence.\n\n## Recommended action policy\n\n- escalate and protect the evidence chain.\n- prefer restore from a known good verified backup over ad hoc repair.\n- isolate affected workload only through an approved incident procedure.\n\n## Escalation conditions\n\n- any confirmed engine consistency failure.\n- evidence is incomplete but data durability could be at risk.\n\n## What not to do\n\n- running repair with data loss automatically.\n- modifying pages, files, or metadata to make an alert disappear.\n\n## Related runbooks\n\n- TSG-INT-01\n- TSG-INT-02\n- TSG-INT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "integrity_signal",
+        "angle": "near_miss",
+        "keywords": [
+          "integrity",
+          "consistency",
+          "checksum",
+          "allocation",
+          "DBCC CHECKDB",
+          "corruption",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-01",
+      "title": "Backup, restore, and recovery: recognition and first response",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-02\n- TSG-BAK-03\n- TSG-BAK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "first_response",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-02",
+      "title": "Backup, restore, and recovery: recurrence and rate context",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-01\n- TSG-BAK-03\n- TSG-BAK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "recurrence",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-03",
+      "title": "Backup, restore, and recovery: diagnostic discriminators",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-01\n- TSG-BAK-02\n- TSG-BAK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "discrimination",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-04",
+      "title": "Backup, restore, and recovery: safe stabilization policy",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-01\n- TSG-BAK-02\n- TSG-BAK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "stabilization",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-05",
+      "title": "Backup, restore, and recovery: escalation evidence package",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-01\n- TSG-BAK-02\n- TSG-BAK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "escalation",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-BAK-06",
+      "title": "Backup, restore, and recovery: near misses and no-action boundary",
+      "incidentClass": "backup_restore_failure",
+      "severityFloor": "high",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/backup-restore/backup-restore-operations",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Backup, restore, and recovery: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers failed, stale, slow, or invalid backup and restore operations. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a backup operation records failure or cannot open its destination.\n- backup history shows repeated failures or an objective breach.\n- restore verification or media checks report a concrete problem.\n\n## Signals that contradict this diagnosis\n\n- a successful recent backup with matching verification.\n- an unrelated application file error.\n- a planned restore still making bounded progress.\n\n## Safe diagnostic steps\n\n1. inspect bounded backup-attempt history and recency.\n2. separate destination permission, capacity, media, and throughput causes.\n3. verify candidate media with approved header, checksum, or restore tests.\n\n## Recommended action policy\n\n- correct the destination or service-account access and retry through the governed job.\n- create a new checksum backup when policy permits.\n- use another verified backup set when media is invalid.\n\n## Escalation conditions\n\n- the recovery objective is or will be missed.\n- no verified recoverable backup remains.\n\n## What not to do\n\n- overwriting the only candidate backup.\n- claiming recoverability from job success without restore verification.\n\n## Related runbooks\n\n- TSG-BAK-01\n- TSG-BAK-02\n- TSG-BAK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "backup_restore_recovery",
+        "angle": "near_miss",
+        "keywords": [
+          "backup",
+          "restore",
+          "3201",
+          "media",
+          "checksum",
+          "recovery objective",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-01",
+      "title": "Query and resource pressure: recognition and first response",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-02\n- TSG-QRY-03\n- TSG-QRY-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "first_response",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-02",
+      "title": "Query and resource pressure: recurrence and rate context",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-01\n- TSG-QRY-03\n- TSG-QRY-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "recurrence",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-03",
+      "title": "Query and resource pressure: diagnostic discriminators",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-01\n- TSG-QRY-02\n- TSG-QRY-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "discrimination",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-04",
+      "title": "Query and resource pressure: safe stabilization policy",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-01\n- TSG-QRY-02\n- TSG-QRY-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "stabilization",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-05",
+      "title": "Query and resource pressure: escalation evidence package",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-01\n- TSG-QRY-02\n- TSG-QRY-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "escalation",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-QRY-06",
+      "title": "Query and resource pressure: near misses and no-action boundary",
+      "incidentClass": "query_resource_pressure",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/troubleshoot/sql/database-engine/performance/troubleshoot-slow-running-queries",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Query and resource pressure: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers slow, CPU-intensive, memory-grant, I/O, and client-timeout query symptoms. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- bounded query telemetry shows high CPU, reads, duration, or waits.\n- an attention event follows work near the client timeout.\n- RESOURCE_SEMAPHORE or a related resource wait is sustained.\n\n## Signals that contradict this diagnosis\n\n- the request is waiting only behind a known lock blocker.\n- one bounded analytical query completes within its objective.\n- host pressure originates outside SQL Server.\n\n## Safe diagnostic steps\n\n1. separate running time from resource wait time.\n2. identify the stable query hash and compare recent executions.\n3. check whether CPU, memory-grant, I/O, or client consumption is the dominant dimension.\n\n## Recommended action policy\n\n- tune the evidenced query, statistics, indexing, or parameter behavior.\n- reduce unsafe concurrency or move noncritical analytical work.\n- align client timeout only after addressing server-side work.\n\n## Escalation conditions\n\n- pressure affects broad service availability.\n- the cause remains ambiguous across SQL, host, and application evidence.\n\n## What not to do\n\n- adding indexes or hints without plan and workload evidence.\n- confusing a connection timeout with a query timeout.\n\n## Related runbooks\n\n- TSG-QRY-01\n- TSG-QRY-02\n- TSG-QRY-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "query_resource_pressure",
+        "angle": "near_miss",
+        "keywords": [
+          "query pressure",
+          "high CPU",
+          "RESOURCE_SEMAPHORE",
+          "memory grant",
+          "attention",
+          "timeout",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-01",
+      "title": "Schema and data errors: recognition and first response",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-02\n- TSG-DAT-03\n- TSG-DAT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "first_response",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-02",
+      "title": "Schema and data errors: recurrence and rate context",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-01\n- TSG-DAT-03\n- TSG-DAT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "recurrence",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-03",
+      "title": "Schema and data errors: diagnostic discriminators",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-01\n- TSG-DAT-02\n- TSG-DAT-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "discrimination",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-04",
+      "title": "Schema and data errors: safe stabilization policy",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-01\n- TSG-DAT-02\n- TSG-DAT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "stabilization",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-05",
+      "title": "Schema and data errors: escalation evidence package",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-01\n- TSG-DAT-02\n- TSG-DAT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "escalation",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-DAT-06",
+      "title": "Schema and data errors: near misses and no-action boundary",
+      "incidentClass": "schema_data_error",
+      "severityFloor": "medium",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/database-engine-events-and-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Schema and data errors: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers conversion, constraint, missing-object, truncation, and related deterministic statement failures. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- a stable engine error identifies conversion, object, constraint, or length failure.\n- the same application path repeats the same normalized signature.\n- deployment or input-schema context aligns with the error.\n\n## Signals that contradict this diagnosis\n\n- a deadlock victim or timeout is the only failure.\n- warning-like text appears only in a payload.\n- the object exists and a different permission error is recorded.\n\n## Safe diagnostic steps\n\n1. preserve the error number, state, object-neutral signature, and application boundary.\n2. compare expected and actual types, lengths, constraints, or deployment versions.\n3. measure recurrence before choosing incident severity.\n\n## Recommended action policy\n\n- correct input validation, schema compatibility, or deployment ordering.\n- handle duplicate operations idempotently where business rules allow.\n- route unknown or conflicting signatures to human review.\n\n## Escalation conditions\n\n- failures follow a deployment across many requests.\n- the correct schema contract or data owner is unclear.\n\n## What not to do\n\n- dropping constraints to accept bad data.\n- exposing literal customer values in work items.\n\n## Related runbooks\n\n- TSG-DAT-01\n- TSG-DAT-02\n- TSG-DAT-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "schema_data_error",
+        "angle": "near_miss",
+        "keywords": [
+          "conversion",
+          "constraint",
+          "missing object",
+          "truncation",
+          "245",
+          "2627",
+          "2628",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-01",
+      "title": "Unknown and ambiguous evidence: recognition and first response",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-02\n- TSG-UNK-03\n- TSG-UNK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "first_response",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-02",
+      "title": "Unknown and ambiguous evidence: recurrence and rate context",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-01\n- TSG-UNK-03\n- TSG-UNK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "recurrence",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-03",
+      "title": "Unknown and ambiguous evidence: diagnostic discriminators",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-01\n- TSG-UNK-02\n- TSG-UNK-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "discrimination",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-04",
+      "title": "Unknown and ambiguous evidence: safe stabilization policy",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-01\n- TSG-UNK-02\n- TSG-UNK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "stabilization",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-05",
+      "title": "Unknown and ambiguous evidence: escalation evidence package",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-01\n- TSG-UNK-02\n- TSG-UNK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "escalation",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-UNK-06",
+      "title": "Unknown and ambiguous evidence: near misses and no-action boundary",
+      "incidentClass": "unknown_ambiguous",
+      "severityFloor": "low",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/errors-events/understanding-database-engine-errors?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Unknown and ambiguous evidence: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers unsupported, incomplete, masked, truncated, or contradictory incident evidence. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- required identifiers or signatures are missing.\n- event fields conflict with the surrounding context.\n- the event family is outside the frozen catalog.\n\n## Signals that contradict this diagnosis\n\n- a complete supported signature and required diagnostics agree.\n- a known benign event matches its no-action policy.\n- only the numeric signature was masked but other evidence is decisive.\n\n## Safe diagnostic steps\n\n1. state exactly which evidence is missing or contradictory.\n2. use only bounded diagnostics relevant to the plausible families.\n3. preserve uncertainty and return a deterministic no-data result when snapshots are absent.\n\n## Recommended action policy\n\n- abstain and escalate to a human with a concise evidence gap.\n- request a supported observation path rather than inventing detail.\n- classify only when the frozen contract has enough evidence.\n\n## Escalation conditions\n\n- uncertainty overlaps a high-impact integrity or availability risk.\n- the signal remains unsupported after allowed diagnostics.\n\n## What not to do\n\n- guessing a specific root cause from generic text.\n- citing a runbook that was not retrieved.\n\n## Related runbooks\n\n- TSG-UNK-01\n- TSG-UNK-02\n- TSG-UNK-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "unknown_ambiguous",
+        "angle": "near_miss",
+        "keywords": [
+          "unknown",
+          "ambiguous",
+          "conflicting evidence",
+          "truncated",
+          "unsupported",
+          "human review",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-01",
+      "title": "Benign activity and near misses: recognition and first response",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: recognition and first response\n\n## Scope\n\nConfirm the incident shape before proposing any change. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-02\n- TSG-NOI-03\n- TSG-NOI-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "first_response",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "recognition",
+          "and",
+          "first",
+          "response"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-02",
+      "title": "Benign activity and near misses: recurrence and rate context",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: recurrence and rate context\n\n## Scope\n\nSeparate an isolated occurrence from a repeated or spreading condition. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-01\n- TSG-NOI-03\n- TSG-NOI-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "recurrence",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "recurrence",
+          "and",
+          "rate",
+          "context"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-03",
+      "title": "Benign activity and near misses: diagnostic discriminators",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: diagnostic discriminators\n\n## Scope\n\nUse supporting and contradicting evidence to distinguish confusable causes. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-01\n- TSG-NOI-02\n- TSG-NOI-04\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "discrimination",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "diagnostic",
+          "discriminators"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-04",
+      "title": "Benign activity and near misses: safe stabilization policy",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: safe stabilization policy\n\n## Scope\n\nChoose the least invasive evidence-backed action while preserving diagnostics. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-01\n- TSG-NOI-02\n- TSG-NOI-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "stabilization",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "safe",
+          "stabilization",
+          "policy"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-05",
+      "title": "Benign activity and near misses: escalation evidence package",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: escalation evidence package\n\n## Scope\n\nCollect a bounded, privacy-preserving record that makes human review efficient. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-01\n- TSG-NOI-02\n- TSG-NOI-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "escalation",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "escalation",
+          "evidence",
+          "package"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    },
+    {
+      "runbookId": "TSG-NOI-06",
+      "title": "Benign activity and near misses: near misses and no-action boundary",
+      "incidentClass": "benign_noise",
+      "severityFloor": "info",
+      "sourceUri": "https://learn.microsoft.com/en-us/sql/relational-databases/extended-events/extended-events?view=sql-server-ver17",
+      "sourceKind": "original_mit_official_reference",
+      "bodyMarkdown": "# Benign activity and near misses: near misses and no-action boundary\n\n## Scope\n\nAvoid false alarms when the signature, duration, or impact threshold is not met. This guide covers successful, duplicated, subthreshold, or text-only events that should not create an incident. It is diagnostic guidance, not permission to mutate a database or host.\n\n## Signals that support this diagnosis\n\n- the operation completed successfully.\n- blocking or resource use stayed below the frozen threshold.\n- the same source-position key is a replay duplicate.\n\n## Signals that contradict this diagnosis\n\n- required failure evidence is independently verified.\n- a sustained threshold breach affects requests.\n- multiple sources corroborate a high-severity signal.\n\n## Safe diagnostic steps\n\n1. confirm source identity and deduplication before counting an alert.\n2. compare duration and recurrence with frozen thresholds.\n3. check that warning-like text is payload content rather than an engine event.\n\n## Recommended action policy\n\n- take no action and retain the observation for audit.\n- suppress exact duplicates idempotently.\n- reclassify only if later evidence crosses the frozen threshold.\n\n## Escalation conditions\n\n- a supposedly benign pattern develops sustained impact.\n- source identity or success status cannot be verified.\n\n## What not to do\n\n- opening work for every successful completion.\n- discarding raw evidence needed to prove suppression.\n\n## Related runbooks\n\n- TSG-NOI-01\n- TSG-NOI-02\n- TSG-NOI-03\n",
+      "metadata": {
+        "license": "MIT",
+        "family": "benign_noise",
+        "angle": "near_miss",
+        "keywords": [
+          "benign",
+          "noise",
+          "duplicate",
+          "success",
+          "subthreshold",
+          "no action",
+          "near",
+          "misses",
+          "and",
+          "no-action",
+          "boundary"
+        ],
+        "sourceCheckedAt": "2026-08-23T00:00:00.000Z"
+      }
+    }
+  ]
+}

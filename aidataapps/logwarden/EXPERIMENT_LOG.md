@@ -287,3 +287,35 @@ place and receive a later disposition.
   and the 28 unit tests still passed. This supersedes the prior development
   tool-gate receipt without changing data, tools, prompts, or outcomes; impact
   is a strictly narrower runtime privilege boundary.
+- 2026-08-23T05:18:38Z — Built the unfrozen `primary-v1` knowledge corpus from
+  deterministic source: 60 original MIT-licensed troubleshooting guides (six
+  perspectives for each governed incident class), 480 heading-aware chunks,
+  official Microsoft reference URLs checked on 2026-08-23, exact source/body/
+  chunk hashes, and zero lab-identifier, synthetic-number, or correlation-token
+  leakage findings. Corpus file hash is
+  `cb465736137b45b466aff4d89ec1f89f377039dec49e732301e66f87174e6f3c`,
+  manifest hash is
+  `b734ba4c05ff3e548b779b1f9718e8956e4f0f9bb45a8246492664f88a0e66df`,
+  and build receipt is
+  `d8b6b81aff2811460fdee6a5469ceb69540381720ceaf9f961af7c149e2f2d79`.
+  The manifest is attached to the mutable campaign but remains deliberately
+  unfrozen until embeddings, hybrid retrieval, and the standard scenario
+  leakage audit pass.
+- 2026-08-23T05:18:38Z — The first post-insert population wait used the wrong
+  full-text catalog identifier and timed out after 60 seconds even though SQL's
+  crawl had completed; it wrote no readiness receipt and did not change corpus
+  rows. Review also found that feasibility migration 011 indexed content but
+  not `heading_path`, contrary to the governing K-1 contract. Forward
+  non-transactional migration 021 rebuilt the index over both columns, and
+  migration 022 made the bounded search procedure query both. The corrected
+  population gate observed status 0 and 483 indexed items (480 primary chunks
+  plus three retained synthetic development-gate chunks). Eleven agent-login
+  canaries retrieved the intended family, including punctuation and numeric
+  input; receipt
+  `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
+  Impact: monitoring and retrieval-contract correctness before freeze; no
+  embedding, model, packet, or scored result was affected. Doctor snapshot
+  `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`,
+  SQL integration receipt
+  `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`,
+  and 31 unit tests in 12 files all pass.
