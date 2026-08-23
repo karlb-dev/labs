@@ -12,6 +12,7 @@
     "run:init": "node --import tsx scripts/run-init.ts",
     "mac:model": "node --import tsx scripts/mac-model.ts",
     "mac:eval": "node --import tsx scripts/mac-eval.ts",
+    "mac:report": "node --import tsx scripts/mac-eval-report.ts",
     "models:sync": "node --import tsx scripts/sync-model-registry.ts",
     "doctor": "node --import tsx scripts/doctor.ts",
     "db:setup": "node --import tsx scripts/setup-database.ts",

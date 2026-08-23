@@ -43,6 +43,29 @@ npm run mac:model -- down          # unload models, stop the daemon
 downloads/loads the profile, runs a deterministic canary (temperature 0), and
 writes `environment/mac-serving-<profile>.json` into the current run.
 
+## Bench and report
+
+`npm run mac:eval -- --profile <key>` runs the frozen 16-episode triage bench
+(`config/mac-eval-episodes.json`) against one profile and writes row-level
+transcripts (`tables/mac-eval/<key>.jsonl`) and summary metrics
+(`metrics/mac-eval-<key>.json`) into the current run. Profiles with a
+`baseUrl` (e.g. the MLX-served Gemma) use that external OpenAI-compatible
+endpoint instead of Foundry.
+
+`npm run mac:report` renders `reports/mac-eval-bench.html` in the run
+directory from those retained rows (§28.5 discipline: every number is
+computed from rows, never hand-entered). The prose comes from a narrative
+JSON — verdict, tiles, ledes, dossiers, caveats, model display order and
+palette slots — resolved from `--narrative <path>`, then
+`reports/mac-eval-narrative.json` in the run, then
+`templates/mac-eval-narrative.example.json` (the 2026-08-23 bench narrative,
+kept as a worked example). The page template is
+`templates/mac-eval-bench.template.html`; the merged data blob is also
+written to `reports/mac-eval-bench-data.json` for inspection. A committed
+snapshot of the first bench lives at `docs/reports/mac-eval-bench-20260823.html`.
+The same flow works on Colab: run evals, author a narrative JSON, run
+`mac:report`.
+
 ## Serving registry
 
 `config/models.mac.json` (loaded by `src/models-mac.ts`) pins mac profiles by

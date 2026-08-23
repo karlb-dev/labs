@@ -1,0 +1,110 @@
+{
+  "eyebrow": "aidataapps · lab 03 · mac plane · development evidence",
+  "title": "LogWarden Mac Bench",
+  "subtitle": "Six local models auditioning for LogWarden's incident-triage agent on an M4 Max — Foundry Local ONNX arms, Karl's Muse Glimmer conversion, and an MLX-served Gemma 4 — scored on sixteen frozen SQL Server incident episodes under the lab's structured-JSON transport.",
+  "meta": [
+    "2026-08-22 · MacBook Pro M4 Max · 48 GB",
+    "foundry local 0.10.3 · :8010 · mlx_lm 0.31.3 · :8020",
+    "episodes mac-eval-v1 · temp 0",
+    "run logwarden-smoke-20260823T041027Z"
+  ],
+  "display": [
+    { "profileKey": "qwen3-4b-foundry", "name": "qwen3-4b", "slot": 1, "runtime": "Foundry ONNX" },
+    { "profileKey": "qwen3-8b-foundry", "name": "qwen3-8b", "slot": 2, "runtime": "Foundry ONNX" },
+    { "profileKey": "olmo-3-7b-foundry", "name": "OLMo 3 7B", "slot": 3, "runtime": "Foundry ONNX" },
+    { "profileKey": "qwen2.5-0.5b-foundry", "name": "qwen2.5-0.5b", "slot": 4, "runtime": "Foundry ONNX" },
+    { "profileKey": "muse-glimmer-30b-foundry", "name": "Muse Glimmer 30B", "slot": 5, "runtime": "Foundry ONNX (custom cache)" },
+    { "profileKey": "gemma-4-e4b-mlx", "name": "Gemma 4 E4B", "slot": 6, "runtime": "MLX 4-bit" }
+  ],
+  "verdict": [
+    "<strong><span class=\"chip\" style=\"background:var(--s5)\"></span>Muse Glimmer 30B — your ONNX conversion — is the best triage brain on this Mac, and about 25× too slow to be the only one.</strong> Given the reasoning budget the Lab 03 addendum sanctions (max_tokens 1400) and a final-channel parser, it scores a perfect 16/16 on incident class, a perfect 16/16 on the action rubric no other model can follow, 87.5% exact-triple, and flawless tool discipline — at 52 seconds per episode.",
+    "The workhorse slot went to a late entrant: <span class=\"chip\" style=\"background:var(--s6)\"></span><strong>Gemma 4 E4B</strong> (MLX 4-bit, added after the Foundry catalog turned out to carry no Gemma) posts 75% exact-triple — second only to Muse — with 100% first-pass-clean JSON, perfect tool discipline, and the fastest usable decode on the bench at 71 tok/s. Behind it, <span class=\"chip\" style=\"background:var(--s2)\"></span><strong>qwen3-8b</strong> and <span class=\"chip\" style=\"background:var(--s3)\"></span><strong>OLMo 3 7B</strong> remain solid arms, <span class=\"chip\" style=\"background:var(--s1)\"></span><strong>qwen3-4b</strong> is the fast smoke arm, and <strong>Muse fits as the reference arm on a control subset</strong> (96 episodes ≈ 1.4 h; a full 600-episode arm ≈ 8.7 h overnight). <span class=\"chip\" style=\"background:var(--s4)\"></span><strong>qwen2.5-0.5b</strong> confirmed the floor: fluent JSON shapes, no agent behavior. Gemma 4 12B stays untested — every MLX conversion declares the <span class=\"mono\">gemma4_unified</span> architecture, which mlx-lm does not support yet.",
+    "Two findings worth carrying into the replay campaign: the catalog models over-escalate severity-high incidents against the action rubric (Muse and E4B prove the rubric is followable, so that is small-model capability, not contract ambiguity) — and E4B's one real flaw is abstention: it confidently dismissed the unknown-signal episode as no_incident, the exact failure an incident agent must not make. Watch it on the unknown regime before trusting it unsupervised."
+  ],
+  "tiles": [
+    { "lab": "Best judgment", "val": "87.5%", "sub": "<span class=\"chip\" style=\"background:var(--s5)\"></span>Muse Glimmer 30B — exact triple; 100% class, 100% action, perfect tools" },
+    { "lab": "Best small-model arm", "val": "75%", "sub": "<span class=\"chip\" style=\"background:var(--s6)\"></span>Gemma 4 E4B — exact triple at 71 tok/s and 100% first-pass JSON; next best small model 50%" },
+    { "lab": "Speed spread", "val": "12×", "sub": "4.5 s/episode (<span class=\"chip\" style=\"background:var(--s6)\"></span>E4B) to 52 s (<span class=\"chip\" style=\"background:var(--s5)\"></span>Muse) for the top two decision-makers" }
+  ],
+  "scoreboard": {
+    "title": "All sixteen episodes, one resident model at a time",
+    "lede": "Accuracy columns score the final decision against frozen ground truth; contract columns score every model turn against the transport rule \"exactly one JSON object, nothing else.\" Tool columns cover the four episodes whose packet names a required diagnostic. Best value per column in green."
+  },
+  "quality": {
+    "title": "Where each model's judgment holds and slips",
+    "lede": "Class = what happened; severity = how bad; action = what to do about it. Every model finds the incident more reliably than it follows the action rubric. The Foundry catalog models' misses skew one way — severity-high incidents get escalated where the rubric reserves escalation for corruption, security, and unknowns — while Muse and Gemma 4 E4B track the rubric closely."
+  },
+  "scatter": {
+    "title": "Quality has a price axis",
+    "lede": "Exact-triple accuracy against decode speed (log scale). Point area tracks on-disk model size. Muse holds the top-left: best decisions, slowest pace. Gemma 4 E4B breaks the expected tradeoff — near-Muse decisions at the fastest usable speed on the bench. The 0.5B proves speed alone is worthless."
+  },
+  "grid": {
+    "title": "Sixteen episodes, six models",
+    "lede": "✓ exact triple · ◐ right class, wrong severity or action · ✗ wrong class · ∅ no decision produced. ⚙ marks episodes requiring a tool round-trip before deciding."
+  },
+  "dossierTitle": "Signature behaviors, verbatim",
+  "dossiers": [
+    { "key": "gemma-4-e4b-mlx", "title": "Gemma 4 E4B — the late-entrant workhorse", "facts": "3.6 GB · 71.1 tok/s · MLX 4-bit via mlx_lm.server",
+      "body": "75% exact-triple, 100% first-pass-clean JSON, perfect tool discipline, fastest usable decode — the small-model bracket isn't close. Its one real flaw is the dangerous kind: it confidently dismissed the unknown-signal episode as no_incident instead of abstaining and escalating. Different runtime and quantization than the Foundry arms; disclosed, and worth re-checking once a Foundry ONNX Gemma exists.",
+      "snip": "{\"kind\":\"decision\",\"incidentClass\":\"no_incident\",\"severity\":\"low\",\n \"action\":\"no_action\",\"rationale\":\"Application-defined error ... not\n related to core SQL Server infrastructure.\"}  ← ep15: should abstain" },
+    { "key": "qwen3-8b-foundry", "title": "qwen3-8b — the catalog stalwart", "facts": "6.0 GB · 27.6 tok/s · load 25.5 s",
+      "body": "Best exact-triple among the Foundry catalog models (50%) and the best catalog rubric-follower (75% action). Its one tool blemish is instructive: on ep11 it answered log_full correctly without running the required diagnostic — right answer, docked credit, exactly the required-tool rule the spec warns about.",
+      "snip": "{\"kind\":\"decision\",\"incidentClass\":\"log_full\",\"severity\":\"high\",\n \"action\":\"open_work_item\",\"rationale\":\"Transaction log nearing full\n capacity...\"}  ← correct, but skipped get_log_space" },
+    { "key": "olmo-3-7b-foundry", "title": "OLMo 3 7B — the clean reader", "facts": "5.6 GB · 24.5 tok/s · load 17.4 s",
+      "body": "93.8% on class and severity, and 100% first-pass contract — every reply was bare, valid JSON with no reasoning channel to strip. Two habits hold it back: it escalates nearly every high-severity incident against the rubric, and it volunteers diagnostics on 31% of no-tool episodes (then recovers cleanly after the no_data miss).",
+      "snip": "{\"kind\":\"decision\",\"incidentClass\":\"login_failure\",\"severity\":\"high\",\n \"action\":\"escalate\",\"rationale\":\"47 failed sa logins in 5 min from\n unknown host indicates brute-force attack.\"}  ← first-pass, no repairs" },
+    { "key": "muse-glimmer-30b-foundry", "title": "Muse Glimmer 30B — thinks out loud", "facts": "19.6 GB · ~16 tok/s · load 54 s · custom cache",
+      "body": "The conversion works in the stock daemon, and given room to think it answers almost everything exactly right — but the reasoning channel re-derives the whole contract before every reply, so throughput and token budget dominate. See the budget ablation below.",
+      "snip": " to=self<|message|>You are LogWarden, an incident-triage agent...\n[re-states the entire operating contract]\n<|eom|><|start|>assistant to=user<|message|>{\"kind\":\"decision\",...}" },
+    { "key": "qwen3-4b-foundry", "title": "qwen3-4b — the fast smoke arm", "facts": "2.9 GB · 41.3 tok/s · load 9.0 s",
+      "body": "87.5% class accuracy at 1.3 s per episode, perfect tool discipline, zero spurious calls. Weakest on rubric-following (31% action). Its /no_think switch lapsing after a tool result — re-entering the reasoning channel and burning the whole budget — was this bench's first transport finding; the prefix now rides every user turn.",
+      "snip": "<think> Okay, let's see. The user provided an evidence packet\nwith a monitoring alert... [512 tokens, never closes]  ← before the fix" },
+    { "key": "qwen2.5-0.5b-foundry", "title": "qwen2.5-0.5b — the floor, confirmed", "facts": "0.7 GB · 212 tok/s · load <1 s",
+      "body": "Emits plausible JSON shapes at ferocious speed and understands nothing: tool_request and decision in the same reply, snake_case keys the schema rejects, apology prose to a frozen snapshot store. Kept as the plumbing control and a useful reminder that shape-validity is not agent capability.",
+      "snip": "```json\n{\"kind\":\"tool_request\", ...}\n```\n**Decision:**\n{\"kind\":\"decision\",\"incident_class\":\"log_full\", ...}  ← two objects, wrong keys" }
+  ],
+  "ablation": {
+    "kicker": "The Muse story",
+    "title": "A 30B that thinks out loud, on a token budget",
+    "lede": "The INT4 ONNX conversion loads and generates in the stock daemon — 19 GB resident, ~54 s load, ~16 tok/s — served straight from the mac_bundle cache via foundry cache cd. The catch is the reasoning channel: Muse re-derives the whole operating contract in its thinking channel before answering, so the token budget decides whether an answer exists at all. That is exactly the failure the Lab 03 addendum §A-8 anticipates, and its sanctioned fix is what the headline row uses.",
+    "cards": [
+      { "lab": "max_tokens 512 · spec default", "big": "3 / 16 decisions", "body": "Thinking channel exhausts the budget on 13 of 16 episodes; the three answers that fit were all exactly right, and all had to be rescued from reasoning text (contract failures). 15.7 tok/s, ~32 s per episode." },
+      { "lab": "max_tokens 1400 · §A-8 override", "big": "16 / 16 · 87.5% triple", "body": "With the addendum-sanctioned reasoning budget and a final-channel parser (to=user message extraction, a legal repair), Muse answers everything: 100% class, 100% action, perfect tools. Mean 853 completion tokens and 52 s per episode — the budget buys correctness, not speed." }
+    ]
+  },
+  "caveatTitle": "What this bench is, and is not",
+  "caveats": [
+    "<strong>Transport mirrors the lab spec.</strong> One user turn carries the byte-identical operating contract (classes, severity and action rubrics, tool schemas) plus the evidence packet; models reply in structured JSON with no native <span class=\"mono\">tools</span> parameter; frozen tool snapshots answer tool requests, and a wrong tool gets a deterministic <span class=\"mono\">no_data</span> miss (SPEC_ADDENDUM §A-1/§A-3 style). Temperature 0, 512 max tokens, up to 4 model turns.",
+    "<strong>Disclosed per-model knobs.</strong> Qwen3 profiles carry a <span class=\"mono\">/no_think</span> prefix on every user turn (the Foundry API has no chat-template kwargs; the prefix lapsing after tool results was itself a bench finding). Muse carries the §A-8 max-tokens override to 1400 and a final-channel parser (<span class=\"mono\">to=user&lt;|message|&gt;</span>).",
+    "<strong>Repair ladder.</strong> think/channel/fence/leading-text strips count as legal transport repairs; rescuing a JSON object embedded in prose (<span class=\"mono\">balanced_extract</span>) counts as a contract failure even when the rescued decision is right.",
+    "<strong>Mac-plane evidence only.</strong> Foundry serves Microsoft-published ONNX builds (Muse: Karl's conversion) on WebGPU/Metal — different artifacts from the digest-pinned vLLM campaign profiles; nothing here is a frozen-campaign row. One run per model, one seed, 16 hand-authored episodes with authored ground truth; treat gaps under ~10 points as noise, not signal.",
+    "<strong>Substitutions and runtimes.</strong> The Foundry catalog has no Gemma at any size, so both Gemma 4 profiles are mlx-community OptiQ 4-bit conversions served by <span class=\"mono\">mlx_lm.server</span> — a third runtime on the bench, disclosed per dossier (quantization and stack differ from the Foundry ONNX builds). Gemma 4 12B is blocked: every conversion declares <span class=\"mono\">gemma4_unified</span>, unsupported by mlx-lm 0.31.3. OLMo ships as OLMo 3 7B Instruct, not the frozen registry's OLMo 3.1 family.",
+    "<strong>Reproduce:</strong> <span class=\"mono\">npm run mac:eval -- --profile &lt;key&gt;</span> then <span class=\"mono\">npm run mac:report</span> on branch <span class=\"mono\">aidataapps-logwarden-mac</span>; rows, metrics, and this page land in the run directory."
+  ],
+  "scatterLabelOffsets": {
+    "qwen3-4b-foundry": [10, -12],
+    "qwen3-8b-foundry": [12, 4],
+    "olmo-3-7b-foundry": [12, 20],
+    "qwen2.5-0.5b-foundry": [-8, -14],
+    "muse-glimmer-30b-foundry": [16, 5],
+    "gemma-4-e4b-mlx": [10, -14]
+  },
+  "episodeShorts": {
+    "ep01-log-full-active-tran": "log full · active tran",
+    "ep02-single-deadlock": "single deadlock",
+    "ep03-active-blocking": "active blocking",
+    "ep04-benign-login-failure": "benign login failure",
+    "ep05-login-storm": "login storm",
+    "ep06-backup-failure-disk": "backup fail · disk",
+    "ep07-torn-page": "torn page 824",
+    "ep08-tempdb-log-full": "tempdb log full",
+    "ep09-deadlock-recurrence": "deadlock recurrence",
+    "ep10-maintenance-blocking": "maintenance blocking",
+    "ep11-tool-log-space": "log space",
+    "ep12-tool-blocking-snapshot": "blocking snapshot",
+    "ep13-tool-backup-history": "backup history",
+    "ep14-tool-deadlock-graph": "deadlock graph",
+    "ep15-unknown-custom-error": "unknown 51321",
+    "ep16-clean-checkdb": "clean CHECKDB"
+  }
+}
