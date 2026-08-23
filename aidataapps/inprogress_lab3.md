@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 06:59 UTC
+Last manually updated: 2026-08-23 07:27 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -35,9 +35,9 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
   agent-observability, least-privilege tools, real eight-family injectors,
   exact-correlation/context-snapshot gates, the real Qwen embedding vLLM port
-  gate, all 480 corpus embeddings, and the three-mode hybrid retrieval
-  development gate passed. The bounded agent loop, standard capture, held-out
-  retrieval assessment, corpus freeze, and chat-model canary remain.
+  gate, all 480 corpus embeddings, the three-mode hybrid retrieval development
+  gate, and the fully persisted bounded agent loop passed. Standard capture,
+  held-out retrieval assessment, corpus freeze, and chat-model canary remain.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -52,10 +52,10 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twenty-seven hash-locked control migrations and seven versioned
+- Thirty hash-locked control migrations and seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 18 test files and 60 unit tests. The capture-specific
+  `npm run check` passes 19 test files and 64 unit tests. The capture-specific
   XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -146,6 +146,20 @@ and its effect on the evidence ceiling must be recorded append-only in
   all modes reached recall@5=1 and MRR=1, with lexical/vector/hybrid SQL p50 of
   14.074/72.502/75.022 ms. These deliberately easy canaries prove mechanics,
   not hybrid lift; that claim is reserved for held-out packet evaluation.
+- The bounded multi-turn agent gate passes eight terminal routes with receipt
+  `8449a07300d761fdac156962f8c9b7056f48f8bd5c96d825745b82ce3ddc10b8`:
+  17 model turns, 13 tool calls, three safely persisted decisions, exact cache
+  reuse, a deterministic snapshot miss, four rejection classes, zero executed
+  actions, zero retained leases, and closed/link-complete traces. Prompt/model/
+  retry/tool/validation/decision phases persist in both hash-chained files and
+  SQL; raw requests, responses, and full tool results are independently
+  rehashed. Two uncached hybrid searches produced exactly two real CUDA
+  embedding requests/successes, 17 prompt tokens, two latency observations,
+  zero errors, and zero preemptions. The primary transport is user-turn-only
+  and unconstrained: no system message, OpenAI `tools`, or `response_format`.
+  Queue migrations 029/030 add RCSI-safe locking reads and normalize pooled
+  session isolation; three fail-closed attempts and their evidence impact are
+  append-only in `EXPERIMENT_LOG.md`.
 - The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
   group-isolated templates and 600 deterministic variants across all ten
   incident families and all five regimes. Exact role allocation is 60 dev, 60
@@ -177,11 +191,11 @@ and its effect on the evidence ceiling must be recorded append-only in
   files, and fail-closed zero loss counters. Asset hash:
   `667bee8af19d8b2dba416cd31968215945b8f39ee1121e6294e37549bc2068c1`.
 - Current doctor snapshot:
-  `c3cc8ced060215850572d50927d21cc02055159ac3bd0815335e8c9683a9316f`
+  `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548`
   (`PASS`); SQL integration receipt:
-  `64e45aa7f64b7caf466d92182ced84c4954eda6e68b16ec985b10f6959297911`
+  `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2`
   (8/8); least-privilege tool receipt:
-  `c463035983b16e85e4da6e8d1f43efe30d99b492b18a6c8ea5aae06508f218a5`
+  `fca0eaa2e865c00082141f98527c85b9e6f83f77caeae10a2254c0f4a879126f`
   (9 positive/11 negative).
 - The five user-supplied Mac/Foundry/report commits through `725cdae` are
   merged. Their platform-separated Foundry/MLX registry, Apple Silicon
@@ -191,9 +205,9 @@ and its effect on the evidence ceiling must be recorded append-only in
   committed 6 x 16 HTML report rebuilds byte-for-byte from retained data and
   its template. Foundry is absent on this Linux VM and, by user direction,
   remains a post-governed-model validation lane with non-comparable results.
-- Next incomplete milestone: implement and validate the bounded agent loop,
-  then run standard capture, build/audit its packets, assess held-out retrieval,
-  and freeze the corpus. The qwen-smoke chat service may load only for its
+- Next incomplete milestone: run standard capture, build/audit its packets,
+  assess held-out retrieval, and freeze the corpus. The qwen-smoke chat service
+  may load only for its
   separate real `/metrics` gate; no long chat campaign may start until that
   gate passes. Foundry model validation is deliberately deferred until after
   the governed local models.
@@ -262,10 +276,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `20a92098906ac63588ce951ce15e21d3ec932ca10f4d81beb504cffbfc4a9a18`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `c3cc8ced060215850572d50927d21cc02055159ac3bd0815335e8c9683a9316f` (`PASS`)
-- SQL integration receipt: `64e45aa7f64b7caf466d92182ced84c4954eda6e68b16ec985b10f6959297911` (8/8 passed)
-- Last durable implementation checkpoint: `9a6ef51` (governed corpus
-  embeddings and three-mode hybrid retrieval)
+- Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
+- SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
+- Last durable implementation checkpoint: `bf2ae68` (governed bounded agent
+  loop, deep phase evidence, and RCSI-safe queue claims)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
