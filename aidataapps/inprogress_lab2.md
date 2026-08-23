@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 04:54 UTC
+Last manually updated: 2026-08-23 07:40 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline at this update: `c8f9731` (run `git rev-parse HEAD`
+- latest pushed baseline before this update: `44364c5` (run `git rev-parse HEAD`
   because later watchdog-safe milestone commits supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
@@ -85,10 +85,10 @@ Muse is complete:
 - its exact weight cache was evicted only after local/Drive evidence and backup
   hashes matched; it is re-downloadable at the pinned revision
 
-Gemma is active:
+Gemma is complete:
 
 - profile `gemma-4-31b`, pinned revision `842da3794eaa0b77d5f08bae87a17459d91ff475`
-- chat container `aidataapps-modelprint-chat-gemma-r4`
+- completed residency container `aidataapps-modelprint-chat-gemma-r4`
 - attempt 1 stopped before the gate because GPU utilization 0.78 provided
   13.22 GiB KV cache versus 13.76 GiB required for frozen 16K context
 - attempt 2 reached the gate at utilization 0.80 and exposed batch-sensitive
@@ -98,18 +98,28 @@ Gemma is active:
   `5cfe529ebcb21f66e51cd070f13fa2ca172fc812ea7b0d03bd036e65b2f65831`
 - strict gate passed with six identical deterministic hashes; gate artifact
   SHA-256 is `f3e39acac7a475ef7d9ec675bb57b9e93125753ddd172c1f507e107065dad9b6`
-- active primary command:
+- primary completed 10,000/10,000 with zero failures; raw SHA-256
+  `4136aeffa1b190f492c52467d401bd764dacbb7b71fd18884096a71f4ed44fe1`
+- robustness completed 501/501 with zero failures; raw SHA-256
+  `27828adff9f852c182b4debbc646ab19963f36c2ff53923e40a5596044fabe80`
+- likelihood selected 23,939 eligible non-empty Qwen/Muse/Gemma rows:
+  prompted 23,939/23,939; unprompted 23,890/23,939
+- all 49 missing unprompted values were audited from the retained JSONL: each
+  row has a valid prompted score, exactly one Gemma output token, and vLLM
+  returned no first-token unprompted logprob; no value was imputed
+- the 49 rows break down as Qwen 20, Muse 1, Gemma 28; 64 empty-final Muse
+  rows are separately recorded as unavailable
+- likelihood raw SHA-256:
+  `775df32e203cb9774846696634adf33a680320ddc4e3ec7a8b9a065130d1371b`
+- pre-eviction native backup and Drive copy match at SHA-256
+  `5d3c7383be0a482173770abc1e260e583eafe99c585f39a8b8687c16c989b7bb`
+- Gemma stopped cleanly; its exact one-repository/one-revision cache entry was
+  evicted with `hf cache rm`, freeing 62.6 GB; it remains re-downloadable at
+  the pinned revision
 
-```bash
-npm run generate -- --profile gemma-4-31b --resume --concurrency 64 --checkpoint-size 100
-```
-
-- first durable checkpoint: 100/10,000 complete, zero failed at
-  `2026-08-23T04:53:38Z`; later checkpoint/SQL counts supersede this value
-
-OLMo has not started. Gemma robustness/likelihood, OLMo, final
-cross-likelihood completion, features, analyses, reports, BACPAC, archive,
-mirror, and reproducibility run remain.
+OLMo has not started and is the next residency. OLMo, final cross-likelihood
+completion, features, analyses, reports, BACPAC, archive, mirror, and
+reproducibility run remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -173,10 +183,11 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Do not start a second Gemma generator if the command is alive. If it is absent,
-rerun the exact primary command above; `--resume` reconciles SQL state and its
-config hash before selecting missing rows. Confirm current counts with the
-checkpoint, manifests, and SQL rather than trusting this timestamped prose.
+Gemma is complete and no chat process should be restarted unless a later
+cross-likelihood fill rotation explicitly requires it. Confirm port 8000 is
+free, then start OLMo with the exact pinned profile and a unique container;
+inspect current processes and SQL/manifests before resuming any interrupted
+OLMo stage.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -238,17 +249,21 @@ tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 
 ## Remaining residency workflow
 
-Muse is fully complete and no longer resident. Gemma is gated and its primary
-generator is active. After primary completion, run its robustness and
-likelihood stages:
+Qwen, Muse, and Gemma are fully complete for their first residencies and are no
+longer resident. Start OLMo at its frozen defaults and run the unchanged gate
+before any campaign request:
 
 ```bash
-npm run robustness:generate -- --profile gemma-4-31b --concurrency 64 --checkpoint-size 100
-npm run likelihood:score -- --scorer gemma-4-31b --include-robustness --concurrency 64 --checkpoint-size 200
+unset CHAT_GPU_MEMORY_UTILIZATION VLLM_BATCH_INVARIANT
+export CHAT_CONTAINER_NAME=aidataapps-modelprint-chat-olmo-r1
+npm run model -- start --profile olmo-3.1-32b-instruct
+npm run port:gate -- --profile olmo-3.1-32b-instruct
+npm run generate -- --profile olmo-3.1-32b-instruct --resume --concurrency 64 --checkpoint-size 100
+npm run robustness:generate -- --profile olmo-3.1-32b-instruct --concurrency 64 --checkpoint-size 100
+npm run likelihood:score -- --scorer olmo-3.1-32b-instruct --include-robustness --concurrency 64 --checkpoint-size 200
 npm run checkpoint:once
 ```
 
-Repeat with a unique OLMo chat name and profile `olmo-3.1-32b-instruct`.
 During each scorer residency, score every target output available. Rotate prior
 scorers again after later model generations to fill missing cross-likelihood
 cells. If resource/time limits prevent a rectangular matrix, label it
@@ -298,5 +313,5 @@ git status --short --branch
 
 Create a completion tag only after `repro` succeeds and the final archive is
 mirrored. Milestone history through this update is recorded in
-`/content/handoff.md` and `git log`; pushed HEAD `d9ac4db` includes the Muse
-Unicode likelihood-alignment recovery.
+`/content/handoff.md` and `git log`; use `git rev-parse HEAD` rather than an
+older prose hash when resuming.

@@ -68,3 +68,9 @@ Append-only operator record.
 - 2026-08-23T04:44:46.252Z — MP-3 port gate STOP_PORT for gemma-4-31b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-gemma-4-31b.json.
 
 - 2026-08-23T04:50:44.257Z — MP-3 port gate PASS for gemma-4-31b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-gemma-4-31b.json.
+
+- 2026-08-23T06:47:20.694Z — MP-4 generation invocation completed for gemma-4-31b; selected=10000; completed=10000; failed=0.
+
+- 2026-08-23T06:48:54.764Z — MP-4 robustness generation completed for gemma-4-31b; selected=501; completed=501; failed=0.
+
+- 2026-08-23T07:37:03Z — MP-4 Gemma likelihood residency complete: all 23,939 eligible non-empty Qwen/Muse/Gemma target and robustness rows have prompted likelihood; 23,890 also have unprompted likelihood. The retained 49 prompted-only records were audited exhaustively: every record contains one valid prompted score over exactly one Gemma output token and only `No unprompted logprobs`, because vLLM has no previous-token distribution for the first token of an unprompted echo. Counts are Qwen=20, Muse=1, Gemma=28. No value was imputed; 64 empty-final Muse rows remain separately unavailable. Raw SHA-256 is `775df32e203cb9774846696634adf33a680320ddc4e3ec7a8b9a065130d1371b`. A pre-eviction SQL backup and Drive copy matched SHA-256 `5d3c7383be0a482173770abc1e260e583eafe99c585f39a8b8687c16c989b7bb`; Gemma then stopped cleanly and exact `hf cache rm` eviction removed one repository/revision and freed 62.6 GB.
