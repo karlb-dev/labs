@@ -98,6 +98,7 @@ if "semantic1024-qwen-raw-final-v1" in representations and "style512-raw-final-v
       INSERT dbo.fingerprint_vectors(generation_id,representation_id,projection_manifest_hash,embedding,created_by_run) VALUES(%s,%s,%s,CAST(%s AS vector(64)),%s)""",
       [(r[0],r[1],*r) for r in records[start:start+500]]);conn.commit()
 else:projection_hash=None
+representation_indices={name:index for index,name in enumerate(representations)}
 if args.representations:
   requested=args.representations.split(",");missing=set(requested)-set(representations)
   if missing:raise SystemExit(f"Unavailable representations: {sorted(missing)}")
@@ -163,14 +164,19 @@ def permute_labels(y,groups,rng):
 y=base.label.to_numpy();groups=base.prompt_group_id.to_numpy();results={"schemaVersion":2,"runId":run_id,"campaignIds":campaign_ids,"campaignHash":freeze["campaignHash"],
  "tier":args.tier,"models":models,"rows":len(base),"dataRoles":{"train":int(train.sum()),"calibration":int(cal.sum()),**{key:int(mask.sum()) for key,mask in suite_masks.items()}},
  "classifier":"standardized-sgd-multinomial-logistic","permutations":args.permutations,"bootstrap":args.bootstrap,
- "execution":{"jobs":args.jobs,"resumeCompleted":args.resume_completed,"resumedRepresentations":[],"resumedSuiteNulls":[],"resumedLofoNulls":[],"resumedFamilyNulls":[],"skippedIneligibleFamilyNullFits":0},"representations":{}}
+ "execution":{"jobs":args.jobs,"resumeCompleted":args.resume_completed,"resumedRepresentations":[],"resumedResultCheckpoints":[],"resumedSuiteNulls":[],"resumedLofoNulls":[],"resumedFamilyNulls":[],"skippedIneligibleFamilyNullFits":0},"representations":{}}
 prediction_frames=[];cursor=conn.cursor();artifact_paths=[]
-for rep_index,(name,(X,available)) in enumerate(representations.items()):
+for name,(X,available) in representations.items():
+  rep_index=representation_indices[name];prediction_checkpoint_start=len(prediction_frames)
   fit_mask=train&available;cal_mask=cal&available
   if len(set(y[fit_mask]))<len(models) or len(set(y[cal_mask]))<len(models):continue
   active_suites={key:(mask&available) for key,mask in suite_masks.items() if (mask&available).sum()};model_path=run/f"manifests/probe-{name}.pkl"
-  suite_null_paths={suite:run/f"tables/permutation-probe-{name}-{suite}.csv" for suite in active_suites};lofo_null_path=run/f"tables/permutation-probe-{name}-lofo.csv"
+  suite_null_paths={suite:run/f"tables/permutation-probe-{name}-{suite}.csv" for suite in active_suites};lofo_null_path=run/f"tables/permutation-probe-{name}-lofo.csv";result_checkpoint_path=run/f"manifests/probe-result-{name}.pkl"
   resume_ready=bool(args.resume_completed and model_path.exists() and lofo_null_path.exists() and all(path.exists() for path in suite_null_paths.values()))
+  if resume_ready and result_checkpoint_path.exists():
+    saved=pickle.loads(result_checkpoint_path.read_bytes());artifact_hashes={"model":hashlib.sha256(model_path.read_bytes()).hexdigest(),"lofo":hashlib.sha256(lofo_null_path.read_bytes()).hexdigest(),**{f"suite:{suite}":hashlib.sha256(path.read_bytes()).hexdigest() for suite,path in suite_null_paths.items()}}
+    if saved.get("schemaVersion")!=1 or saved.get("representation")!=name or saved.get("campaignHash")!=freeze["campaignHash"] or saved.get("models")!=models or saved.get("tier")!=args.tier or saved.get("permutations")!=args.permutations or saved.get("bootstrap")!=args.bootstrap or saved.get("rows")!=len(base) or saved.get("artifactHashes")!=artifact_hashes or not isinstance(saved.get("predictions"),pd.DataFrame):raise SystemExit(f"Representation result checkpoint drift for {name}")
+    results["representations"][name]=saved["result"];prediction_frames.append(saved["predictions"]);artifact_paths.append(str(model_path));results["execution"]["resumedRepresentations"].append(name);results["execution"]["resumedResultCheckpoints"].append(name);continue
   if resume_ready:
     results["execution"]["resumedRepresentations"].append(name)
     model_info=pickle.loads(model_path.read_bytes())
@@ -264,6 +270,9 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
     prediction_frames.extend(lofo_predictions)
   results["representations"][name]=rep
   model_path.write_bytes(pickle.dumps({"pipeline":model,"temperature":temperature,"conformalQ":q,"models":models,"alpha":alpha}));artifact_paths.append(str(model_path))
+  artifact_hashes={"model":hashlib.sha256(model_path.read_bytes()).hexdigest(),"lofo":hashlib.sha256(lofo_null_path.read_bytes()).hexdigest(),**{f"suite:{suite}":hashlib.sha256(path.read_bytes()).hexdigest() for suite,path in suite_null_paths.items()}}
+  checkpoint_frames=prediction_frames[prediction_checkpoint_start:];checkpoint_predictions=pd.concat(checkpoint_frames,ignore_index=True) if checkpoint_frames else pd.DataFrame()
+  result_checkpoint_tmp=result_checkpoint_path.with_suffix(".pkl.tmp");result_checkpoint_tmp.write_bytes(pickle.dumps({"schemaVersion":1,"representation":name,"campaignHash":freeze["campaignHash"],"models":models,"tier":args.tier,"permutations":args.permutations,"bootstrap":args.bootstrap,"rows":len(base),"artifactHashes":artifact_hashes,"result":rep,"predictions":checkpoint_predictions}));os.replace(result_checkpoint_tmp,result_checkpoint_path)
 
 predictions=pd.concat(prediction_frames,ignore_index=True) if prediction_frames else pd.DataFrame();predictions.to_parquet(run/"tables/predictions.parquet",index=False);predictions.to_csv(run/"tables/predictions.csv",index=False)
 cursor.execute("INSERT dbo.attribution_models(run_id,model_kind,training_manifest_hash,artifact_json) VALUES(%s,'sgd-multinomial-probes',%s,%s); SELECT SCOPE_IDENTITY()",
