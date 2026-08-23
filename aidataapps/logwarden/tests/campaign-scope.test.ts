@@ -35,4 +35,9 @@ describe("standard campaign schedule isolation", () => {
     expect(source).toContain("prediction.agent_run_id=agent_run.agent_run_id");
     expect(source).toContain("prediction.agent_run_id=turn.agent_run_id");
   });
+
+  it("tests direct-arm isolation against an untrusted packet tool list", async () => {
+    const source = await readFile("scripts/chat-port-gate.ts", "utf8");
+    expect(source).toContain('index === fixtures.length - 1 ? ["get_log_space", "runbook_search"] : []');
+  });
 });

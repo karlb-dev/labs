@@ -311,7 +311,7 @@ function canaryPackets(): Array<Record<string, unknown>> {
     anchorTimeUtc: "2026-01-01T00:00:00.000Z",
     sourceEvents: [{ canonicalEventId: String(index + 1), sourceKind: "synthetic_port_gate", occurredAtUtc: "2026-01-01T00:00:00.000Z", state: null, clientAppName: "LogWarden-Port-Gate", fingerprint: sha256(canonicalJson(event)), ...event }],
     recentHistory: { sameFingerprint5m: 0, sameClass1h: 0, openRelatedIncidents: 0 },
-    availableTools: [],
+    availableTools: index === fixtures.length - 1 ? ["get_log_space", "runbook_search"] : [],
     frozenToolSnapshots: {},
     sourceDiagnostics: { linkedEventCount: 1, sources: ["synthetic_port_gate"] },
     redactions: [],
