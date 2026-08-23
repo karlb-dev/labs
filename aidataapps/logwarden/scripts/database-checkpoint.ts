@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { copyFile, mkdir, stat } from "node:fs/promises";
+import { copyFile, mkdir, stat, unlink } from "node:fs/promises";
 import { basename } from "node:path";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
@@ -71,6 +71,7 @@ try {
           VALUES(@run,@path,'database_backup',@bytes,@hash);
       `);
     if (restoreTest) restoreResults.push(await restoreAndProbe(master, kind, database, containerPath, stamp));
+    await removeSqlStagingBackup(`${sqlVolumePath}/backup/${fileName}`, containerPath);
   }
 } finally {
   await master.close();
@@ -162,4 +163,13 @@ function commandOutput(command: string, arguments_: string[]): Promise<string> {
       else resolve(stdout);
     });
   });
+}
+
+async function removeSqlStagingBackup(hostPath: string, containerPath: string): Promise<void> {
+  try {
+    await unlink(hostPath);
+  } catch (error) {
+    if ((error as { code?: string }).code !== "ENOENT") throw error;
+    await commandOutput("docker", ["exec", `${composeProject}-sqlserver-1`, "rm", "--", containerPath]);
+  }
 }

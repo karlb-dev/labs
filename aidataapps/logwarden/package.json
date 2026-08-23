@@ -68,6 +68,7 @@
     "secrets:rotate": "node --import tsx scripts/rotate-local-secrets.ts",
     "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
     "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",
+    "checkpoints:prune": "node --import tsx scripts/prune-checkpoints.ts",
     "run:archive": "node --import tsx scripts/archive-run.ts",
     "run:mirror": "./scripts/mirror-run.sh",
     "repro": "./repro.sh"

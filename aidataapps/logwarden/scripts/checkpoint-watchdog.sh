@@ -62,6 +62,7 @@ checkpoint_once() {
   git -C "$repo_root" bundle create "$bundle" "$branch"
   git -C "$repo_root" bundle verify "$bundle" >"$run_dir/recovery/bundle-verify-$stamp.txt" 2>&1
 
+  npm run checkpoints:prune -- --apply --keep-latest 2 >/dev/null
   npm run run:archive >/dev/null
   npm run run:mirror >/dev/null
   jq -cn \

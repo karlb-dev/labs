@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 15:37 UTC
+Last manually updated: 2026-08-23 15:56 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -58,11 +58,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
   The cold failure and one log-classifier false positive remain retained and
   are disclosed in `EXPERIMENT_LOG.md`; neither produced scientific rows.
-- Instrumentation remains active across the residency: whole-residency sampler
-  PID 398833 (phase `muse-glimmer-30b-residency`, epoch
-  `26eda471-0ceb-476f-be48-6304e7ed6c4b`), recurring checkpoint watchdog PID
-  398586, Qwen embedding EngineCore on port 8011, SQL Server on port 1434, and
-  the rootless Docker daemon supervised in retained exec cell 64558.
+- Muse whole-residency sampling is closed. Epoch
+  `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
+  global reconciliation then passed across 193 journals, 119,595 records,
+  8,640 raw artifacts, 6,001 closed traces, 31,220 closed spans, 4,243 paired
+  model requests/responses, 2,725,869 metric samples, and 11,285 raw metric
+  snapshots. Receipt:
+  `fd256614a7fe153fbbe17b88acb8a72589ccd5db63050b7d644e38de8fadad2e`.
+  Qwen embedding remains on port 8011, SQL Server on port 1434, and the
+  rootless Docker daemon is supervised in retained exec cell `64558`.
 - Muse calibration primary replay passed all integrity gates: 180 terminal
   cells, 166 decisions, 14 retained end-to-end failures, 319/319 successful
   stop-finished HTTP requests, zero service error/length/preemption outcomes,
@@ -123,9 +127,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   observed request-level invariance, full-agent invariance not identifiable.
   Original rows remain immutable. Diagnostic receipt:
   `7810da399de51d80e99b133a8490feff11ab7ed3b24821429786feaac43c298d`.
-  Next: close/reconcile Muse residency telemetry, take the profile checkpoint,
-  apply bounded redundant-checkpoint retention, stop/evict Muse, and start the
-  frozen Gemma profile. Do not relaunch completed primary/control jobs.
+  Muse's verified profile checkpoint is pinned at receipt
+  `18447e0da29362059b975ae2cbec930bc77b4d3aad864105311de6543ec8e8de`.
+  Bounded retention passed and removed 28,350,983,266 bytes of redundant
+  local/Drive/SQL-staging copies while preserving the frozen boundary, Muse
+  boundary, two newest rolling checkpoints, and two recovery bundles. Receipt:
+  `ba8843aa7f452b553d14772d334372da2c38641940a158749d3f586bea76eb24`.
+  Next: commit/push this retention boundary, relaunch the bounded watchdog,
+  stop/evict Muse, evict obsolete Qwen-smoke cache, and start the frozen Gemma
+  profile. Do not relaunch completed Muse jobs.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
@@ -402,26 +412,26 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay is active; the next boundary is
-  Muse residency telemetry reconciliation and checkpointing shown above.
+- Long-running scientific process: no replay or sampler is active; Muse is
+  checkpointed and awaits service stop/cache eviction before Gemma startup.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Telemetry: continuous `muse-glimmer-30b-residency` whole-system sampler
-  retained in exec session `16290` (node PID 398833), epoch
-  `26eda471-0ceb-476f-be48-6304e7ed6c4b`
-- Watchdog: recurring 20-minute backup/Git bundle/push/run-mirror supervisor is
-  retained in exec session `51092` (bash PID 398586); it backs up and mirrors
-  while source is clean and records a recovery patch without auto-committing
-  when source is dirty
+- Telemetry: Muse sampler epoch
+  `26eda471-0ceb-476f-be48-6304e7ed6c4b` stopped cleanly after full ingestion
+  and PASS reconciliation; the next sampler begins with Gemma residency
+- Watchdog: intentionally stopped during the retention transaction and must be
+  relaunched after the retention commit; the updated supervisor prunes only
+  hash-verified redundant copies and keeps frozen/pinned boundaries plus two
+  rolling database and Git recovery points
 - SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
   full disposable restore, physical CHECKDB, and teardown; frozen checkpoint
   hash `20a468ccbb80f5ada685f74beade3a0919655fc5c8bfe914f539514aa6e9fd06`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `7b0b6e6` (Muse startup evidence,
-  crash-aware readiness, explicit fatal-log classification, and two passing
-  warm gates)
+- Last durable implementation checkpoint: `ff10a86` (formal batching identity
+  diagnostic; request-level invariance supported, full-agent comparison
+  confounded by execution-local IDs)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -446,10 +456,11 @@ nvidia-smi
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job/work-item state, current Muse port-gate receipt, and Drive checkpoint
 before launching anything. The campaign is frozen/running and Muse is
-authorized; its calibration, protected primary, deterministic router, and
-protected scoring stages are complete. Resume with the next unfinished Muse
-control in the authoritative state section. Do not start another chat model
-while the Muse container is resident.
+complete through calibration, protected primary, deterministic router,
+protected scoring, all three controls, telemetry reconciliation, and its pinned
+database checkpoint. Resume by stopping/evicting Muse and starting Gemma as
+shown in the authoritative state section. Do not start another chat model while
+the Muse container is resident.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.

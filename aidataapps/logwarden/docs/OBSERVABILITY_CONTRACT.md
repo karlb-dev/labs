@@ -164,7 +164,12 @@ failure and missingness funnels, and per-job/model/arm/role/regime aggregates.
 - the sampler survives a worker restart without duplicate samples;
 - telemetry overhead and sampling interval are recorded;
 - the checkpoint watchdog mirrors journals and database backups within the
-  durability ceiling.
+  durability ceiling;
+- checkpoint retention is bounded and receipt-driven: preserve the frozen
+  checkpoint, every explicitly pinned model boundary, and the two newest
+  rolling database/Git recovery points; verify local/Drive hashes before any
+  redundant deletion; retain a deletion-set hash and receipt; and remove only
+  the temporary SQL-side staging copy after a verified local export;
 - diagnostics rebuilt from journals match their persisted input-set hashes and
   do not depend on mutable live state;
 - each exhausted loop bound produces the expected deterministic terminal row,
