@@ -198,6 +198,7 @@ checkpoint_cycle() {
   run_logged "database-backup" npm run db:backup || failures=$((failures + 1))
   run_logged "recovery-snapshot" write_recovery_snapshot || failures=$((failures + 1))
   run_logged "drive-mirror" npm run run:mirror || failures=$((failures + 1))
+  run_logged "local-backup-retention" "$script_dir/prune-local-backups.sh" || failures=$((failures + 1))
 
   log "END checkpoint failures=$failures next_seconds=$interval_seconds"
   return "$failures"

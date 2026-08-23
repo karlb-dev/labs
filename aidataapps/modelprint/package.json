@@ -42,6 +42,7 @@
     "ann:benchmark": "./scripts/python.sh analysis/benchmark_ann.py",
     "reports": "./scripts/python.sh analysis/build_reports.py",
     "db:backup": "./scripts/export-database.sh backup",
+    "db:prune-local": "./scripts/prune-local-backups.sh",
     "db:bacpac": "./scripts/export-database.sh bacpac",
     "run:archive": "node --import tsx scripts/archive-run.ts",
     "run:mirror": "./scripts/mirror-run.sh",
