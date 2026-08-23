@@ -87,7 +87,8 @@ if (command === "list") {
     runtime,
     serverArguments: args.slice(args.indexOf(profile.vllmImage) + 1),
   };
-  await retainReceipt(`chat-service-start-${safeName(selectedKey)}.json`, receipt);
+  const startedAt = receipt.startedAtUtc.replace(/[-:.]/g, "");
+  await retainReceipt(`chat-service-start-${safeName(selectedKey)}-${startedAt}-${safeName(containerId.slice(0, 12))}.json`, receipt);
   console.log(JSON.stringify(receipt, null, 2));
 } else {
   throw new Error(`Unknown model command ${command}`);
