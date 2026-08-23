@@ -76,3 +76,23 @@
   against their snapshot's parsed objects. Fixture DDL execution stays
   deferred (dispositioned at intake); catalog text is what prompts embed,
   so the replay plane is unaffected.
+
+- 2026-08-23 — GT-5 complete. Deterministic baselines B0–B4 over all 588
+  cases, profile baseline-deterministic, scored into eval.row_scores +
+  metric_results through the shared scorer (src/scoring.ts) that model
+  replay will reuse. Frozen rules: normalize-v1 (NFC, trim, collapse
+  whitespace; case-SENSITIVE because the dataset ships CS-collation edge
+  cases) and recompose-v1; parse gate via the pinned ScriptDom service on
+  parse-eligible rows. Results (outcomes over 588): B0/B1 pure abstain
+  floors (101 abstain_correct = the expect_empty rows); B2 grammar-aware
+  catalog: 4 success / 9 partial / 11 fail, category coverage recorded
+  per row (alias-dot, schema-dot, table-source, procedure; no_category 545
+  — most rows are intent-mode, out of deterministic scope by design);
+  B3 history n-gram: 0 success after self-exclusion fix (initial run's 52
+  "successes" were train rows matching their own gold — leakage bug found
+  and fixed, honest floor is zero); B4 template retrieval: 47 partial,
+  0 exact (identifier variance across near-duplicate families).
+  Simplifications logged: B4 identifier-safe adaptation reduced to
+  same-catalog exemplar reuse (same-catalog identifiers are valid by
+  construction); B1 is a frozen keyword-bigram table. H1 floor established:
+  no deterministic arm exceeds 4/487 exact on non-empty rows.

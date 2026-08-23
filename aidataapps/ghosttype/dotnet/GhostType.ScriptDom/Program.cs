@@ -73,6 +73,24 @@ while ((line = Console.ReadLine()) is not null)
                 };
                 break;
             }
+            case "tokens":
+            {
+                var sql = doc.RootElement.GetProperty("sql").GetString() ?? "";
+                var parser = new TSql170Parser(initialQuotedIdentifiers: true);
+                using var reader = new StringReader(sql);
+                var fragment = parser.Parse(reader, out IList<ParseError> _);
+                var tokens = new List<object>();
+                if (fragment?.ScriptTokenStream is not null)
+                {
+                    foreach (var token in fragment.ScriptTokenStream)
+                    {
+                        if (token.TokenType is TSqlTokenType.EndOfFile or TSqlTokenType.WhiteSpace) continue;
+                        tokens.Add(new { type = token.TokenType.ToString(), text = token.Text, offset = token.Offset });
+                    }
+                }
+                result = new { ok = true, tokens };
+                break;
+            }
             default:
                 result = new { ok = false, error = $"unknown op {op}" };
                 break;
