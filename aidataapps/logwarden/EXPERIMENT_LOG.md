@@ -682,3 +682,13 @@ place and receive a later disposition.
   pass. Impact: no standard episode had run, so scientific data are unchanged;
   the adjustment prevents restart downtime from stretching or re-spacing the
   governed schedule.
+- 2026-08-23T07:34:15Z — Launched the governed 600-episode `standard-v1`
+  capture from clean checkpoint `89b42ff` under retained injector session
+  `75344`, continuous telemetry session `46061`, and 20-minute database/Git/
+  Drive watchdog session `92148`. The before-capture whole-system receipt is
+  `b7ad8cdbb1bd28d70e835057f1c807a26cd54acee56bc02cc53aa41026acc740`;
+  the watch epoch is `6cd96b0d-7555-446c-aeb6-bc813a0231d1`. Early health at
+  ordinal 4 was 5/5 terminal, zero failed/unclean, and zero XE dropped events,
+  dropped buffers, or blocked-event-fire time. The Qwen EngineCore remains
+  resident at 6,042 MiB; standard injection is intentionally a SQL/CPU capture
+  phase and does not require chat-model GPU load.

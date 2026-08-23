@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 07:32 UTC
+Last manually updated: 2026-08-23 07:35 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -212,7 +212,7 @@ and its effect on the evidence ceiling must be recorded append-only in
   committed seven-model x 16-episode HTML report rebuilds byte-for-byte from
   retained data and its template. Foundry is absent on this Linux VM and, by user direction,
   remains a post-governed-model validation lane with non-comparable results.
-- Next incomplete milestone: run standard capture, build/audit its packets,
+- Active milestone: complete standard capture, then build/audit its packets,
   assess held-out retrieval, and freeze the corpus. The qwen-smoke chat service
   may load only for its
   separate real `/metrics` gate; no long chat campaign may start until that
@@ -273,20 +273,26 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: none; the Qwen embedding service is an
-  idle, detached infrastructure service
+- Long-running scientific process: `standard-v1` injector retained in Codex
+  exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; early
+  check was 5/5 terminal with zero failed/unclean rows and zero XE loss counters
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Watchdog: dirty-tree recovery and clean-tree handoff/commit modes both passed
-  and mirrored; recurring watch is not running because no long job exists
+- Telemetry: continuous `standard-capture` whole-system sampler retained in
+  exec session `46061` (node PID 227530), epoch
+  `6cd96b0d-7555-446c-aeb6-bc813a0231d1`; before-capture receipt
+  `b7ad8cdbb1bd28d70e835057f1c807a26cd54acee56bc02cc53aa41026acc740`
+- Watchdog: recurring 20-minute backup/Git bundle/push/run-mirror supervisor is
+  retained in exec session `92148` (bash PID 226872); its launch checkpoint
+  committed and pushed cleanly
 - SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `20a92098906ac63588ce951ce15e21d3ec932ca10f4d81beb504cffbfc4a9a18`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable Git checkpoint: `b64ae0f` (bounded agent loop, merged
-  Mac/Foundry/report follow-ups, verified backup, run mirror, and handoff)
+- Last durable implementation checkpoint: `ddf9c8e` (resumable governed
+  schedule clock); launch watchdog checkpoint: `89b42ff`
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
