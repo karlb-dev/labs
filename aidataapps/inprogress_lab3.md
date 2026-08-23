@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 18:08 UTC
+Last manually updated: 2026-08-23 18:12 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -57,8 +57,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   length/error/preemption outcomes and exact repeated outputs; receipt
   `c1ee96f0edeb5984351be40ceabc81cfe870945a036efc70cd4118289045ae37`,
   classification `GUIDED_DECODING_RECOVERS`. Do not run or synthesize OLMo
-  Tier-1 replay rows. Next: close/pin the OLMo STOP_PORT boundary, stop and
-  evict its exact reproducible cache, then start and gate `qwen-3.8-27b`.
+  Tier-1 replay rows. Its 267-record residency journal is fully ingested,
+  global reconciliation passed
+  (`9266d121068c8aa66220e1cc45d3a73f6eed0e25bf221cc30c870bffe9674730`),
+  and its mirrored database boundary is pinned at receipt
+  `e9cf8b0402dcd20d2c498aaddbebb99dd9cfd682df457fc79f2b94b4ec2a18df`.
+  Final mirrored inventory:
+  `9024161ba18e9cde3ae50ea6052cd91be7279b495bd00f7e379599cf15eab5df`.
+  Next: stop and evict its exact reproducible cache, then start and gate
+  `qwen-3.8-27b`.
 - Muse whole-residency sampling is closed. Epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
   global reconciliation then passed across 193 journals, 119,595 records,
@@ -464,15 +471,15 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: OLMo has no replay; its governed residency
-  sampler is active while the STOP_PORT/Tier-2-guided evidence boundary closes.
-  Qwen 3.8 27B is next after OLMo is pinned, stopped, and evicted.
+- Long-running scientific process: none. OLMo has no replay; its STOP_PORT and
+  Tier-2-guided evidence are reconciled, mirrored, and pinned. Qwen 3.8 27B is
+  next after the still-resident OLMo service is stopped and evicted.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: `olmo-3.1-32b-instruct-residency` epoch
-  `56559cbd-e997-4cbb-bb09-713ae851d83b` is active. It began before OLMo
-  download/startup and has covered both failed primary gates and the passing
-  guided gate. Stop and ingest it before the OLMo database checkpoint.
+  `56559cbd-e997-4cbb-bb09-713ae851d83b` is stopped and fully ingested
+  (267 records, zero duplicates; receipt
+  `c1a045405487609a6b4691a0aeaccd722c1522396835dfaffe61d7a653733f8b`).
 - Watchdog: recurring bounded 20-minute backup/Git-bundle/push/run-mirror
   supervisor is retained in exec session `11505` (bash PID 589796); its first
   complete bounded cycle passed and temporary SQL staging cleanup was verified
@@ -482,9 +489,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `5fe8b82` (batched telemetry linking
-  plus queue-only SQL deadlock retry; all 148 tests pass); latest watchdog head
-  is `93060a7`
+- Last durable implementation checkpoint: `94016bd` (separate guided-JSON gate
+  and OLMo STOP_PORT/guided recovery evidence; all 148 tests pass)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -511,8 +517,9 @@ SQL job/work-item state, OLMo port receipts, and Drive checkpoint before
 launching anything. The campaign is frozen/running; Muse and Gemma are complete
 through their calibration, protected primary, deterministic router, protected
 scoring, controls, reconciliation, and pinned checkpoints. OLMo is a governed
-Tier-1 `STOP_PORT` with a passing Tier-2 guided diagnostic. Resume by closing
-and evicting OLMo, then start Qwen 3.8 as shown in the authoritative state
+Tier-1 `STOP_PORT` with a passing Tier-2 guided diagnostic and a pinned profile
+boundary. Resume by stopping and evicting OLMo, then start Qwen 3.8 as shown in
+the authoritative state
 section. Do not run OLMo primary replay or start another chat model while its
 container is resident.
 If `docker info` fails,

@@ -1378,3 +1378,22 @@ place and receive a later disposition.
   Classification: `GUIDED_DECODING_RECOVERS`. Impact: production-style guided
   decoding demonstrably recovers OLMo's contract, but this Tier-2 result is not
   pooled with or substituted for the unconstrained Tier-1 campaign.
+
+- 2026-08-23T18:11:27Z — Closed OLMo residency epoch
+  `56559cbd-e997-4cbb-bb09-713ae851d83b` and ingested 267/267 sampler journal
+  records with zero duplicates (receipt
+  `c1a045405487609a6b4691a0aeaccd722c1522396835dfaffe61d7a653733f8b`).
+  Global telemetry reconciliation passed across 300 journals / 179,688 records
+  / 13,778 raw artifacts: 8,675 traces and 46,778 spans are all closed; 6,767
+  stored campaign model requests have paired responses and zero bad hashes;
+  3,437,229 metric samples and 13,913 raw snapshots have unique keys. Receipt:
+  `9266d121068c8aa66220e1cc45d3a73f6eed0e25bf221cc30c870bffe9674730`.
+  A fresh verified database backup (receipt
+  `e9cf8b0402dcd20d2c498aaddbebb99dd9cfd682df457fc79f2b94b4ec2a18df`)
+  and the complete run were mirrored, then the OLMo STOP_PORT boundary was
+  pinned. Bounded retention passed with zero eligible deletions (receipt
+  `a45985f47721f4f72cdc39569039d8207ed0de412cafd335fddc847e1adb713c`);
+  final local/Drive inventory hash:
+  `9024161ba18e9cde3ae50ea6052cd91be7279b495bd00f7e379599cf15eab5df`.
+  Impact: durability only; both the negative Tier-1 and positive guided Tier-2
+  OLMo evidence are preserved at the exact profile boundary.
