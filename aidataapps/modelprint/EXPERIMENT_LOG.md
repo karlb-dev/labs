@@ -47,3 +47,9 @@ Append-only operator record.
 - 2026-08-23T00:22:02.548Z — MP-4 robustness generation completed for qwen-3.8-27b; selected=500; completed=500; failed=0.
 
 - 2026-08-23T00:38:31.712Z — MP-4 likelihood checkpoint for qwen-3.8-27b: decoded-character assistant-span slicing replaced unsafe separately-tokenized prefix slicing after 267 junction-merge failures were observed. The retained selective rerun recovered every prompted score (8,001/8,001 det/nat target and robustness rows). Unprompted echo scoring is explicitly unavailable for 17 one-token outputs because vLLM returns a null first-token log probability; those rows remain missing rather than receiving an invented likelihood.
+
+- 2026-08-23T01:03:40.803Z — MP-3 port gate STOP_PORT for muse-glimmer-30b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-muse-glimmer-30b.json.
+
+- 2026-08-23T01:04:23.277Z — MP-3 Muse initial port gate STOP_PORT: exact sequential/batched greedy outputs differed. Moderate runtime adjustment: enable the pinned vLLM image batch-invariant mode and rerun the unchanged governed gate; first artifact retained as environment/port-gate-muse-glimmer-30b-attempt1.json.
+
+- 2026-08-23T01:10:10.870Z — MP-3 port gate PASS for muse-glimmer-30b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-muse-glimmer-30b.json.
