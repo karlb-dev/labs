@@ -1225,3 +1225,19 @@ place and receive a later disposition.
   rows disclose the +1-point resource cap and cross-profile throughput cannot
   be attributed solely to model identity. Repeated gate exact-output rates
   (1/6 and 2/6) are retained for the governed batching control.
+
+- 2026-08-23T17:03:37Z — During Gemma protected-primary finalization, all
+  inference cells had already reached a terminal state while the GPU was idle
+  and replay remained in CPU/SQL telemetry materialization. Diagnosis found
+  that each worker journal was batch-ingested but its span foreign keys were
+  then linked with one SQL round-trip per span. Replaced that post-inference
+  loop for subsequent invocations with duplicate-checked, exact-row-counted
+  `OPENJSON` batches of up to 1,000 links and added the requested/updated/batch
+  counts to each worker receipt. Build plus 41 test files / 144 tests passed;
+  an idempotent live-SQL validation updated 1,000/1,000 existing span links in
+  one batch in 55.427 ms. The already-running Gemma primary process had loaded
+  the prior code and remains untouched, so its evidence and timing preserve
+  the original sequential finalization path. Impact is limited to reducing
+  post-inference persistence overhead for controls and later profiles; model
+  prompts, responses, decisions, inference telemetry, and scientific metrics
+  are unchanged.

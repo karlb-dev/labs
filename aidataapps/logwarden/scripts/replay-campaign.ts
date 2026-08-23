@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
-import { runAgentLoop, type AgentLoopOptions, type AgentLoopResult, type PrimaryAgentArm } from "../src/agent-loop.js";
+import { runAgentLoop, type AgentLoopOptions, type AgentLoopResult, type AgentSpanLink, type PrimaryAgentArm } from "../src/agent-loop.js";
 import { frozenArmIdentities, loadAgentArmRegistry, loadDecodeRegistry, loadStandardCampaign } from "../src/campaign.js";
 import { summarizeChatMetrics, validateChatMetricDelta } from "../src/chat-metrics.js";
 import { loadConfig } from "../src/config.js";
@@ -25,6 +25,7 @@ import {
 import { appendExperimentLog, atomicWrite, resolveRunDirectory } from "../src/run.js";
 import { ingestTelemetryJournal, type TelemetryIngestionResult } from "../src/telemetry-ingest.js";
 import { createComponentTelemetryJournal } from "../src/telemetry.js";
+import { linkTelemetrySpans } from "../src/telemetry-links.js";
 
 interface RunManifest { runId: string }
 interface CampaignRow { campaignId: number; status: string; campaignHash: string }
@@ -50,13 +51,6 @@ interface AttemptIdentity {
   jobAttemptId: number;
   attemptNumber: number;
 }
-interface SpanLink {
-  traceId: string;
-  spanId: string;
-  turnId?: number;
-  modelRequestId?: number;
-  toolInvocationId?: number;
-}
 interface WorkerExecution {
   workerId: string;
   journalPath: string;
@@ -68,7 +62,7 @@ interface WorkerExecution {
   claimRetryCount: number;
   claimAvailabilityCheckCount: number;
   claimRetryWaitMs: number;
-  links: SpanLink[];
+  links: AgentSpanLink[];
 }
 interface FrozenControlRow { episodeId: string; splitRole: ReplayRole; family: string; regime: string }
 interface ControlAssignmentEvidence {
@@ -139,9 +133,9 @@ try {
   const workerResults: Array<Record<string, unknown>> = [];
   for (const execution of workerExecutions) {
     const ingestion = await ingestTelemetryJournal(control, run.runId, execution.journalPath, { batchSize: 250 });
-    await linkTelemetry(execution.links);
+    const telemetryLinks = await linkTelemetrySpans(control, execution.links);
     const { links: _links, ...summary } = execution;
-    workerResults.push({ ...summary, ingestion });
+    workerResults.push({ ...summary, ingestion, telemetryLinks });
   }
   await linkTelemetryByEvidence(jobs);
   for (const job of jobs) await materializePrediction(job, null);
@@ -564,7 +558,7 @@ async function assertQueueIsolation(jobs: JobIdentity[]): Promise<void> {
 async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity[], episodes: ReplayEpisode[]): Promise<WorkerExecution> {
   const workerId = `replay-${safeName(profileKey)}-${invocationId.slice(0, 8)}-${String(index).padStart(2, "0")}`.slice(0, 120);
   const created = await createComponentTelemetryJournal(runDirectory, run.runId, `replay-${profileKey}-${controlId ?? "primary"}-worker-${index}`);
-  const links: SpanLink[] = [];
+  const links: AgentSpanLink[] = [];
   const episodeMap = new Map(episodes.map((episode) => [episode.episodeId, episode]));
   const jobMap = new Map(jobs.map((job) => [job.jobId, job]));
   const agentControl = agentControlOptions();
@@ -853,15 +847,6 @@ async function primarySourcePredictionId(episodeId: string): Promise<number | nu
     `);
   if (result.recordset.length !== 1) throw new Error(`Expected exactly one primary A-tools prediction for ${profileKey}/${episodeId}, found ${result.recordset.length}`);
   return Number(result.recordset[0]!.prediction_id);
-}
-
-async function linkTelemetry(links: SpanLink[]): Promise<void> {
-  for (const link of links) await control.request().input("trace", sql.Char(32), link.traceId)
-    .input("span", sql.Char(16), link.spanId).input("turn", sql.BigInt, link.turnId ?? null)
-    .input("request", sql.BigInt, link.modelRequestId ?? null).input("tool", sql.BigInt, link.toolInvocationId ?? null).query(`
-      UPDATE telemetry.spans SET turn_id=COALESCE(@turn,turn_id),model_request_id=COALESCE(@request,model_request_id),
-        tool_invocation_id=COALESCE(@tool,tool_invocation_id) WHERE trace_id=@trace AND span_id=@span;
-    `);
 }
 
 async function linkTelemetryByEvidence(jobs: JobIdentity[]): Promise<void> {
