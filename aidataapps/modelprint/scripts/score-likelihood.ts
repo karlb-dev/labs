@@ -4,11 +4,10 @@ import { loadConfig } from "../src/config.js";
 import { hashFile, hashJson } from "../src/hash.js";
 import { resolveModelProfile } from "../src/models.js";
 import { resolveRunDirectory, valueAfter } from "../src/run.js";
+import { sliceAssistantLogprobs, type TokenLogprobCandidate } from "../src/likelihood.js";
 
 interface ScoreJob { generation_id: number; prompt: string; final_text: string; source_model: string; decode_key: string; }
-interface TokenizeResponse { tokens?: number[]; }
-interface PromptLogprob { logprob?: number; decoded_token?: string; }
-interface ChatScoreResponse { prompt_token_ids?: number[]; prompt_logprobs?: Array<Record<string, PromptLogprob> | null>; }
+interface ChatScoreResponse { prompt_token_ids?: number[]; prompt_logprobs?: Array<Record<string, TokenLogprobCandidate> | null>; }
 interface CompletionScoreResponse { choices?: Array<{ logprobs?: { token_logprobs?: Array<number | null> } }> }
 
 const scorerKey = valueAfter("--scorer") ?? process.env.MODEL_PROFILE;
@@ -46,23 +45,17 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 async function score(job: ScoreJob, prompted: boolean) {
   if (!job.final_text) return { prompted, ll: 0, tokens: 0, chars: 0, bitsPerChar: Number.POSITIVE_INFINITY, detail: { empty: true } };
   if (prompted) {
-    const prefix = await post<TokenizeResponse>("/tokenize", { model: scorerKey, messages: [{ role: "user", content: job.prompt }], add_generation_prompt: true });
     const response = await post<ChatScoreResponse>("/v1/chat/completions", { model: scorerKey,
       messages: [{ role: "user", content: job.prompt }, { role: "assistant", content: job.final_text }], temperature: 0, top_p: 1, top_k: 0, min_p: 0,
       repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, seed: 0, max_tokens: 1, n: 1, stop: [], prompt_logprobs: 1,
       return_token_ids: true, chat_template_kwargs: scorer.chatTemplateKwargs });
-    const tokens = response.prompt_token_ids ?? []; const logs = response.prompt_logprobs ?? []; const start = Math.min(prefix.tokens?.length ?? 0, tokens.length);
-    const values: number[] = [];
-    for (let index = start; index < Math.min(tokens.length, logs.length); index += 1) {
-      const candidates = logs[index]; if (!candidates) continue;
-      const actual = candidates[String(tokens[index])] ?? Object.values(candidates).find((row) => row.decoded_token !== undefined);
-      if (!actual || !Number.isFinite(actual.logprob)) continue;
-      if (/<\|(?:im_end|eot_id|end_of_turn)[^>]*\|>|<end_of_turn>/i.test(actual.decoded_token ?? "")) break;
-      values.push(actual.logprob!);
-    }
-    if (!values.length) throw new Error(`No assistant-span prompt logprobs for generation ${job.generation_id}`);
+    const tokens = response.prompt_token_ids ?? []; const logs = response.prompt_logprobs ?? [];
+    const span = sliceAssistantLogprobs(tokens, logs, job.final_text);
+    if (!span) throw new Error(`No decoded assistant span in prompt logprobs for generation ${job.generation_id}`);
+    const values = span.values;
     const ll = values.reduce((a, b) => a + b, 0); return { prompted, ll, tokens: values.length, chars: job.final_text.length,
-      bitsPerChar: -ll / Math.LN2 / Math.max(job.final_text.length, 1), detail: { prefixTokens: start, fullTokens: tokens.length } };
+      bitsPerChar: -ll / Math.LN2 / Math.max(job.final_text.length, 1), detail: { prefixTokens: span.firstTokenIndex, fullTokens: tokens.length,
+        assistantCharStart: span.assistantCharStart, assistantCharEnd: span.assistantCharEnd, slicing: "decoded-character-overlap-v1" } };
   }
   const response = await post<CompletionScoreResponse>("/v1/completions", { model: scorerKey, prompt: job.final_text, temperature: 0, top_p: 1, top_k: 0,
     min_p: 0, repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, seed: 0, max_tokens: 0, echo: true, logprobs: 1, stop: [] });

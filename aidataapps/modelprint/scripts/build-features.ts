@@ -97,6 +97,29 @@ async function embeddings() {
       embedded += rows.length; totalDone += rows.length;
       if (embedded % 1024 === 0 || embedded === artifacts.recordset.length) console.log(JSON.stringify({ stage: "embeddings", profile: selected.key, embedded, total: artifacts.recordset.length }));
     }
+    // The second embedding family is a whole-output comparator. The Qwen
+    // embedder additionally owns every retained segment representation used by
+    // chunk vote and the high-row-count SQL vector-index benchmark.
+    if (selected.key === "qwen3-embedding-0.6b") {
+      const segments = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: number; segmenter: string; text: string }>(`
+        SELECT DISTINCT s.segment_id AS id,s.segmenter_id AS segmenter,s.segment_text AS text
+        FROM dbo.output_segments s JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=s.text_artifact_id
+        JOIN dbo.generations g ON g.generation_id=m.generation_id
+        WHERE g.campaign_id IN (${campaignSql}) AND s.is_primary_eligible=1 AND NOT EXISTS
+        (SELECT 1 FROM dbo.semantic_vectors v WHERE v.segment_id=s.segment_id AND v.embedding_profile_id=@profile
+          AND v.representation_id=CONCAT('segment-',s.segmenter_id));`);
+      let segmentEmbedded = 0;
+      for (const rows of batch(segments.recordset, 64)) {
+        const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
+        await insertJson(rows.map((row, index) => ({ id: row.id, representation: `segment-${row.segmenter}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
+          INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
+          SELECT NULL,s.id,'${selected.key}',s.representation,CAST(s.vector AS vector(1024)),s.sha,'${runId}' FROM OPENJSON(@rows) WITH
+            (id bigint '$.id',representation varchar(80) '$.representation',vector nvarchar(max) '$.vector',sha char(64) '$.sha') s
+          WHERE NOT EXISTS (SELECT 1 FROM dbo.semantic_vectors v WHERE v.segment_id=s.id AND v.embedding_profile_id='${selected.key}' AND v.representation_id=s.representation);`);
+        segmentEmbedded += rows.length; totalDone += rows.length;
+        if (segmentEmbedded % 1024 === 0 || segmentEmbedded === segments.recordset.length) console.log(JSON.stringify({ stage: "segment-embeddings", profile: selected.key, embedded: segmentEmbedded, total: segments.recordset.length }));
+      }
+    }
   }
   return totalDone;
 }

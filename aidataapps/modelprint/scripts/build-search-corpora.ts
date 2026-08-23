@@ -7,7 +7,7 @@ import { appendExperimentLog, resolveRunDirectory } from "../src/run.js";
 const runDirectory = resolveRunDirectory();
 const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`, "utf8")) as { campaignId: number; campaignHash: string };
 const runId = runDirectory.split("/").at(-1)!; const config = loadConfig().database;
-const tables = ["search_semantic_train", "search_style_train", "search_residual_train", "search_fingerprint_train", "search_likelihood_train"] as const;
+const tables = ["search_semantic_train", "search_segment_train", "search_style_train", "search_residual_train", "search_fingerprint_train", "search_likelihood_train"] as const;
 const corpusBase = { schemaVersion: 1, campaignId: Number(freeze.campaignId), campaignHash: freeze.campaignHash, runId,
   eligibility: { split: "train", decode: ["det", "nat-0", "nat-1"], excludedCarrier: "structured-v1", minimumReferenceTokens: 16,
     truncated: false, textView: "raw-final-v1", exactMultiSourceDuplicates: "excluded" } };
@@ -33,6 +33,20 @@ try {
         AND v.carrier_id<>'structured-v1' AND g.truncated=0 AND g.reference_token_count>=16 AND t.multi_source_exact_duplicate=0)
     INSERT dbo.search_semantic_train(vector_id,embedding_profile_id,model_profile_id,prompt_group_id,text_artifact_id,split,length_band,stratum,corpus_manifest_hash,frozen_at,embedding,text_view_id)
     SELECT semantic_vector_id,embedding_profile_id,model_profile_id,prompt_group_id,text_artifact_id,split,length_band,stratum,@hash,@frozen,embedding,text_view_id FROM eligible WHERE rn=1;
+
+    WITH eligible AS (
+      SELECT s.semantic_vector_id,s.embedding_profile_id,g.model_profile_id,v.prompt_group_id,t.text_artifact_id,o.segment_id,g.split,g.length_band,p.stratum,s.embedding,
+        ROW_NUMBER() OVER(PARTITION BY s.semantic_vector_id ORDER BY g.generation_id) rn
+      FROM dbo.generations g JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id
+      JOIN dbo.prompt_groups p ON p.prompt_group_id=v.prompt_group_id JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
+      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id AND t.text_view_id='raw-final-v1'
+      JOIN dbo.output_segments o ON o.text_artifact_id=t.text_artifact_id AND o.is_primary_eligible=1
+      JOIN dbo.semantic_vectors s ON s.segment_id=o.segment_id AND s.embedding_profile_id='qwen3-embedding-0.6b'
+        AND s.representation_id=CONCAT('segment-',o.segmenter_id)
+      WHERE g.campaign_id=@campaign AND g.split='train' AND JSON_VALUE(d.config_json,'$.key') IN('det','nat-0','nat-1')
+        AND v.carrier_id<>'structured-v1' AND g.truncated=0 AND g.reference_token_count>=16 AND t.multi_source_exact_duplicate=0)
+    INSERT dbo.search_segment_train(vector_id,embedding_profile_id,model_profile_id,prompt_group_id,text_artifact_id,segment_id,split,length_band,stratum,corpus_manifest_hash,frozen_at,embedding)
+    SELECT semantic_vector_id,embedding_profile_id,model_profile_id,prompt_group_id,text_artifact_id,segment_id,split,length_band,stratum,@hash,@frozen,embedding FROM eligible WHERE rn=1;
 
     WITH eligible AS (
       SELECT s.style_vector_id,g.model_profile_id,v.prompt_group_id,t.text_artifact_id,t.text_view_id,g.split,g.length_band,p.stratum,s.embedding,

@@ -107,6 +107,19 @@ def softmax(logits,temp=1):
 def fit_temp(logits,truth):return float(math.exp(minimize_scalar(lambda t:log_loss(truth,softmax(logits,math.exp(t)),labels=np.arange(len(models))),bounds=(-4,4),method="bounded").x))
 def adaptive_ece(truth,prob,bins=10):
   conf=prob.max(1);pred=prob.argmax(1);parts=np.array_split(np.argsort(conf),bins);return float(sum(len(part)/len(truth)*abs((pred[part]==truth[part]).mean()-conf[part].mean()) for part in parts if len(part)))
+def classwise_ece(truth,prob,bins=10):
+  output={}
+  for index,model in enumerate(models):
+    confidence=prob[:,index];target=(truth==index).astype(float);parts=np.array_split(np.argsort(confidence),bins)
+    output[model]=float(sum(len(part)/len(truth)*abs(target[part].mean()-confidence[part].mean()) for part in parts if len(part)))
+  return output
+def reliability_bins(truth,prob,bins=15):
+  confidence=prob.max(1);pred=prob.argmax(1);edges=np.linspace(0,1,bins+1);output=[]
+  for index in range(bins):
+    mask=(confidence>=edges[index])&(confidence<(edges[index+1] if index<bins-1 else edges[index+1]+1e-12))
+    output.append({"lower":float(edges[index]),"upper":float(edges[index+1]),"rows":int(mask.sum()),
+      "meanConfidence":float(confidence[mask].mean()) if mask.any() else None,"accuracy":float((pred[mask]==truth[mask]).mean()) if mask.any() else None})
+  return output
 def conformal_q(prob,truth,alpha=.1):
   score=1-prob[np.arange(len(truth)),truth];level=min(1,math.ceil((len(score)+1)*(1-alpha))/len(score));return float(np.quantile(score,level,method="higher"))
 def pipeline(alpha,seed):return make_pipeline(StandardScaler(),SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True))
@@ -133,7 +146,8 @@ def metrics(frame,prob,bootstrap_n,rng,q):
   return {"rows":len(frame),"groups":int(frame.prompt_group_id.nunique()),"accuracy":float(accuracy_score(truth,pred)),"balancedAccuracy":float(balanced_accuracy_score(truth,pred)),
     "macroF1":float(f1_score(truth,pred,average="macro",labels=np.arange(len(models)),zero_division=0)),"macroF1Ci95":bootstrap(frame,pred,bootstrap_n,rng),
     "top2Accuracy":float(top_k_accuracy_score(truth,prob,k=2,labels=np.arange(len(models)))),"nll":float(log_loss(truth,prob,labels=np.arange(len(models)))),
-    "brier":float(np.mean(np.sum((prob-np.eye(len(models))[truth])**2,axis=1))),"eceAdaptive10":adaptive_ece(truth,prob),
+    "brier":float(np.mean(np.sum((prob-np.eye(len(models))[truth])**2,axis=1))),"eceAdaptive10":adaptive_ece(truth,prob),"classwiseEceAdaptive10":classwise_ece(truth,prob),
+    "reliabilityEqualWidth15":reliability_bins(truth,prob),
     "selectiveAccuracyAt50Coverage":float(accuracy_score(truth[half],pred[half])),"coverageAt85Accuracy":coverage85,
     "conformalCoverage":float(sets[np.arange(len(truth)),truth].mean()),"conformalMeanSetSize":float(sets.sum(1).mean()),
     "perClass":{models[i]:{"precision":float(per[0][i]),"recall":float(per[1][i]),"f1":float(per[2][i]),"support":int(per[3][i])} for i in range(len(models))},
@@ -160,12 +174,13 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
   null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
   rep={"alpha":alpha,"groupedCvMacroF1":cv_scores,"temperature":temperature,"conformalQ90":q,"suites":{},"lofo":{}}
   for suite,mask in active_suites.items():
-    frame=base.loc[mask].reset_index(drop=True);prob=softmax(model.decision_function(X[mask]),temperature);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+rep_index),q)
+    frame=base.loc[mask].reset_index(drop=True);logits=model.decision_function(X[mask]);raw_prob=softmax(logits);prob=softmax(logits,temperature);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+rep_index),q)
     null=[row[suite] for row in null_rows];metric["permutationNull"]={"mean":float(np.mean(null)),"p95":float(np.quantile(null,.95))} if null else {"mean":None,"p95":None}
     pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets");rep["suites"][suite]=metric
     out=frame[["generation_id","model_profile_id","prompt_group_id","source_id","family","family_bucket","carrier_id","decode_key","length_band","split"]].copy()
     out["representation"]=name;out["method"]="linear-probe";out["suite"]=suite;out["predicted_model_profile_id"]=[models[i] for i in pred];out["confidence"]=confidence
-    out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];prediction_frames.append(out)
+    out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob];out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob]
+    out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];prediction_frames.append(out)
     pd.DataFrame({"value":null}).to_csv(run/f"tables/permutation-probe-{name}-{suite}.csv",index=False);pd.DataFrame(metric["confusion"],index=models,columns=models).to_csv(run/f"tables/confusion-probe-{name}-{suite}.csv")
 
   # Leave-one-family-out rotations use only held-out test_id rows and never expose that family during fit/calibration.
@@ -176,10 +191,11 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
     if family_test.sum()==0 or len(set(y[family_train]))<len(models) or len(set(y[family_cal]))<len(models):continue
     lofo_specs.append((family,family_train,family_cal,family_test,int(family_test.sum())))
     candidate=pipeline(alpha,SEED);candidate.fit(X[family_train],y[family_train]);family_temp=fit_temp(candidate.decision_function(X[family_cal]),y[family_cal]);family_q=conformal_q(softmax(candidate.decision_function(X[family_cal]),family_temp),y[family_cal])
-    frame=base.loc[family_test].reset_index(drop=True);prob=softmax(candidate.decision_function(X[family_test]),family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+len(lofo_metrics)),family_q)
+    frame=base.loc[family_test].reset_index(drop=True);logits=candidate.decision_function(X[family_test]);raw_prob=softmax(logits);prob=softmax(logits,family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+len(lofo_metrics)),family_q)
     metric["permutationNull"]={"mean":None,"p95":None,"disposition":"computed-at-aggregate-rotation"};pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets");lofo_metrics[family]=metric
     out=frame[["generation_id","model_profile_id","prompt_group_id","source_id","family","family_bucket","carrier_id","decode_key","length_band","split"]].copy();out["representation"]=name;out["method"]="linear-probe";out["suite"]=f"lofo:{family}"
-    out["predicted_model_profile_id"]=[models[i] for i in pred];out["confidence"]=confidence;out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];lofo_predictions.append(out)
+    out["predicted_model_profile_id"]=[models[i] for i in pred];out["confidence"]=confidence;out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob]
+    out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];lofo_predictions.append(out)
   if lofo_metrics:
     eligible=[value for value in lofo_metrics.values() if value["rows"]>=100] or list(lofo_metrics.values());macro=[value["macroF1"] for value in eligible]
     def one_lofo_null(index):

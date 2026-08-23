@@ -1,9 +1,24 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { VllmGateway } from "../src/inference.js";
+import { sliceAssistantLogprobs } from "../src/likelihood.js";
 import { resolveModelProfile } from "../src/models.js";
 import { decodeCell } from "../src/types.js";
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("likelihood span slicing", () => {
+  it("counts the assistant span when its first token merges at the template junction", () => {
+    const result = sliceAssistantLogprobs([1, 2, 3, 4], [
+      { "1": { logprob: -0.1, decoded_token: "<assistant>" } },
+      { "2": { logprob: -0.2, decoded_token: ":Hel" } },
+      { "3": { logprob: -0.3, decoded_token: "lo" } },
+      { "4": { logprob: -0.4, decoded_token: "<|im_end|>" } },
+    ], "Hello");
+    expect(result?.tokenCount).toBe(2);
+    expect(result?.values).toEqual([-0.2, -0.3]);
+    expect(result?.firstTokenIndex).toBe(1);
+  });
+});
 
 describe("VllmGateway", () => {
   it("sends exactly one user message and retains raw/final/reasoning fields", async () => {
