@@ -17,6 +17,8 @@
     "scenarios:build": "node --import tsx scripts/scenarios-build.ts",
     "scenarios:inject": "node --import tsx scripts/scenarios-inject.ts",
     "capture:verify": "node --import tsx scripts/capture-verify.ts",
+    "gate:errorlog-rotation": "node --import tsx scripts/errorlog-recovery-gate.ts --mode rotation",
+    "gate:errorlog-restart": "node --import tsx scripts/errorlog-recovery-gate.ts --mode restart",
     "db:backup": "node --import tsx scripts/database-checkpoint.ts",
     "db:restore-test": "node --import tsx scripts/database-checkpoint.ts --restore-test",
     "packets:build": "node --import tsx scripts/packets-build.ts",

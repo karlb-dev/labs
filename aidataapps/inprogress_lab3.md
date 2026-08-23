@@ -85,8 +85,11 @@ and its effect on the evidence ceiling must be recorded append-only in
   artifacts with receipt
   `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
   the derived file rebuilt byte-for-byte.
-- Next incomplete milestone: ERRORLOG rotation/container recovery and the
-  least-privilege read-only tool procedures, followed by supported catalog and
+- ERRORLOG `sp_cycle_errorlog` recovery passed with a stable pre-roll key,
+  one unique post-roll marker, and 599/599 duplicates on immediate replay;
+  receipt `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
+- Next incomplete milestone: the checkpointed container restart recovery gate
+  and least-privilege read-only tool procedures, followed by supported catalog and
   runbook expansion/freeze. A small embedding or qwen-smoke port may then load
   for the remaining real `/metrics` gate; no long chat campaign may load yet.
 
@@ -177,7 +180,7 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is ERRORLOG rotation/container recovery followed by read-only
+this checkpoint is checkpointed ERRORLOG container-restart recovery followed by read-only
 tools and the standard catalog/runbook freeze; do not load a model until the
 remaining real-service observability gate can run. If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained

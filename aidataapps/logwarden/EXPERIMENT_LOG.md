@@ -214,3 +214,11 @@ place and receive a later disposition.
   hashes are `f986c6132c3c7d344892d1263d55b54a35858ec676f966557225ee281e3f9dc3`
   and `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
   an immediate rebuild was byte-identical.
+- 2026-08-23T04:44:20Z — The mandatory ERRORLOG rotation gate passed. A
+  pre-roll marker retained the exact source-position key after
+  `sys.sp_cycle_errorlog` renamed its generation, a post-roll marker produced a
+  second unique raw/canonical row, and immediate replay inserted zero of 599
+  parsed records (all 599 were recognized duplicates). Receipt
+  `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
+  The file reader was factored into a retrying shared module; this changes only
+  container file-access robustness and has no scientific-result impact.

@@ -1,8 +1,8 @@
-import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
-import { parseErrorlogFiles, type ErrorlogFile } from "../src/errorlog.js";
+import { parseErrorlogFiles } from "../src/errorlog.js";
+import { readErrorlogFilesFromContainer } from "../src/errorlog-files.js";
 import { hashJson } from "../src/hash.js";
 import { connect } from "../src/repository.js";
 import { atomicWrite, resolveRunDirectory } from "../src/run.js";
@@ -36,7 +36,7 @@ try {
     receiptBody.xe = result.recordset[0] ?? {};
   }
   if (requestedSource === "all" || requestedSource === "errorlog") {
-    const files = await readErrorlogs(process.env.LOGWARDEN_SQL_CONTAINER ?? "aidataapps-logwarden-sqlserver-1");
+    const files = await readErrorlogFilesFromContainer(process.env.LOGWARDEN_SQL_CONTAINER ?? "aidataapps-logwarden-sqlserver-1");
     const scan = parseErrorlogFiles(files);
     const result = await pool.request()
       .input("worker_id", sql.VarChar(120), `ingest-${process.pid}`)
@@ -59,25 +59,6 @@ const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
 const stamp = new Date().toISOString().replaceAll(/[-:.]/g, "");
 await atomicWrite(`${runDirectory}/ingestion/${stamp}-${requestedSource}.json`, `${JSON.stringify(receipt, null, 2)}\n`);
 console.log(JSON.stringify(receipt, null, 2));
-
-async function readErrorlogs(container: string): Promise<ErrorlogFile[]> {
-  const listing = await runDocker(container, ["sh", "-lc",
-    "ls -1 /var/opt/mssql/log/errorlog /var/opt/mssql/log/errorlog.[0-9]* 2>/dev/null || true"]);
-  const paths = [...new Set(listing.split("\n").map((line) => line.trim()).filter(Boolean))];
-  const files: ErrorlogFile[] = [];
-  for (const path of paths) files.push({ path, content: await runDocker(container, ["cat", path]) });
-  if (files.length === 0) throw new Error("No SQL Server ERRORLOG files were readable through the container");
-  return files;
-}
-
-function runDocker(container: string, command: string[]): Promise<string> {
-  return new Promise((resolve, reject) => {
-    execFile("docker", ["exec", container, ...command], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }, (error, stdout, stderr) => {
-      if (error !== null) reject(new Error(`docker exec failed: ${stderr.trim() || error.message}`));
-      else resolve(stdout);
-    });
-  });
-}
 
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
