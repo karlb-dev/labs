@@ -158,3 +158,9 @@
       abstention behavior on real package prompts during its campaign.
   Pins (system fingerprints, logprobs support, determinism) recorded in
   control.model_profiles.port_gate_json for all five profiles.
+
+- 2026-08-24 — Karl decision: Muse runs WITH the DFlash speculative-decoding
+  drafter for the quality campaign ("it's faster and basically the same
+  output, so no point not to use it"). The GT-11 WARN stands as a label
+  only: Muse rows are non-deterministic-decode; do not disable the drafter
+  to chase exact repeatability.

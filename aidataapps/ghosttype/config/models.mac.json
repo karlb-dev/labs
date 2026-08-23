@@ -45,7 +45,8 @@
         "serverField": "reasoning_content",
         "note": "mlx-vlm 0.6.15 splits the channel; reasoning never enters insertText."
       },
-      "reasoningAllowanceTokens": 1024
+      "reasoningAllowanceTokens": 1024,
+      "decodeLabel": "non-deterministic-decode (DFlash drafter on, per Karl 2026-08-24)"
     },
     "gemma-4-26b-a4b-mlx": {
       "family": "gemma",
