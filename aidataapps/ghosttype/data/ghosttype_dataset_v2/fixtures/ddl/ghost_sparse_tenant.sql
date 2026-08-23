@@ -1,0 +1,17 @@
+-- Candidate fixture DDL for ghost_sparse_tenant.
+-- The Lab 04 implementation must replace or verify this against the pinned SQL Server build before freeze.
+-- Catalog source follows.
+/*
+-- connection: ghosttype / TenantPortal, default schema reporting, engine: Azure SQL Database
+-- inferred system query: no
+-- permission profile: analyst_readonly; hidden schemas are not listed
+-- schema size sparse: 5 detailed objects, 2 names-only objects
+TABLE reporting.CustomerSummary (CustomerId int NOT NULL PK, DisplayName nvarchar(120) NOT NULL, Segment nvarchar(40), LastOrderDate date, LifetimeValue decimal(18,2))
+TABLE reporting.MonthlyRevenue (MonthStart date NOT NULL, RegionCode char(3) NOT NULL, Revenue decimal(18,2) NOT NULL, OrderCount bigint NOT NULL)
+TABLE sales.Customers (CustomerId int NOT NULL PK, CustomerName nvarchar(120), RegionCode char(3))
+TABLE archive.Customers (CustomerId int NOT NULL PK, CustomerName nvarchar(120), ArchivedAt datetime2 NOT NULL)
+TABLE app.Settings (SettingKey nvarchar(100) NOT NULL PK, SettingValue nvarchar(max), IsPublic bit NOT NULL)
+SYNONYM reporting.CurrentCustomers -> sales.Customers
+TABLE NAMES: reporting.DailyPipeline, reporting.ProductMix
+SYSTEM OBJECTS: sys.schemas, sys.tables, sys.columns, sys.synonyms, INFORMATION_SCHEMA.TABLES
+*/

@@ -1,0 +1,15 @@
+{
+  "status": "pending",
+  "required_gates": [
+    "ScriptDom parse/token audit",
+    "catalog binding",
+    "sp_describe_first_result_set",
+    "fixture compilation",
+    "sandbox execution",
+    "mutation-state oracle",
+    "capability routing",
+    "split near-duplicate audit",
+    "independent reconstruction"
+  ],
+  "results": {}
+}

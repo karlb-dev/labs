@@ -1,0 +1,529 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ghosttype/dataset/completion-record.schema.json",
+  "title": "GhostType SQL completion record v2",
+  "type": "object",
+  "required": [
+    "id",
+    "dataset",
+    "dataset_version",
+    "task",
+    "split",
+    "completion_category",
+    "source",
+    "environment",
+    "prompt",
+    "messages",
+    "messages_chat",
+    "gold_completion",
+    "eval",
+    "ghosttype"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable example id, unique within the dataset."
+    },
+    "dataset": {
+      "type": "string",
+      "const": "ghosttype-sql-completions"
+    },
+    "dataset_version": {
+      "type": "string",
+      "const": "2.0.0"
+    },
+    "task": {
+      "type": "string",
+      "const": "mssql_copilot_completion"
+    },
+    "split": {
+      "type": "string",
+      "enum": [
+        "eval"
+      ]
+    },
+    "completion_category": {
+      "type": "string",
+      "enum": [
+        "intent",
+        "continuation"
+      ],
+      "description": "intent = comment-to-complete-query; continuation = one ghost-text unit at the cursor."
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind",
+        "gold_author",
+        "gold_model"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "trace",
+            "synthetic"
+          ]
+        },
+        "trace_file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "event_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "exported_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "origin_model_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "origin_model_family": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "origin_model_vendor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "origin_result": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "origin_latency_ms": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "origin_input_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "origin_output_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "origin_completion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Unedited model output from the trace, when this record was derived from a log."
+        },
+        "gold_author": {
+          "type": "string"
+        },
+        "gold_model": {
+          "type": "string"
+        },
+        "gold_role": {
+          "type": "string",
+          "enum": [
+            "cleaned_trace",
+            "replaced_trace_gold",
+            "synthetic"
+          ]
+        },
+        "edit_notes": {
+          "type": "string"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "database",
+        "engine",
+        "schema_id"
+      ],
+      "properties": {
+        "connection_label": {
+          "type": "string"
+        },
+        "database": {
+          "type": "string"
+        },
+        "engine": {
+          "type": "string"
+        },
+        "default_schema": {
+          "type": "string"
+        },
+        "language_id": {
+          "type": "string"
+        },
+        "schema_id": {
+          "type": "string"
+        },
+        "schema_size": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string"
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "required": [
+        "intent_mode",
+        "inferred_system_query",
+        "recent_document_prefix",
+        "current_statement_prefix",
+        "document_suffix",
+        "current_line_prefix",
+        "current_line_suffix"
+      ],
+      "properties": {
+        "intent_mode": {
+          "type": "boolean"
+        },
+        "inferred_system_query": {
+          "type": "boolean"
+        },
+        "user_comment": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recent_document_prefix": {
+          "type": "string"
+        },
+        "current_statement_prefix": {
+          "type": "string"
+        },
+        "document_suffix": {
+          "type": "string"
+        },
+        "current_line_prefix": {
+          "type": "string"
+        },
+        "current_line_suffix": {
+          "type": "string"
+        }
+      }
+    },
+    "messages": {
+      "type": "array",
+      "description": "Production-faithful prompt: two user messages (rules, then tagged context), matching the VS Code MSSQL Copilot traces.",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "system",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "messages_chat": {
+      "type": "array",
+      "description": "Recommended chat-eval prompt: system rules + one user context message. Gold is the assistant completion.",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "system",
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "gold_completion": {
+      "type": "string",
+      "description": "Reference assistant output. Empty string is a valid gold (refuse-to-invent / no natural continuation)."
+    },
+    "eval": {
+      "type": "object",
+      "required": [
+        "difficulty",
+        "scenario",
+        "tags",
+        "expect_empty",
+        "forbid_markdown",
+        "raw_sql_only",
+        "scoring",
+        "rubric"
+      ],
+      "properties": {
+        "difficulty": {
+          "type": "string",
+          "enum": [
+            "easy",
+            "medium",
+            "hard"
+          ]
+        },
+        "scenario": {
+          "type": "string",
+          "enum": [
+            "developer",
+            "admin",
+            "devops",
+            "analytics",
+            "metadata"
+          ],
+          "description": "Persona facet for slicing results: who would type this prompt. Inferred from tags at build time unless the example sets it explicitly."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expect_empty": {
+          "type": "boolean"
+        },
+        "forbid_markdown": {
+          "type": "boolean"
+        },
+        "raw_sql_only": {
+          "type": "boolean"
+        },
+        "must_contain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_contain_any": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_not_contain": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_objects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scoring": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rubric": {
+          "type": "string"
+        }
+      }
+    },
+    "ghosttype": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "package_version",
+        "legacy_id",
+        "source_record_sha256",
+        "split_group_id",
+        "data_role",
+        "template_family",
+        "near_duplicate_family",
+        "dialect",
+        "compatibility_level",
+        "completion_class",
+        "cursor",
+        "fixture_id",
+        "catalog_snapshot_id",
+        "permission_profile_id",
+        "accepted_insertions",
+        "canonical_insertion",
+        "must_reference_objects",
+        "must_not_reference_objects",
+        "capability_requirements",
+        "oracle",
+        "known_ambiguity",
+        "abstention_reason"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "2.0"
+        },
+        "package_version": {
+          "type": "string",
+          "const": "2.0.0"
+        },
+        "legacy_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_record_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "split_group_id": {
+          "type": "string"
+        },
+        "data_role": {
+          "type": "string",
+          "enum": [
+            "train",
+            "calibration",
+            "test_id",
+            "test_template_holdout",
+            "test_schema_holdout",
+            "test_suffix_holdout",
+            "test_sparse_catalog",
+            "test_capability"
+          ]
+        },
+        "template_family": {
+          "type": "string"
+        },
+        "near_duplicate_family": {
+          "type": "string"
+        },
+        "dialect": {
+          "type": "string",
+          "const": "tsql"
+        },
+        "compatibility_level": {
+          "type": "integer"
+        },
+        "completion_class": {
+          "type": "string"
+        },
+        "cursor": {
+          "type": "object",
+          "required": [
+            "encoding",
+            "offset_utf8",
+            "offset_utf16",
+            "selection_start_utf16",
+            "selection_end_utf16"
+          ],
+          "properties": {
+            "encoding": {
+              "type": "string",
+              "enum": [
+                "utf16"
+              ]
+            },
+            "offset_utf8": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "offset_utf16": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "selection_start_utf16": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "selection_end_utf16": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "fixture_id": {
+          "type": "string"
+        },
+        "catalog_snapshot_id": {
+          "type": "string"
+        },
+        "permission_profile_id": {
+          "type": "string"
+        },
+        "accepted_insertions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "canonical_insertion": {
+          "type": "string"
+        },
+        "must_reference_objects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_not_reference_objects": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "capability_requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "oracle": {
+          "type": "object"
+        },
+        "known_ambiguity": {
+          "type": "boolean"
+        },
+        "abstention_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

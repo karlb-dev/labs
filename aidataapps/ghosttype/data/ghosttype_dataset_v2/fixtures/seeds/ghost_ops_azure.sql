@@ -1,0 +1,1 @@
+-- Deterministic seed placeholder for ghost_ops_azure; runtime fixture generation is a pending gate.

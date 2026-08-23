@@ -1,0 +1,1 @@
+-- Deterministic seed placeholder for ghost_temporal_audit; runtime fixture generation is a pending gate.

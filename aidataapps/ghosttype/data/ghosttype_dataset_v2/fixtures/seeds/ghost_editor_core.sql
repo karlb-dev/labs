@@ -1,0 +1,1 @@
+-- Deterministic seed placeholder for ghost_editor_core; runtime fixture generation is a pending gate.

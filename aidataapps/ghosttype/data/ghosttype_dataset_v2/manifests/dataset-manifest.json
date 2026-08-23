@@ -1,0 +1,91 @@
+{
+  "package_name": "ghosttype_dataset_v2",
+  "package_version": "2.0.0",
+  "created_utc": "2026-08-23T00:00:00Z",
+  "record_count": 588,
+  "legacy_record_count": 265,
+  "synthetic_record_count": 323,
+  "catalog_count": 15,
+  "new_catalog_count": 6,
+  "records_path": "records/ghosttype_sql_completions_v2.jsonl",
+  "records_sha256": "3da75007c927b9517571266a13641f680960a6b671ef293557f1f10667c48714",
+  "new_records_sha256": "376e2f1bfd291bc73d626c11a2487125f012c1b5affa2ee39c71b5e5c0253229",
+  "legacy_source_sha256": "a094126e152668ea21e72c9cba5e0e8561ea3131bbaf3c1f49d3f22a1cb22f4b",
+  "schema_sha256": "6df5e779b4be8ce387a9cc6bbf83e218d813dc0e51ee73ea9c96133bd99f803c",
+  "counts": {
+    "by_data_role": {
+      "calibration": 45,
+      "test_capability": 10,
+      "test_id": 335,
+      "test_schema_holdout": 20,
+      "test_sparse_catalog": 18,
+      "test_suffix_holdout": 25,
+      "test_template_holdout": 25,
+      "train": 110
+    },
+    "by_category": {
+      "continuation": 158,
+      "intent": 430
+    },
+    "by_scenario": {
+      "admin": 103,
+      "analytics": 91,
+      "developer": 339,
+      "devops": 25,
+      "metadata": 30
+    },
+    "by_difficulty": {
+      "easy": 200,
+      "hard": 124,
+      "medium": 264
+    },
+    "by_expect_empty": {
+      "false": 487,
+      "true": 101
+    },
+    "by_catalog": {
+      "adventure_azure": 34,
+      "azure_master": 7,
+      "fabric_warehouse": 29,
+      "fitnessapp_test": 73,
+      "ghost_editor_core": 56,
+      "ghost_ops_azure": 54,
+      "ghost_parser_edges": 55,
+      "ghost_sparse_tenant": 52,
+      "ghost_temporal_audit": 52,
+      "ghost_vector_search": 54,
+      "master_onprem": 33,
+      "msdb_onprem": 22,
+      "ninjadb_a": 57,
+      "ninjadb_b": 10
+    },
+    "new_by_catalog": {
+      "ghost_editor_core": 56,
+      "ghost_ops_azure": 54,
+      "ghost_parser_edges": 55,
+      "ghost_sparse_tenant": 52,
+      "ghost_temporal_audit": 52,
+      "ghost_vector_search": 54
+    }
+  },
+  "static_validation": {
+    "json_schema_valid": true,
+    "json_schema_failure_count": 0,
+    "gold_contract_valid": true,
+    "gold_contract_failure_count": 0,
+    "legacy_ids_preserved": true,
+    "legacy_missing": [],
+    "legacy_duplicate_or_nonunique": []
+  },
+  "runtime_gates_pending": [
+    "ScriptDom parse/token audit",
+    "catalog binding",
+    "sp_describe_first_result_set",
+    "fixture compilation",
+    "sandbox execution",
+    "mutation-state oracle",
+    "capability routing",
+    "split near-duplicate audit",
+    "independent reconstruction"
+  ]
+}

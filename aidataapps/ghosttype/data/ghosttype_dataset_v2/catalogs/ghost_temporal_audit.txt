@@ -1,0 +1,10 @@
+-- connection: ghosttype / TemporalLab, default schema dbo, engine: SQL Server 2025 Developer
+-- inferred system query: no
+-- temporal and change-tracking fixture
+TABLE dbo.Accounts SYSTEM_VERSIONED (AccountId int NOT NULL PK, CustomerId int NOT NULL, Status nvarchar(30) NOT NULL, Balance decimal(18,2) NOT NULL, ValidFrom datetime2 GENERATED ALWAYS AS ROW START, ValidTo datetime2 GENERATED ALWAYS AS ROW END, PERIOD FOR SYSTEM_TIME (ValidFrom, ValidTo), HISTORY_TABLE=dbo.AccountsHistory)
+TABLE dbo.AccountsHistory (AccountId int NOT NULL, CustomerId int NOT NULL, Status nvarchar(30) NOT NULL, Balance decimal(18,2) NOT NULL, ValidFrom datetime2 NOT NULL, ValidTo datetime2 NOT NULL)
+TABLE dbo.Subscriptions SYSTEM_VERSIONED (SubscriptionId int NOT NULL PK, AccountId int NOT NULL FK->dbo.Accounts.AccountId, PlanCode nvarchar(30) NOT NULL, State nvarchar(30) NOT NULL, ValidFrom datetime2 GENERATED ALWAYS AS ROW START, ValidTo datetime2 GENERATED ALWAYS AS ROW END, PERIOD FOR SYSTEM_TIME (ValidFrom, ValidTo), HISTORY_TABLE=dbo.SubscriptionsHistory)
+TABLE dbo.SubscriptionsHistory (SubscriptionId int NOT NULL, AccountId int NOT NULL, PlanCode nvarchar(30) NOT NULL, State nvarchar(30) NOT NULL, ValidFrom datetime2 NOT NULL, ValidTo datetime2 NOT NULL)
+TABLE dbo.AuditEvents (AuditEventId bigint NOT NULL PK, EntityType nvarchar(50) NOT NULL, EntityId int NOT NULL, EventType nvarchar(50) NOT NULL, EventAt datetime2 NOT NULL, DetailJson nvarchar(max) NULL)
+CHANGE TRACKING: dbo.AuditEvents enabled; current version via CHANGE_TRACKING_CURRENT_VERSION()
+SYSTEM OBJECTS: sys.tables, sys.columns, sys.periods, sys.change_tracking_tables

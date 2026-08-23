@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_ops_azure",
+  "catalog_id": "ghost_ops_azure",
+  "ddl_path": "fixtures/ddl/ghost_ops_azure.sql",
+  "seed_path": "fixtures/seeds/ghost_ops_azure.sql",
+  "status": "candidate_static_only"
+}

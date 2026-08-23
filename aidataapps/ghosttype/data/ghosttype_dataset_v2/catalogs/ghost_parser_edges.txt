@@ -1,0 +1,11 @@
+-- connection: ghosttype / ParserEdges, default schema dbo, engine: SQL Server 2025 Developer
+-- inferred system query: no
+-- case-sensitive fixture; QUOTED_IDENTIFIER ON
+TABLE dbo.[Order] ([Order ID] int NOT NULL PK, [select] nvarchar(50) NOT NULL, [Created At] datetime2 NOT NULL)
+TABLE dbo.[User Profile] ([User ID] int NOT NULL PK, [First Name] nvarchar(80), [Last Name] nvarchar(80), [naïve score] decimal(9,4))
+TABLE dbo.[München Customers] ([Kunden-ID] int NOT NULL PK, [Straße] nvarchar(120), [PLZ] nvarchar(12))
+TABLE dbo.[Emoji📦] ([📦 ID] int NOT NULL PK, [📦 Count] int NOT NULL, [note/*not comment*/] nvarchar(200))
+TABLE dbo.CaseSensitive (Id int NOT NULL PK, Code nvarchar(40) COLLATE Latin1_General_100_CS_AS NOT NULL, code_shadow nvarchar(40) NULL)
+TABLE dbo.BatchItems (BatchId int NOT NULL, ItemId int NOT NULL, Payload nvarchar(max), CONSTRAINT PK_BatchItems PRIMARY KEY (BatchId, ItemId))
+PROCEDURE dbo.[usp Process Order] (@OrderId int, @DryRun bit = 1)
+SYSTEM OBJECTS: sys.tables, sys.columns, INFORMATION_SCHEMA.COLUMNS

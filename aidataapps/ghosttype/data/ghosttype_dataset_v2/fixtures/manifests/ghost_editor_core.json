@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_editor_core",
+  "catalog_id": "ghost_editor_core",
+  "ddl_path": "fixtures/ddl/ghost_editor_core.sql",
+  "seed_path": "fixtures/seeds/ghost_editor_core.sql",
+  "status": "candidate_static_only"
+}

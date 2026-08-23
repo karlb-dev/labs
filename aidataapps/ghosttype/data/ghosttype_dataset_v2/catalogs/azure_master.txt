@@ -1,0 +1,36 @@
+-- connection: sqlninja / master, default schema dbo, engine: Azure SQL Database
+-- inferred system query: no
+-- schema size small: 0 tables, 0 views, 1 routines (1 total user objects)
+-- schema budget: profile balanced, size small, columns verbose, max prompt chars 18000
+-- schemas (user): db_datareader, db_denydatareader, dbo, db_accessadmin, db_backupoperator, db_datawriter, db_ddladmin, db_denydatawriter, db_owner, db_securityadmin, guest
+SCALAR FUNCTION dbo.fn_sysdac_get_currentusername() RETURNS sysname
+-- system catalog / DMVs available:
+sys.dm_exec_requests (session_id, request_id, status, command, database_id, blocking_session_id, wait_type, wait_time, cpu_time, total_elapsed_time, sql_handle, plan_handle)
+sys.dm_exec_sessions (session_id, login_time, host_name, program_name, login_name, status, database_id, cpu_time, memory_usage, reads, writes, last_request_end_time)
+sys.dm_exec_connections (session_id, connect_time, net_transport, protocol_type, client_net_address, local_net_address, local_tcp_port, most_recent_sql_handle)
+sys.dm_exec_query_stats (sql_handle, plan_handle, creation_time, last_execution_time, execution_count, total_worker_time, total_elapsed_time, total_logical_reads, total_logical_writes)
+sys.dm_exec_sql_text (sql_handle, dbid, objectid, number, encrypted, text)
+sys.dm_exec_query_plan (plan_handle, dbid, objectid, number, encrypted, query_plan)
+sys.dm_db_index_usage_stats (database_id, object_id, index_id, user_seeks, user_scans, user_lookups, user_updates, last_user_seek, last_user_scan)
+sys.dm_db_missing_index_details (index_handle, database_id, object_id, equality_columns, inequality_columns, included_columns, statement)
+sys.dm_db_index_physical_stats (database_id, object_id, index_id, partition_number, index_type_desc, alloc_unit_type_desc, avg_fragmentation_in_percent, page_count)
+sys.dm_tran_locks (resource_type, resource_database_id, resource_associated_entity_id, request_mode, request_type, request_status, request_session_id)
+sys.databases (database_id, name, state_desc, compatibility_level, collation_name, recovery_model_desc, create_date)
+sys.objects (object_id, name, schema_id, type, type_desc, create_date, modify_date)
+sys.columns (object_id, column_id, name, user_type_id, max_length, precision, scale, is_nullable)
+sys.tables (object_id, name, schema_id, type_desc, create_date, modify_date, is_ms_shipped)
+sys.views (object_id, name, schema_id, type_desc, create_date, modify_date, is_ms_shipped)
+sys.indexes (object_id, index_id, name, type_desc, is_unique, is_primary_key, is_disabled)
+sys.index_columns (object_id, index_id, index_column_id, column_id, key_ordinal, is_included_column)
+sys.partitions (partition_id, object_id, index_id, partition_number, rows, data_compression_desc)
+sys.allocation_units (allocation_unit_id, type_desc, container_id, data_pages, used_pages, total_pages)
+sys.foreign_keys (object_id, name, parent_object_id, referenced_object_id, delete_referential_action_desc, update_referential_action_desc)
+sys.foreign_key_columns (constraint_object_id, constraint_column_id, parent_object_id, parent_column_id, referenced_object_id, referenced_column_id)
+sys.schemas (schema_id, name, principal_id)
+sys.types (user_type_id, system_type_id, name, schema_id, max_length, precision, scale, is_nullable)
+sys.procedures (object_id, name, schema_id, type_desc, create_date, modify_date)
+sys.parameters (object_id, parameter_id, name, user_type_id, max_length, precision, scale, is_output)
+INFORMATION_SCHEMA.TABLES (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE)
+INFORMATION_SCHEMA.COLUMNS (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, DATA_TYPE, IS_NULLABLE)
+INFORMATION_SCHEMA.VIEWS (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION)
+INFORMATION_SCHEMA.ROUTINES (SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE)

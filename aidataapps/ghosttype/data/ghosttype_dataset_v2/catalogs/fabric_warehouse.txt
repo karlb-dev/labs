@@ -1,0 +1,33 @@
+-- connection: fabricninja / ContosoDW, default schema dbo, engine: Microsoft Fabric Data Warehouse
+-- inferred system query: no
+-- schema size small: 9 tables, 0 views, 0 routines (9 total user objects)
+-- schema budget: profile balanced, size small, columns verbose, max prompt chars 18000
+-- schemas (user): db_datareader, db_denydatareader, dbo, db_accessadmin, db_datawriter, db_ddladmin, db_denydatawriter, db_owner, db_securityadmin, guest
+-- user tables: detailed 5 of 9
+TABLE dbo.DimDate (DateKey int NOT NULL PK, FullDate date NOT NULL, CalendarYear smallint NOT NULL, CalendarQuarter tinyint NOT NULL, CalendarMonth tinyint NOT NULL, MonthName varchar(10) NOT NULL, DayOfWeek tinyint, IsWeekend bit, FiscalYear smallint, FiscalQuarter tinyint)
+TABLE dbo.DimCustomer (CustomerKey int NOT NULL PK, CustomerAltKey varchar(15) NOT NULL, FirstName varchar(50), LastName varchar(50), EmailAddress varchar(100), City varchar(50), StateProvince varchar(50), CountryRegion varchar(50), CustomerSegment varchar(20))
+TABLE dbo.DimProduct (ProductKey int NOT NULL PK, ProductAltKey varchar(25) NOT NULL, ProductName varchar(100) NOT NULL, Category varchar(50), Subcategory varchar(50), Brand varchar(50), Color varchar(20), ListPrice decimal(10,2), StandardCost decimal(10,2))
+TABLE dbo.DimStore (StoreKey int NOT NULL PK, StoreName varchar(100) NOT NULL, City varchar(50), StateProvince varchar(50), CountryRegion varchar(50), OpenDate date, SquareFeet int)
+TABLE dbo.FactSales (SalesKey bigint NOT NULL, DateKey int NOT NULL FK->dbo.DimDate.DateKey, CustomerKey int NOT NULL FK->dbo.DimCustomer.CustomerKey, ProductKey int NOT NULL FK->dbo.DimProduct.ProductKey, StoreKey int NOT NULL FK->dbo.DimStore.StoreKey, OrderNumber varchar(20) NOT NULL, Quantity int NOT NULL, UnitPrice decimal(10,2) NOT NULL, DiscountAmount decimal(10,2), TotalAmount decimal(12,2) NOT NULL, CostAmount decimal(12,2))
+-- additional tables listed without columns (4 more omitted):
+TABLE NAMES dbo (ETLAudit, FactInventory, FactReturns, StagingSales)
+-- system catalog / DMVs available:
+queryinsights.exec_requests_history (distributed_statement_id, session_id, start_time, end_time, total_elapsed_time_ms, login_name, row_count, status, result_cache_hit, command, program_name, query_hash, label)
+queryinsights.exec_sessions_history (session_id, login_name, login_time, session_end_time, program_name, status)
+queryinsights.frequently_run_queries (query_hash, command, number_of_runs, number_of_successful_runs, number_of_failed_runs, number_of_canceled_runs, avg_total_elapsed_time_ms, min_total_elapsed_time_ms, max_total_elapsed_time_ms, last_run_start_time, avg_scanned_bytes)
+queryinsights.long_running_queries (query_hash, command, number_of_runs, median_total_elapsed_time_ms, last_run_total_elapsed_time_ms, last_run_start_time, status)
+sys.dm_exec_requests (session_id, request_id, status, command, database_id, blocking_session_id, wait_type, wait_time, cpu_time, total_elapsed_time, sql_handle, plan_handle)
+sys.dm_exec_sessions (session_id, login_time, host_name, program_name, login_name, status, database_id, cpu_time, memory_usage, reads, writes, last_request_end_time)
+sys.dm_exec_connections (session_id, connect_time, net_transport, protocol_type, client_net_address, local_net_address, local_tcp_port, most_recent_sql_handle)
+sys.databases (database_id, name, state_desc, compatibility_level, collation_name, recovery_model_desc, create_date)
+sys.objects (object_id, name, schema_id, type, type_desc, create_date, modify_date)
+sys.columns (object_id, column_id, name, user_type_id, max_length, precision, scale, is_nullable)
+sys.tables (object_id, name, schema_id, type_desc, create_date, modify_date, is_ms_shipped)
+sys.views (object_id, name, schema_id, type_desc, create_date, modify_date, is_ms_shipped)
+sys.partitions (partition_id, object_id, index_id, partition_number, rows, data_compression_desc)
+sys.schemas (schema_id, name, principal_id)
+sys.foreign_keys (object_id, name, parent_object_id, referenced_object_id, delete_referential_action_desc, update_referential_action_desc)
+sys.foreign_key_columns (constraint_object_id, constraint_column_id, parent_object_id, parent_column_id, referenced_object_id, referenced_column_id)
+INFORMATION_SCHEMA.TABLES (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE)
+INFORMATION_SCHEMA.COLUMNS (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, ORDINAL_POSITION, DATA_TYPE, IS_NULLABLE)
+INFORMATION_SCHEMA.VIEWS (TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, VIEW_DEFINITION)

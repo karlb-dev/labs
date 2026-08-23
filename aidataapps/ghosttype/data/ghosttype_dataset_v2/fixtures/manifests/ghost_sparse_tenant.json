@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_sparse_tenant",
+  "catalog_id": "ghost_sparse_tenant",
+  "ddl_path": "fixtures/ddl/ghost_sparse_tenant.sql",
+  "seed_path": "fixtures/seeds/ghost_sparse_tenant.sql",
+  "status": "candidate_static_only"
+}

@@ -1,0 +1,22 @@
+{
+  "workload_id": "gpu-multi-user-v1",
+  "data_roles": [
+    "test_id",
+    "test_template_holdout",
+    "test_schema_holdout",
+    "test_suffix_holdout",
+    "test_sparse_catalog",
+    "test_capability"
+  ],
+  "seed": 0,
+  "concurrency_sweep": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "notes": "Hosted vLLM quality replay plus separate load-generation cells."
+}

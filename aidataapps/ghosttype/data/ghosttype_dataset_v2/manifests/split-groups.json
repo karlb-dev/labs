@@ -1,0 +1,2942 @@
+{
+  "gt-cur-case-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-case-g01",
+    "template_family": "gt-cur-case"
+  },
+  "gt-cur-case-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-case-g01",
+    "template_family": "gt-cur-case"
+  },
+  "gt-cur-case-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-case-g02",
+    "template_family": "gt-cur-case"
+  },
+  "gt-cur-case-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-case-g02",
+    "template_family": "gt-cur-case"
+  },
+  "gt-cur-cte-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-cte-g01",
+    "template_family": "gt-cur-cte"
+  },
+  "gt-cur-cte-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-cte-g01",
+    "template_family": "gt-cur-cte"
+  },
+  "gt-cur-cte-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-cte-g02",
+    "template_family": "gt-cur-cte"
+  },
+  "gt-cur-cte-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-cte-g02",
+    "template_family": "gt-cur-cte"
+  },
+  "gt-cur-delete-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-delete-g01",
+    "template_family": "gt-cur-delete"
+  },
+  "gt-cur-delete-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-delete-g01",
+    "template_family": "gt-cur-delete"
+  },
+  "gt-cur-delete-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-delete-g02",
+    "template_family": "gt-cur-delete"
+  },
+  "gt-cur-delete-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-delete-g02",
+    "template_family": "gt-cur-delete"
+  },
+  "gt-cur-empty-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-empty-g01",
+    "template_family": "gt-cur-empty"
+  },
+  "gt-cur-empty-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-empty-g01",
+    "template_family": "gt-cur-empty"
+  },
+  "gt-cur-empty-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-empty-g02",
+    "template_family": "gt-cur-empty"
+  },
+  "gt-cur-empty-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-empty-g02",
+    "template_family": "gt-cur-empty"
+  },
+  "gt-cur-group-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-group-g01",
+    "template_family": "gt-cur-group"
+  },
+  "gt-cur-group-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-group-g01",
+    "template_family": "gt-cur-group"
+  },
+  "gt-cur-group-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-group-g02",
+    "template_family": "gt-cur-group"
+  },
+  "gt-cur-group-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-group-g02",
+    "template_family": "gt-cur-group"
+  },
+  "gt-cur-insert-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-insert-g01",
+    "template_family": "gt-cur-insert"
+  },
+  "gt-cur-insert-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-insert-g01",
+    "template_family": "gt-cur-insert"
+  },
+  "gt-cur-insert-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-insert-g02",
+    "template_family": "gt-cur-insert"
+  },
+  "gt-cur-insert-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-insert-g02",
+    "template_family": "gt-cur-insert"
+  },
+  "gt-cur-join-on-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g01",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-on-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g01",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-on-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g02",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-on-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g02",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-target-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g01",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-target-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g01",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-target-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g02",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-join-target-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-join-g02",
+    "template_family": "gt-cur-join"
+  },
+  "gt-cur-order-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-order-g01",
+    "template_family": "gt-cur-order"
+  },
+  "gt-cur-order-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-order-g01",
+    "template_family": "gt-cur-order"
+  },
+  "gt-cur-order-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-order-g02",
+    "template_family": "gt-cur-order"
+  },
+  "gt-cur-order-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-order-g02",
+    "template_family": "gt-cur-order"
+  },
+  "gt-cur-proc-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-proc-g01",
+    "template_family": "gt-cur-proc"
+  },
+  "gt-cur-proc-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-proc-g01",
+    "template_family": "gt-cur-proc"
+  },
+  "gt-cur-proc-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-proc-g02",
+    "template_family": "gt-cur-proc"
+  },
+  "gt-cur-proc-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-proc-g02",
+    "template_family": "gt-cur-proc"
+  },
+  "gt-cur-select-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-select-g01",
+    "template_family": "gt-cur-select"
+  },
+  "gt-cur-select-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-select-g01",
+    "template_family": "gt-cur-select"
+  },
+  "gt-cur-select-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-select-g02",
+    "template_family": "gt-cur-select"
+  },
+  "gt-cur-select-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-select-g02",
+    "template_family": "gt-cur-select"
+  },
+  "gt-cur-update-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-update-g01",
+    "template_family": "gt-cur-update"
+  },
+  "gt-cur-update-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-update-g01",
+    "template_family": "gt-cur-update"
+  },
+  "gt-cur-update-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-update-g02",
+    "template_family": "gt-cur-update"
+  },
+  "gt-cur-update-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-update-g02",
+    "template_family": "gt-cur-update"
+  },
+  "gt-cur-where-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-where-g01",
+    "template_family": "gt-cur-where"
+  },
+  "gt-cur-where-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-where-g01",
+    "template_family": "gt-cur-where"
+  },
+  "gt-cur-where-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-where-g02",
+    "template_family": "gt-cur-where"
+  },
+  "gt-cur-where-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-where-g02",
+    "template_family": "gt-cur-where"
+  },
+  "gt-cur-window-01": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-window-g01",
+    "template_family": "gt-cur-window"
+  },
+  "gt-cur-window-02": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-window-g01",
+    "template_family": "gt-cur-window"
+  },
+  "gt-cur-window-03": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-window-g02",
+    "template_family": "gt-cur-window"
+  },
+  "gt-cur-window-04": {
+    "data_role": "train",
+    "split_group_id": "gt-cur-window-g02",
+    "template_family": "gt-cur-window"
+  },
+  "gt-edge-case-01": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-case-g01",
+    "template_family": "gt-edge-case"
+  },
+  "gt-edge-case-02": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-case-g01",
+    "template_family": "gt-edge-case"
+  },
+  "gt-edge-case-03": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-case-g02",
+    "template_family": "gt-edge-case"
+  },
+  "gt-edge-case-04": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-case-g02",
+    "template_family": "gt-edge-case"
+  },
+  "gt-edge-case-05": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-case-g03",
+    "template_family": "gt-edge-case"
+  },
+  "gt-edge-comment-empty-01": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-comment-g01",
+    "template_family": "gt-edge-comment"
+  },
+  "gt-edge-comment-empty-02": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-comment-g01",
+    "template_family": "gt-edge-comment"
+  },
+  "gt-edge-comment-empty-03": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-comment-g02",
+    "template_family": "gt-edge-comment"
+  },
+  "gt-edge-comment-empty-04": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-comment-g02",
+    "template_family": "gt-edge-comment"
+  },
+  "gt-edge-comment-empty-05": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-comment-g03",
+    "template_family": "gt-edge-comment"
+  },
+  "gt-edge-cont-01": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-cont-g01",
+    "template_family": "gt-edge-cont"
+  },
+  "gt-edge-cont-02": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-cont-g01",
+    "template_family": "gt-edge-cont"
+  },
+  "gt-edge-cont-03": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-cont-g02",
+    "template_family": "gt-edge-cont"
+  },
+  "gt-edge-cont-04": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-cont-g02",
+    "template_family": "gt-edge-cont"
+  },
+  "gt-edge-cont-05": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-cont-g03",
+    "template_family": "gt-edge-cont"
+  },
+  "gt-edge-cte-01": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-cte-g01",
+    "template_family": "gt-edge-cte"
+  },
+  "gt-edge-cte-02": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-cte-g01",
+    "template_family": "gt-edge-cte"
+  },
+  "gt-edge-cte-03": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-cte-g02",
+    "template_family": "gt-edge-cte"
+  },
+  "gt-edge-cte-04": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-cte-g02",
+    "template_family": "gt-edge-cte"
+  },
+  "gt-edge-cte-05": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-cte-g03",
+    "template_family": "gt-edge-cte"
+  },
+  "gt-edge-go-01": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-go-g01",
+    "template_family": "gt-edge-go"
+  },
+  "gt-edge-go-02": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-go-g01",
+    "template_family": "gt-edge-go"
+  },
+  "gt-edge-go-03": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-go-g02",
+    "template_family": "gt-edge-go"
+  },
+  "gt-edge-go-04": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-go-g02",
+    "template_family": "gt-edge-go"
+  },
+  "gt-edge-go-05": {
+    "data_role": "test_capability",
+    "split_group_id": "gt-edge-go-g03",
+    "template_family": "gt-edge-go"
+  },
+  "gt-edge-order-01": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-order-g01",
+    "template_family": "gt-edge-order"
+  },
+  "gt-edge-order-02": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-order-g01",
+    "template_family": "gt-edge-order"
+  },
+  "gt-edge-order-03": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-order-g02",
+    "template_family": "gt-edge-order"
+  },
+  "gt-edge-order-04": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-order-g02",
+    "template_family": "gt-edge-order"
+  },
+  "gt-edge-order-05": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-order-g03",
+    "template_family": "gt-edge-order"
+  },
+  "gt-edge-proc-01": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-proc-g01",
+    "template_family": "gt-edge-proc"
+  },
+  "gt-edge-proc-02": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-proc-g01",
+    "template_family": "gt-edge-proc"
+  },
+  "gt-edge-proc-03": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-proc-g02",
+    "template_family": "gt-edge-proc"
+  },
+  "gt-edge-proc-04": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-proc-g02",
+    "template_family": "gt-edge-proc"
+  },
+  "gt-edge-proc-05": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-proc-g03",
+    "template_family": "gt-edge-proc"
+  },
+  "gt-edge-select-01": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-edge-select-g01",
+    "template_family": "gt-edge-select"
+  },
+  "gt-edge-select-02": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-edge-select-g01",
+    "template_family": "gt-edge-select"
+  },
+  "gt-edge-select-03": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-select-g02",
+    "template_family": "gt-edge-select"
+  },
+  "gt-edge-select-04": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-select-g02",
+    "template_family": "gt-edge-select"
+  },
+  "gt-edge-select-05": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-select-g03",
+    "template_family": "gt-edge-select"
+  },
+  "gt-edge-tablevar-01": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-tablevar-g01",
+    "template_family": "gt-edge-tablevar"
+  },
+  "gt-edge-tablevar-02": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-tablevar-g01",
+    "template_family": "gt-edge-tablevar"
+  },
+  "gt-edge-tablevar-03": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-tablevar-g02",
+    "template_family": "gt-edge-tablevar"
+  },
+  "gt-edge-tablevar-04": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-tablevar-g02",
+    "template_family": "gt-edge-tablevar"
+  },
+  "gt-edge-tablevar-05": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-tablevar-g03",
+    "template_family": "gt-edge-tablevar"
+  },
+  "gt-edge-temp-01": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-temp-g01",
+    "template_family": "gt-edge-temp"
+  },
+  "gt-edge-temp-02": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-temp-g01",
+    "template_family": "gt-edge-temp"
+  },
+  "gt-edge-temp-03": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-temp-g02",
+    "template_family": "gt-edge-temp"
+  },
+  "gt-edge-temp-04": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-temp-g02",
+    "template_family": "gt-edge-temp"
+  },
+  "gt-edge-temp-05": {
+    "data_role": "test_sparse_catalog",
+    "split_group_id": "gt-edge-temp-g03",
+    "template_family": "gt-edge-temp"
+  },
+  "gt-edge-unicode-01": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-unicode-g01",
+    "template_family": "gt-edge-unicode"
+  },
+  "gt-edge-unicode-02": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-unicode-g01",
+    "template_family": "gt-edge-unicode"
+  },
+  "gt-edge-unicode-03": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-unicode-g02",
+    "template_family": "gt-edge-unicode"
+  },
+  "gt-edge-unicode-04": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-unicode-g02",
+    "template_family": "gt-edge-unicode"
+  },
+  "gt-edge-unicode-05": {
+    "data_role": "test_suffix_holdout",
+    "split_group_id": "gt-edge-unicode-g03",
+    "template_family": "gt-edge-unicode"
+  },
+  "gt-ops-blocking-01": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g01",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-blocking-02": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g01",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-blocking-03": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g02",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-blocking-04": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g02",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-blocking-05": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g03",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-blocking-06": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-blocking-g03",
+    "template_family": "gt-ops-blocking"
+  },
+  "gt-ops-config-01": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g01",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-config-02": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g01",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-config-03": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g02",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-config-04": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g02",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-config-05": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g03",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-config-06": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-config-g03",
+    "template_family": "gt-ops-config"
+  },
+  "gt-ops-forced-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-forced-g01",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-forced-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-forced-g01",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-forced-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-forced-g02",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-forced-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-forced-g02",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-forced-05": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-forced-g03",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-forced-06": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-forced-g03",
+    "template_family": "gt-ops-forced"
+  },
+  "gt-ops-indexusage-01": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g01",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-indexusage-02": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g01",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-indexusage-03": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g02",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-indexusage-04": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g02",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-indexusage-05": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g03",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-indexusage-06": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-indexusage-g03",
+    "template_family": "gt-ops-indexusage"
+  },
+  "gt-ops-qstore-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g01",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-qstore-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g01",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-qstore-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g02",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-qstore-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g02",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-qstore-05": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g03",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-qstore-06": {
+    "data_role": "test_id",
+    "split_group_id": "gt-ops-qstore-g03",
+    "template_family": "gt-ops-qstore"
+  },
+  "gt-ops-requests-01": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g01",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-requests-02": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g01",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-requests-03": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g02",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-requests-04": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g02",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-requests-05": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g03",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-requests-06": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-requests-g03",
+    "template_family": "gt-ops-requests"
+  },
+  "gt-ops-resource-01": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g01",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-resource-02": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g01",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-resource-03": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g02",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-resource-04": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g02",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-resource-05": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g03",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-resource-06": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-resource-g03",
+    "template_family": "gt-ops-resource"
+  },
+  "gt-ops-unsupported-01": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g01",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-unsupported-02": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g01",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-unsupported-03": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g02",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-unsupported-04": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g02",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-unsupported-05": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g03",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-unsupported-06": {
+    "data_role": "test_schema_holdout",
+    "split_group_id": "gt-ops-unsupported-g03",
+    "template_family": "gt-ops-unsupported"
+  },
+  "gt-ops-waits-01": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g01",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-ops-waits-02": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g01",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-ops-waits-03": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g02",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-ops-waits-04": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g02",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-ops-waits-05": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g03",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-ops-waits-06": {
+    "data_role": "test_template_holdout",
+    "split_group_id": "gt-ops-waits-g03",
+    "template_family": "gt-ops-waits"
+  },
+  "gt-sparse-alias-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-alias-g01",
+    "template_family": "gt-sparse-alias"
+  },
+  "gt-sparse-alias-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-alias-g01",
+    "template_family": "gt-sparse-alias"
+  },
+  "gt-sparse-alias-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-alias-g02",
+    "template_family": "gt-sparse-alias"
+  },
+  "gt-sparse-alias-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-alias-g02",
+    "template_family": "gt-sparse-alias"
+  },
+  "gt-sparse-cont-empty-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-cont-g01",
+    "template_family": "gt-sparse-cont"
+  },
+  "gt-sparse-cont-empty-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-cont-g01",
+    "template_family": "gt-sparse-cont"
+  },
+  "gt-sparse-cont-empty-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-cont-g02",
+    "template_family": "gt-sparse-cont"
+  },
+  "gt-sparse-cont-empty-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-cont-g02",
+    "template_family": "gt-sparse-cont"
+  },
+  "gt-sparse-count-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-count-g01",
+    "template_family": "gt-sparse-count"
+  },
+  "gt-sparse-count-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-count-g01",
+    "template_family": "gt-sparse-count"
+  },
+  "gt-sparse-count-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-count-g02",
+    "template_family": "gt-sparse-count"
+  },
+  "gt-sparse-count-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-count-g02",
+    "template_family": "gt-sparse-count"
+  },
+  "gt-sparse-crossdb-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-crossdb-g01",
+    "template_family": "gt-sparse-crossdb"
+  },
+  "gt-sparse-crossdb-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-crossdb-g01",
+    "template_family": "gt-sparse-crossdb"
+  },
+  "gt-sparse-crossdb-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-crossdb-g02",
+    "template_family": "gt-sparse-crossdb"
+  },
+  "gt-sparse-crossdb-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-crossdb-g02",
+    "template_family": "gt-sparse-crossdb"
+  },
+  "gt-sparse-hidden-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-hidden-g01",
+    "template_family": "gt-sparse-hidden"
+  },
+  "gt-sparse-hidden-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-hidden-g01",
+    "template_family": "gt-sparse-hidden"
+  },
+  "gt-sparse-hidden-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-hidden-g02",
+    "template_family": "gt-sparse-hidden"
+  },
+  "gt-sparse-hidden-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-hidden-g02",
+    "template_family": "gt-sparse-hidden"
+  },
+  "gt-sparse-injection-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-injection-g01",
+    "template_family": "gt-sparse-injection"
+  },
+  "gt-sparse-injection-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-injection-g01",
+    "template_family": "gt-sparse-injection"
+  },
+  "gt-sparse-injection-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-injection-g02",
+    "template_family": "gt-sparse-injection"
+  },
+  "gt-sparse-injection-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-injection-g02",
+    "template_family": "gt-sparse-injection"
+  },
+  "gt-sparse-missing-col-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-missing-g01",
+    "template_family": "gt-sparse-missing"
+  },
+  "gt-sparse-missing-col-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-missing-g01",
+    "template_family": "gt-sparse-missing"
+  },
+  "gt-sparse-missing-col-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-missing-g02",
+    "template_family": "gt-sparse-missing"
+  },
+  "gt-sparse-missing-col-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-missing-g02",
+    "template_family": "gt-sparse-missing"
+  },
+  "gt-sparse-names-only-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-names-g01",
+    "template_family": "gt-sparse-names"
+  },
+  "gt-sparse-names-only-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-names-g01",
+    "template_family": "gt-sparse-names"
+  },
+  "gt-sparse-names-only-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-names-g02",
+    "template_family": "gt-sparse-names"
+  },
+  "gt-sparse-names-only-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-names-g02",
+    "template_family": "gt-sparse-names"
+  },
+  "gt-sparse-permission-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-permission-g01",
+    "template_family": "gt-sparse-permission"
+  },
+  "gt-sparse-permission-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-permission-g01",
+    "template_family": "gt-sparse-permission"
+  },
+  "gt-sparse-permission-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-permission-g02",
+    "template_family": "gt-sparse-permission"
+  },
+  "gt-sparse-permission-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-permission-g02",
+    "template_family": "gt-sparse-permission"
+  },
+  "gt-sparse-qualified-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-qualified-g01",
+    "template_family": "gt-sparse-qualified"
+  },
+  "gt-sparse-qualified-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-qualified-g01",
+    "template_family": "gt-sparse-qualified"
+  },
+  "gt-sparse-qualified-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-qualified-g02",
+    "template_family": "gt-sparse-qualified"
+  },
+  "gt-sparse-qualified-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-qualified-g02",
+    "template_family": "gt-sparse-qualified"
+  },
+  "gt-sparse-stale-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-stale-g01",
+    "template_family": "gt-sparse-stale"
+  },
+  "gt-sparse-stale-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-stale-g01",
+    "template_family": "gt-sparse-stale"
+  },
+  "gt-sparse-stale-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-stale-g02",
+    "template_family": "gt-sparse-stale"
+  },
+  "gt-sparse-stale-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-stale-g02",
+    "template_family": "gt-sparse-stale"
+  },
+  "gt-sparse-synonym-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-synonym-g01",
+    "template_family": "gt-sparse-synonym"
+  },
+  "gt-sparse-synonym-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-synonym-g01",
+    "template_family": "gt-sparse-synonym"
+  },
+  "gt-sparse-synonym-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-synonym-g02",
+    "template_family": "gt-sparse-synonym"
+  },
+  "gt-sparse-synonym-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-synonym-g02",
+    "template_family": "gt-sparse-synonym"
+  },
+  "gt-sparse-visible-01": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-visible-g01",
+    "template_family": "gt-sparse-visible"
+  },
+  "gt-sparse-visible-02": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-visible-g01",
+    "template_family": "gt-sparse-visible"
+  },
+  "gt-sparse-visible-03": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-visible-g02",
+    "template_family": "gt-sparse-visible"
+  },
+  "gt-sparse-visible-04": {
+    "data_role": "train",
+    "split_group_id": "gt-sparse-visible-g02",
+    "template_family": "gt-sparse-visible"
+  },
+  "gt-temp-all-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-all-g01",
+    "template_family": "gt-temp-all"
+  },
+  "gt-temp-all-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-all-g01",
+    "template_family": "gt-temp-all"
+  },
+  "gt-temp-all-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-all-g02",
+    "template_family": "gt-temp-all"
+  },
+  "gt-temp-all-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-all-g02",
+    "template_family": "gt-temp-all"
+  },
+  "gt-temp-asof-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-asof-g01",
+    "template_family": "gt-temp-asof"
+  },
+  "gt-temp-asof-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-asof-g01",
+    "template_family": "gt-temp-asof"
+  },
+  "gt-temp-asof-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-asof-g02",
+    "template_family": "gt-temp-asof"
+  },
+  "gt-temp-asof-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-asof-g02",
+    "template_family": "gt-temp-asof"
+  },
+  "gt-temp-audit-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-audit-g01",
+    "template_family": "gt-temp-audit"
+  },
+  "gt-temp-audit-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-audit-g01",
+    "template_family": "gt-temp-audit"
+  },
+  "gt-temp-audit-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-audit-g02",
+    "template_family": "gt-temp-audit"
+  },
+  "gt-temp-audit-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-audit-g02",
+    "template_family": "gt-temp-audit"
+  },
+  "gt-temp-between-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-between-g01",
+    "template_family": "gt-temp-between"
+  },
+  "gt-temp-between-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-between-g01",
+    "template_family": "gt-temp-between"
+  },
+  "gt-temp-between-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-between-g02",
+    "template_family": "gt-temp-between"
+  },
+  "gt-temp-between-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-between-g02",
+    "template_family": "gt-temp-between"
+  },
+  "gt-temp-changetable-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-changetable-g01",
+    "template_family": "gt-temp-changetable"
+  },
+  "gt-temp-changetable-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-changetable-g01",
+    "template_family": "gt-temp-changetable"
+  },
+  "gt-temp-changetable-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-changetable-g02",
+    "template_family": "gt-temp-changetable"
+  },
+  "gt-temp-changetable-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-changetable-g02",
+    "template_family": "gt-temp-changetable"
+  },
+  "gt-temp-contained-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-contained-g01",
+    "template_family": "gt-temp-contained"
+  },
+  "gt-temp-contained-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-contained-g01",
+    "template_family": "gt-temp-contained"
+  },
+  "gt-temp-contained-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-contained-g02",
+    "template_family": "gt-temp-contained"
+  },
+  "gt-temp-contained-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-contained-g02",
+    "template_family": "gt-temp-contained"
+  },
+  "gt-temp-current-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g01",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g01",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g02",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g02",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-vs-history-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g01",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-vs-history-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g01",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-vs-history-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g02",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-current-vs-history-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-current-g02",
+    "template_family": "gt-temp-current"
+  },
+  "gt-temp-cursor-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-cursor-g01",
+    "template_family": "gt-temp-cursor"
+  },
+  "gt-temp-cursor-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-cursor-g01",
+    "template_family": "gt-temp-cursor"
+  },
+  "gt-temp-cursor-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-cursor-g02",
+    "template_family": "gt-temp-cursor"
+  },
+  "gt-temp-cursor-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-cursor-g02",
+    "template_family": "gt-temp-cursor"
+  },
+  "gt-temp-history-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-history-g01",
+    "template_family": "gt-temp-history"
+  },
+  "gt-temp-history-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-history-g01",
+    "template_family": "gt-temp-history"
+  },
+  "gt-temp-history-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-history-g02",
+    "template_family": "gt-temp-history"
+  },
+  "gt-temp-history-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-history-g02",
+    "template_family": "gt-temp-history"
+  },
+  "gt-temp-join-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-join-g01",
+    "template_family": "gt-temp-join"
+  },
+  "gt-temp-join-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-join-g01",
+    "template_family": "gt-temp-join"
+  },
+  "gt-temp-join-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-join-g02",
+    "template_family": "gt-temp-join"
+  },
+  "gt-temp-join-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-join-g02",
+    "template_family": "gt-temp-join"
+  },
+  "gt-temp-periodmeta-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-periodmeta-g01",
+    "template_family": "gt-temp-periodmeta"
+  },
+  "gt-temp-periodmeta-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-periodmeta-g01",
+    "template_family": "gt-temp-periodmeta"
+  },
+  "gt-temp-periodmeta-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-periodmeta-g02",
+    "template_family": "gt-temp-periodmeta"
+  },
+  "gt-temp-periodmeta-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-periodmeta-g02",
+    "template_family": "gt-temp-periodmeta"
+  },
+  "gt-temp-unsupported-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-unsupported-g01",
+    "template_family": "gt-temp-unsupported"
+  },
+  "gt-temp-unsupported-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-unsupported-g01",
+    "template_family": "gt-temp-unsupported"
+  },
+  "gt-temp-unsupported-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-unsupported-g02",
+    "template_family": "gt-temp-unsupported"
+  },
+  "gt-temp-unsupported-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-temp-unsupported-g02",
+    "template_family": "gt-temp-unsupported"
+  },
+  "gt-vector-distance-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g01",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-distance-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g01",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-distance-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g02",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-distance-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g02",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-distance-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g03",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-distance-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-distance-g03",
+    "template_family": "gt-vector-distance"
+  },
+  "gt-vector-exact-01": {
+    "data_role": "train",
+    "split_group_id": "gt-vector-exact-g01",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-exact-02": {
+    "data_role": "train",
+    "split_group_id": "gt-vector-exact-g01",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-exact-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-exact-g02",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-exact-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-exact-g02",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-exact-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-exact-g03",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-exact-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-exact-g03",
+    "template_family": "gt-vector-exact"
+  },
+  "gt-vector-hybrid-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g01",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-hybrid-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g01",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-hybrid-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g02",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-hybrid-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g02",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-hybrid-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g03",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-hybrid-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-hybrid-g03",
+    "template_family": "gt-vector-hybrid"
+  },
+  "gt-vector-indexmeta-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-indexmeta-g01",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-indexmeta-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-indexmeta-g01",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-indexmeta-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-indexmeta-g02",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-indexmeta-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-indexmeta-g02",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-indexmeta-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-indexmeta-g03",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-indexmeta-06": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-indexmeta-g03",
+    "template_family": "gt-vector-indexmeta"
+  },
+  "gt-vector-insert-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g01",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-insert-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g01",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-insert-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g02",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-insert-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g02",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-insert-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g03",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-insert-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-insert-g03",
+    "template_family": "gt-vector-insert"
+  },
+  "gt-vector-json-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g01",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-json-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g01",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-json-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g02",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-json-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g02",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-json-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g03",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-json-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-json-g03",
+    "template_family": "gt-vector-json"
+  },
+  "gt-vector-meta-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g01",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-meta-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g01",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-meta-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g02",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-meta-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g02",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-meta-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g03",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-meta-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-meta-g03",
+    "template_family": "gt-vector-meta"
+  },
+  "gt-vector-openjson-01": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g01",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-openjson-02": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g01",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-openjson-03": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g02",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-openjson-04": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g02",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-openjson-05": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g03",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-openjson-06": {
+    "data_role": "calibration",
+    "split_group_id": "gt-vector-openjson-g03",
+    "template_family": "gt-vector-openjson"
+  },
+  "gt-vector-preview-empty-01": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g01",
+    "template_family": "gt-vector-preview"
+  },
+  "gt-vector-preview-empty-02": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g01",
+    "template_family": "gt-vector-preview"
+  },
+  "gt-vector-preview-empty-03": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g02",
+    "template_family": "gt-vector-preview"
+  },
+  "gt-vector-preview-empty-04": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g02",
+    "template_family": "gt-vector-preview"
+  },
+  "gt-vector-preview-empty-05": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g03",
+    "template_family": "gt-vector-preview"
+  },
+  "gt-vector-preview-empty-06": {
+    "data_role": "test_id",
+    "split_group_id": "gt-vector-preview-g03",
+    "template_family": "gt-vector-preview"
+  },
+  "syn-cont-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-001",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-002",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-003",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-004",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-005",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-006",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-007",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-008",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-009",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-010",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-011",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-012",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-013",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-014",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-015",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-016",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-017",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-018",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-019",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-020",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-021",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-022",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-023": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-023",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-024": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-024",
+    "template_family": "legacy-continuation"
+  },
+  "syn-cont-025": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-cont-025",
+    "template_family": "legacy-continuation"
+  },
+  "syn-empty-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-001",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-002",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-003",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-004",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-005",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-006",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-007",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-008",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-009",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-010",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-011",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-012",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-013",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-014",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-015",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-016",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-017",
+    "template_family": "legacy-intent"
+  },
+  "syn-empty-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-empty-018",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-001",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-002",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-003",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-004",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-005",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-006",
+    "template_family": "legacy-continuation"
+  },
+  "syn-fmt-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-007",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-008",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-009",
+    "template_family": "legacy-intent"
+  },
+  "syn-fmt-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-fmt-010",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-001",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-002",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-003",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-004",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-005",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-006",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-007",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-008",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-009",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-010",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-011",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-012",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-013",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-014",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-015",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-016",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-017",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-018",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-019",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-020",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-021",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-022",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-023": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-023",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-024": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-024",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-025": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-025",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-026": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-026",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-027": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-027",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-fa-028": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-fa-028",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-001",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-002",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-003",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-004",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-005",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-006",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-007",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-008",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-009",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-010",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-011",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-012",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-013",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-014",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-015",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-016",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-017",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-018",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-019",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-020",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-021",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-022",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-023": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-023",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-024": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-024",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-025": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-025",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-026": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-026",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-027": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-027",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-028": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-028",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-029": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-029",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-030": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-030",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-031": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-031",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-032": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-032",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-033": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-033",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-034": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-034",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-nj-035": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-nj-035",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-001",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-002",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-003",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-004",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-005",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-006",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-007",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-008",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-009",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-010",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-011",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-012",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-013",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-014",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-015",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-016",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-017",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-018",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-019",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-020",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-021",
+    "template_family": "legacy-intent"
+  },
+  "syn-intent-sys-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn-intent-sys-022",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-001",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-002",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-003",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-004",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-005",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-006",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-007",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-008",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-009",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-010",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-011",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-012",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-013",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-014",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-015",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-016",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-017",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-018",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-019",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-020",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-021",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-022",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-023": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-023",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-024": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-024",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-025": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-025",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-026": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-026",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-027": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-027",
+    "template_family": "legacy-intent"
+  },
+  "syn2-adv-028": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-028",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-adv-029": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-029",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-adv-030": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-030",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-adv-031": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-031",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-adv-032": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-adv-032",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-ansi-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-001",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-002",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-003",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-004",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-005",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-006",
+    "template_family": "legacy-intent"
+  },
+  "syn2-ansi-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-007",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-ansi-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-ansi-008",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fab-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-001",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-002",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-003",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-004",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-005",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-006",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-007",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-008",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-009",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-010",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-011",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-012",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-013",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-014",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-015",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-016",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-017",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-018",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-019",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-020",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-021",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-022": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-022",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-023": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-023",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fab-024": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-024",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fab-025": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-025",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fab-026": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-026",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fab-027": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-027",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fab-028": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fab-028",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fmt-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-001",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-002",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-003",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-004",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-005",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-006",
+    "template_family": "legacy-intent"
+  },
+  "syn2-fmt-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-007",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-fmt-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-fmt-008",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-msdb-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-001",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-002",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-003",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-004",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-005",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-006",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-007",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-008",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-009",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-010",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-011",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-012",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-013",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-014",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-015",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-016",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-017",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-018",
+    "template_family": "legacy-intent"
+  },
+  "syn2-msdb-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-019",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-msdb-020": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-020",
+    "template_family": "legacy-continuation"
+  },
+  "syn2-msdb-021": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-syn2-msdb-021",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-001",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-002",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-003",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-004",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-005",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-006",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-007",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-008",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-009",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-010",
+    "template_family": "legacy-continuation"
+  },
+  "trace-cont-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-cont-011",
+    "template_family": "legacy-continuation"
+  },
+  "trace-intent-001": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-001",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-002": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-002",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-003": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-003",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-004": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-004",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-005": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-005",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-006": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-006",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-007": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-007",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-008": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-008",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-009": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-009",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-010": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-010",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-011": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-011",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-012": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-012",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-013": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-013",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-014": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-014",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-015": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-015",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-016": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-016",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-017": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-017",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-018": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-018",
+    "template_family": "legacy-intent"
+  },
+  "trace-intent-019": {
+    "data_role": "test_id",
+    "split_group_id": "legacy-trace-intent-019",
+    "template_family": "legacy-intent"
+  }
+}

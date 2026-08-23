@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "fixture_id",
+    "catalog_id",
+    "ddl_path"
+  ],
+  "properties": {
+    "fixture_id": {
+      "type": "string"
+    },
+    "catalog_id": {
+      "type": "string"
+    },
+    "ddl_path": {
+      "type": "string"
+    }
+  }
+}

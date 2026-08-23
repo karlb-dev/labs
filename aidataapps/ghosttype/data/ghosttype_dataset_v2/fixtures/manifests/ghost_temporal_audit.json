@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_temporal_audit",
+  "catalog_id": "ghost_temporal_audit",
+  "ddl_path": "fixtures/ddl/ghost_temporal_audit.sql",
+  "seed_path": "fixtures/seeds/ghost_temporal_audit.sql",
+  "status": "candidate_static_only"
+}

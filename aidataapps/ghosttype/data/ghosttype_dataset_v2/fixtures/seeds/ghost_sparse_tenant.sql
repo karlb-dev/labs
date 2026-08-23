@@ -1,0 +1,1 @@
+-- Deterministic seed placeholder for ghost_sparse_tenant; runtime fixture generation is a pending gate.

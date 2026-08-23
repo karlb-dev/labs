@@ -1,0 +1,11 @@
+-- Candidate fixture DDL for ghost_ops_azure.
+-- The Lab 04 implementation must replace or verify this against the pinned SQL Server build before freeze.
+-- Catalog source follows.
+/*
+-- connection: ghosttype / OpsAzure, default schema app, engine: Azure SQL Database
+-- inferred system query: yes
+TABLE app.ApiRequests (RequestId bigint NOT NULL PK, Route nvarchar(200) NOT NULL, StatusCode int NOT NULL, DurationMs int NOT NULL, CreatedAt datetime2 NOT NULL)
+TABLE app.Deployments (DeploymentId bigint NOT NULL PK, Version nvarchar(80) NOT NULL, StartedAt datetime2 NOT NULL, CompletedAt datetime2 NULL, Status nvarchar(30) NOT NULL)
+SYSTEM OBJECTS: sys.dm_exec_requests, sys.dm_exec_sessions, sys.dm_tran_locks, sys.dm_db_wait_stats, sys.dm_db_resource_stats, sys.dm_db_index_usage_stats, sys.indexes, sys.tables, sys.database_scoped_configurations, sys.query_store_query_text, sys.query_store_query, sys.query_store_plan, sys.query_store_runtime_stats, sys.query_store_runtime_stats_interval
+UNAVAILABLE SERVER OBJECTS: msdb.dbo.sysjobs, sys.dm_os_wait_stats, sys.master_files, xp_cmdshell, sys.configurations
+*/

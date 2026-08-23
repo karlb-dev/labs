@@ -1,0 +1,26 @@
+{
+  "all": {
+    "adventure_azure": 34,
+    "azure_master": 7,
+    "fabric_warehouse": 29,
+    "fitnessapp_test": 73,
+    "ghost_editor_core": 56,
+    "ghost_ops_azure": 54,
+    "ghost_parser_edges": 55,
+    "ghost_sparse_tenant": 52,
+    "ghost_temporal_audit": 52,
+    "ghost_vector_search": 54,
+    "master_onprem": 33,
+    "msdb_onprem": 22,
+    "ninjadb_a": 57,
+    "ninjadb_b": 10
+  },
+  "new_only": {
+    "ghost_editor_core": 56,
+    "ghost_ops_azure": 54,
+    "ghost_parser_edges": 55,
+    "ghost_sparse_tenant": 52,
+    "ghost_temporal_audit": 52,
+    "ghost_vector_search": 54
+  }
+}

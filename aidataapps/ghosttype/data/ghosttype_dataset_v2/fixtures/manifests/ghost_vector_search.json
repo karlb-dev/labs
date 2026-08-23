@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_vector_search",
+  "catalog_id": "ghost_vector_search",
+  "ddl_path": "fixtures/ddl/ghost_vector_search.sql",
+  "seed_path": "fixtures/seeds/ghost_vector_search.sql",
+  "status": "candidate_static_only"
+}

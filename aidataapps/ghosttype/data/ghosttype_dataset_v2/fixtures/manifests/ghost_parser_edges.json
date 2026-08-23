@@ -1,0 +1,7 @@
+{
+  "fixture_id": "ghost_parser_edges",
+  "catalog_id": "ghost_parser_edges",
+  "ddl_path": "fixtures/ddl/ghost_parser_edges.sql",
+  "seed_path": "fixtures/seeds/ghost_parser_edges.sql",
+  "status": "candidate_static_only"
+}

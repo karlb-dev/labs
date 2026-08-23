@@ -1,0 +1,1 @@
+-- Deterministic seed placeholder for ghost_vector_search; runtime fixture generation is a pending gate.

@@ -1,0 +1,13 @@
+{
+  "workload_id": "cpu-single-user-v1",
+  "data_roles": [
+    "train",
+    "calibration",
+    "test_id",
+    "test_suffix_holdout",
+    "test_sparse_catalog"
+  ],
+  "seed": 0,
+  "concurrency": 1,
+  "notes": "Sequential replay for CPU foundation and local editor simulation."
+}

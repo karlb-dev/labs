@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ghosttype/dataset/dataset-manifest.schema.json",
+  "type": "object",
+  "required": [
+    "package_version",
+    "record_count",
+    "legacy_record_count",
+    "synthetic_record_count",
+    "catalog_count",
+    "records_sha256",
+    "created_utc"
+  ],
+  "properties": {
+    "package_version": {
+      "type": "string"
+    },
+    "records_sha256": {
+      "type": "string"
+    },
+    "created_utc": {
+      "type": "string"
+    },
+    "record_count": {
+      "type": "integer"
+    },
+    "legacy_record_count": {
+      "type": "integer"
+    },
+    "synthetic_record_count": {
+      "type": "integer"
+    },
+    "catalog_count": {
+      "type": "integer"
+    }
+  }
+}
