@@ -382,3 +382,15 @@ place and receive a later disposition.
   the action rubric. Gemma 4 12B blocked: all MLX conversions declare
   gemma4_unified, unsupported by mlx-lm 0.31.3. Mac-plane development
   evidence only; never comparable to the frozen campaign.
+
+- 2026-08-23T05:55:00.000Z — Merged Colab commits through 2987b41 (runbook
+  corpus, scenario catalog, read-only tool boundary with msdb signed proxy)
+  into the mac branch and revalidated the mac plane: npm run check 38/38,
+  migrations 017–023 and server 002–006 applied, doctor PASS, SQL
+  integration 8/8, tool-security gate PASS (7 tools, 9 positive, 11
+  negative; gate needed one seeded LogWardenWorkload backup for its
+  msdb-history positive case). Two mac fixes: models-mac test updated for
+  the -mlx profile keys, and database-checkpoint falls back to docker cp
+  when the volume mountpoint is not host-visible (Docker Desktop);
+  backup + restore-test round-trip passes with DBCC CHECKDB on both
+  databases.

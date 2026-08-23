@@ -39,7 +39,14 @@ try {
     await master.request()
       .input("path", sql.NVarChar(500), containerPath)
       .query(`BACKUP DATABASE ${sqlIdentifier(database)} TO DISK=@path WITH COPY_ONLY, INIT, CHECKSUM, COMPRESSION; RESTORE VERIFYONLY FROM DISK=@path WITH CHECKSUM;`);
-    await copyFile(`${sqlVolumePath}/backup/${fileName}`, localPath);
+    try {
+      await copyFile(`${sqlVolumePath}/backup/${fileName}`, localPath);
+    } catch (error) {
+      // Docker Desktop (mac profile): volume mountpoints live inside the VM,
+      // not on the host filesystem — copy out of the container instead.
+      if ((error as { code?: string }).code !== "ENOENT") throw error;
+      await commandOutput("docker", ["cp", `${composeProject}-sqlserver-1:${containerPath}`, localPath]);
+    }
     const file = await stat(localPath);
     const artifact = {
       kind,

@@ -12,8 +12,12 @@ describe("mac serving registry", () => {
   it("keeps mac profiles distinct from frozen campaign identities", () => {
     const registry = loadMacModelRegistry();
     for (const [key, profile] of Object.entries(registry.profiles)) {
-      expect(key.endsWith("-foundry")).toBe(true);
+      expect(key.endsWith("-foundry") || key.endsWith("-mlx")).toBe(true);
       expect(profile.foundryAlias.length).toBeGreaterThan(0);
+      if (key.endsWith("-mlx")) {
+        expect(profile.baseUrl).toBeDefined();
+        expect(profile.servedModelId).toBeDefined();
+      }
     }
     expect(registry.comparability).toMatch(/never comparable/);
   });
