@@ -865,6 +865,14 @@ place and receive a later disposition.
   materialized its deterministic 180 replay jobs but stopped before workers or
   model transport; those pending identities are reused by the corrected replay,
   with no inference observations discarded or repeated.
+- 2026-08-23T10:17:54Z — Queue isolation stopped the corrected replay before
+  workers because one previously verified synthetic HTTP-error gate fixture
+  remained intentionally `retryable_failure` even though its parent job was
+  failed. The SQL model-client gate now retires verified retry semantics to
+  `stopped` after verification and its recovery covers terminal parent jobs.
+  Impact: zero qwen-smoke model calls in this invocation; the 180 pending replay
+  cells remain unchanged, while synthetic gate evidence and its state transition
+  history remain retained.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 

@@ -106,11 +106,13 @@ try {
       disposition: "PASS",
     });
   }
+  const retiredVerifiedRetryableFixtures = await retireVerifiedGateRetries(pool);
   const receiptBody = {
     schemaVersion: 1,
     runId: run.runId,
     gateId,
     recoveredIncompleteFixtures,
+    retiredVerifiedRetryableFixtures,
     fakeGateway: { address: "127.0.0.1", routeCounts: Object.fromEntries([...routeCounts].sort()) },
     cases: caseReceipts,
     disposition: "PASS",
@@ -222,12 +224,12 @@ async function recoverIncompleteGateFixtures(pool: sql.ConnectionPool): Promise<
   const result = await pool.request().query<{ recovered: number }>(`
     DECLARE @recovered TABLE(work_item_id bigint NOT NULL,from_state varchar(40) NOT NULL);
     UPDATE item
-    SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL
+    SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL,
+        next_attempt_at_utc=NULL,completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
     OUTPUT INSERTED.work_item_id,DELETED.status INTO @recovered(work_item_id,from_state)
     FROM ops.work_items AS item
     INNER JOIN control.jobs AS job ON job.job_id=item.job_id
     WHERE job.run_kind='fake_gateway_gate'
-      AND job.status='running'
       AND item.status NOT IN ('complete','contract_rejected','policy_rejected','model_timeout','tool_timeout','stopped');
     INSERT ops.transitions(entity_kind,entity_id,from_state,to_state,actor,reason)
     SELECT 'work_item',work_item_id,from_state,'stopped','fake-gateway-gate','recovered interrupted development gate'
@@ -245,6 +247,25 @@ async function recoverIncompleteGateFixtures(pool: sql.ConnectionPool): Promise<
     SELECT COUNT(*) AS recovered FROM @recovered;
   `);
   return Number(result.recordset[0]?.recovered ?? 0);
+}
+
+async function retireVerifiedGateRetries(pool: sql.ConnectionPool): Promise<number> {
+  const result = await pool.request().query<{ retired: number }>(`
+    DECLARE @retired TABLE(work_item_id bigint NOT NULL,from_state varchar(40) NOT NULL);
+    UPDATE item
+    SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL,
+        next_attempt_at_utc=NULL,completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
+    OUTPUT INSERTED.work_item_id,DELETED.status INTO @retired(work_item_id,from_state)
+    FROM ops.work_items AS item
+    INNER JOIN control.jobs AS job ON job.job_id=item.job_id
+    WHERE job.run_kind='fake_gateway_gate' AND item.status='retryable_failure';
+    INSERT ops.transitions(entity_kind,entity_id,from_state,to_state,actor,reason)
+    SELECT 'work_item',work_item_id,from_state,'stopped','fake-gateway-gate',
+      'verified retry semantics retained; synthetic fixture retired from shared queue'
+    FROM @retired;
+    SELECT COUNT(*) AS retired FROM @retired;
+  `);
+  return Number(result.recordset[0]?.retired ?? 0);
 }
 
 async function finalizeWorkItem(pool: sql.ConnectionPool, fixture: FixtureIdentity, result: GatewayCallResult): Promise<void> {
