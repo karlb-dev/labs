@@ -64,13 +64,21 @@ try {
     episode_count: number; cell_count: number; mode_count: number; role_count: number;
     invalid_evaluator_rows: number; query_drift_episodes: number; oracle_failures: number; shuffled_relevance: number;
   }>(`
-    WITH selected AS
+    WITH agent_visible_runs AS
+    (
+      SELECT retrieval_run_id
+      FROM kb.retrieval_results
+      WHERE returned_to_agent=1
+      GROUP BY retrieval_run_id
+    ), selected AS
     (
       SELECT score.*,truth.scenario_group_id,
-        run.evaluator_only AS run_evaluator_only,run.status AS run_status
+        run.evaluator_only AS run_evaluator_only,run.status AS run_status,
+        visible.retrieval_run_id AS agent_visible_retrieval_run_id
       FROM eval.retrieval_benchmark_results score
       INNER JOIN eval.ground_truth_episodes truth ON truth.episode_id=score.episode_id
       INNER JOIN kb.retrieval_runs run ON run.retrieval_run_id=score.retrieval_run_id
+      LEFT JOIN agent_visible_runs visible ON visible.retrieval_run_id=score.retrieval_run_id
       INNER JOIN workload.injection_executions execution ON execution.episode_id=score.episode_id AND execution.run_id=@run
       INNER JOIN workload.schedule_items schedule_item ON schedule_item.schedule_item_id=execution.schedule_item_id
       INNER JOIN workload.schedules schedule ON schedule.schedule_id=schedule_item.schedule_id
@@ -83,7 +91,7 @@ try {
     SELECT COUNT(DISTINCT episode_id) AS episode_count,COUNT(*) AS cell_count,
       COUNT(DISTINCT retrieval_mode) AS mode_count,COUNT(DISTINCT split_role) AS role_count,
       SUM(CASE WHEN evaluator_only<>1 OR run_evaluator_only<>1 OR run_status<>'complete'
-        OR EXISTS(SELECT 1 FROM kb.retrieval_results result WHERE result.retrieval_run_id=selected.retrieval_run_id AND result.returned_to_agent=1)
+        OR agent_visible_retrieval_run_id IS NOT NULL
         THEN 1 ELSE 0 END) AS invalid_evaluator_rows,
       (SELECT COUNT(*) FROM episode_queries) AS query_drift_episodes,
       SUM(CASE WHEN retrieval_mode='oracle_runbook' AND

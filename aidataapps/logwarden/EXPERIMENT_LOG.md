@@ -834,4 +834,10 @@ place and receive a later disposition.
   relevant items from ranks 1/3/5 to 1/2/3 and producing `0.722727`. The parser
   now preserves duplicate rank positions and the regression suite asserts that
   contract. Impact: validation logic only; retained rankings and metrics were
-  not rewritten.
+  not rewritten. The next search-freeze attempt stopped before mutation because
+  SQL Server forbids the gate's `SUM(CASE ... EXISTS(...))` aggregate shape.
+  The same invariant now joins a pre-aggregated set of agent-visible retrieval
+  runs and sums a scalar flag. Impact: query-shape compatibility only; the
+  corpus remained unfrozen and all evidence rows were unchanged.
+
+- 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
