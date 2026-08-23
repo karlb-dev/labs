@@ -100,6 +100,7 @@ for (const row of cases) {
     max_tokens: (MAX_TOKENS[row.completion_class] ?? 384) + (profile.reasoningAllowanceTokens ?? 0),
     servedModelId: profile.servedModelId, baseUrl: profile.baseUrl,
     reasoningPolicy: profile.reasoningPolicy ?? null, arm, campaign: args.campaign,
+    decodeLabel: profile.decodeLabel ?? "deterministic-reference",
   };
   const promptSha = createHash("sha256")
     .update(JSON.stringify(messagesByCase.get(row.case_id) ?? []), "utf8").digest("hex");
