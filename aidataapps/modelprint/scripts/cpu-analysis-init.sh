@@ -38,9 +38,18 @@ if ((external_sql == 0)); then
   docker compose version >/dev/null
   architecture="$(uname -m)"
   if [[ "$architecture" != "x86_64" && "$architecture" != "amd64" ]]; then
-    echo "SQL Server 2025 containers are x86-64 only and Microsoft does not support emulation on $architecture." >&2
-    echo "Use --external-sql with an x86-64 Linux SQL Server host; see handoff_lab02_to_cpu.md." >&2
-    exit 4
+    if [[ "${MODELPRINT_ALLOW_EMULATED_SQL:-0}" == "1" ]] \
+      && [[ "$(docker run --rm --platform linux/amd64 alpine uname -m 2>/dev/null)" == "x86_64" ]]; then
+      echo "WARNING: running the x86-64 SQL Server image under emulation on $architecture." >&2
+      echo "Microsoft does not support this host; continuing per MODELPRINT_ALLOW_EMULATED_SQL=1" >&2
+      echo "(deviation recorded in EXPERIMENT_LOG.md; Rosetta viability evidenced by Lab 03)." >&2
+      export DOCKER_DEFAULT_PLATFORM=linux/amd64
+    else
+      echo "SQL Server 2025 containers are x86-64 only and Microsoft does not support emulation on $architecture." >&2
+      echo "Use --external-sql with an x86-64 Linux SQL Server host; see handoff_lab02_to_cpu.md," >&2
+      echo "or set MODELPRINT_ALLOW_EMULATED_SQL=1 to proceed under a working amd64 emulator." >&2
+      exit 4
+    fi
   fi
   docker compose up --detach sqlserver
   sql_container="$(docker compose ps -q sqlserver)"

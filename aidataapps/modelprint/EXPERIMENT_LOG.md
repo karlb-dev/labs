@@ -156,3 +156,48 @@ Append-only operator record.
 - 2026-08-23T16:30:00Z — CPU database portability gate complete: the clean native backup `modelprint-full-20260822T230728Z-20260823T155623Z.bak` is 4,264,128,512 bytes with SHA-256 `a315c1b3d81e9650d45250d3b84e90a2606b628c0e07844782cedb7734eb4278`; checksum validation, an isolated `RESTORE ... WITH CHECKSUM`, all migration/campaign/run-state validations, and temporary-database cleanup passed. The BACPAC `ModelPrint-20260823T155430Z.bacpac` is 5,188,484,189 bytes with SHA-256 `1dddedcc8211717e6a831dfe82b5eb5777002260ef441622ba728bcb9c9d8bfd`; its full ZIP/BCP integrity scan and isolated import passed. The import demonstrated that BACPAC does not preserve database-scoped `PREVIEW_FEATURES`; the wrapper now explicitly sets compatibility 170 and preview features before validation, and the validator refuses SQL versions below 2025, compatibility other than 170, or disabled preview. The corrected imported database and the primary database both passed, both temporary restore/import databases were dropped, fresh-migration schema parity again passed with zero differences, build and all 17 unit tests passed, and the SQL vector integration test passed. Idle Qwen/BGE embedding services were stopped; no GPU service or evaluation job remains active.
 
 - 2026-08-23T16:42:00Z — Drive BACPAC finalization correction: a post-pack independent `stat`/SHA readback found the documented Drive BACPAC had reverted to an 861,923,324-byte in-flight copy, even though the local finalized artifact remained 5,188,484,189 bytes and valid. The native backup was unaffected. The cause was a watchdog mirror observing SqlPackage's final-named file while it was still growing; later same-path DriveFS promotion was not durable. The partial optional copy was replaced only after a uniquely named 5,188,484,189-byte upload hashed to `1dddedcc8211717e6a831dfe82b5eb5777002260ef441622ba728bcb9c9d8bfd`, then promoted and re-read at the final path. Run mirroring now excludes all `.bacpac` files from the general rsync, publishes only locally checksum-finalized exports with both sidecars, stages them under a unique content-hash upload name, and requires size/digest readback before and after promotion. CPU pack validation now also compares destination size, data hash, sidecar hash, and JSON metadata. The compact pack is regenerated only after these stronger gates pass.
+
+- 2026-08-23 (CPU continuation, Apple Silicon M4 Max) — Adopted the GPU→CPU
+  handoff on Karl's Mac. Transfer set verified: native backup
+  modelprint-full-20260822T230728Z-20260823T155623Z.bak (4,264,128,512 bytes,
+  SHA-256 a315c1…eb4278) OK against its sidecar; compact-pack
+  TRANSFER_SHA256.txt all OK; run-state archive hash matched
+  TRANSFER_MANIFEST.json; branch at the recorded head 92d3597; working-tree
+  patch of the four partial generated reports reapplied uncommitted.
+  Deviations, all environmental: (1) SQL Server 2025 runs in the pinned
+  x86-64 container under Docker Desktop Rosetta emulation — outside
+  Microsoft's support matrix; gated behind MODELPRINT_ALLOW_EMULATED_SQL=1
+  in scripts/cpu-analysis-init.sh (not a frozen file) after an amd64
+  emulation probe; Lab 03 ran the same engine build under Rosetta on this
+  machine with restores, DBCC, and exact vector queries passing.
+  (2) checkpoint-watchdog.sh is not run here (no Drive mount; its cycle
+  includes a full database backup every 20 minutes, declined by Karl for
+  disk reasons) — durability instead via stage-boundary db:backup, and
+  GitHub push at milestones. Governed analysis settings are unchanged.
+  Follow-up: compose.yaml gpus stanzas rewritten from the `gpus: all`
+  shorthand to the long-form list (semantics unchanged; Docker Desktop
+  compose v2.32 rejects the shorthand at config validation) — same fix
+  applied on the Lab 03 branch earlier.
+  Runtime correction (analysis/evaluate_ood.py, first-ever execution of this
+  stage): its generation queries selected prompt_group_id/split directly from
+  dbo.generations, columns that exist on dbo.prompt_groups via
+  dbo.prompt_variants in the frozen schema — the join idiom every previously
+  executed analysis script uses. Fix: removed one dead metadata query (its
+  result was never referenced) and added the standard variant/group joins to
+  the four channel queries, selecting p.split. No governed setting, input,
+  or threshold changed.
+  Runtime correction (analysis/build_reports.py, first execution with a
+  complete predictions.parquet): the by-length section merged length_band
+  from the generations frame into predictions, which already carries
+  length_band, so pandas suffixed both and the subsequent groupby raised
+  KeyError. Fix: use predictions' own column; no metric definition changed.
+  Runtime correction (scripts/archive-run.ts): the archiver wrote
+  ARTIFACT_INVENTORY.json from pre-computed hashes and then rewrote
+  RESUME.md with a fresh timestamp, so repro's inventory digest check could
+  never pass after an archive. The RESUME.md inventory row (file and SQL)
+  is now refreshed after the rewrite. No evidence artifact changed.
+  Runtime correction (scripts/container-storage.sh): the docker-cp branch of
+  copy_to_container_file left files root-owned inside the container, so the
+  mssql user hit OS error 5 opening the repro restore backup under Docker
+  Desktop (the rootless branch already chmods). The docker-cp branch now
+  chmods a+r after copy. No evidence artifact changed.

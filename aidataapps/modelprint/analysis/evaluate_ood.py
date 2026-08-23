@@ -16,7 +16,7 @@ conn=pymssql.connect(server=os.getenv("SQLSERVER_HOST","127.0.0.1"),port=int(os.
 items=pd.read_sql("SELECT evaluation_item_id,source_id,source_row_id,prompt_group_id,split_role,item_text,metadata_json FROM dbo.evaluation_items WHERE run_id=%s ORDER BY evaluation_item_id",conn,params=(run_id,))
 if items.empty:raise SystemExit("No evaluation controls; run npm run controls:build")
 items["metadata"]=items.metadata_json.map(json.loads);item_position={int(value):index for index,value in enumerate(items.evaluation_item_id)}
-meta=pd.read_sql("SELECT generation_id,model_profile_id,prompt_group_id,split FROM dbo.generations WHERE campaign_id=%s AND truncated=0 AND reference_token_count>=16",conn,params=(campaign,))
+# (removed: dead metadata query that referenced columns not on dbo.generations)
 
 def parse(value):return np.asarray(json.loads(value),dtype=np.float32)
 def softmax(logits,temp):
@@ -27,16 +27,19 @@ def percentile(reference,values):
  ordered=np.sort(np.asarray(reference));return np.searchsorted(ordered,np.asarray(values),side="right")/max(len(ordered),1)
 
 definitions={
- "semantic1024-qwen-raw-final-v1":("semantic1024-qwen-v1",f"""SELECT g.generation_id,g.model_profile_id,g.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+ "semantic1024-qwen-raw-final-v1":("semantic1024-qwen-v1",f"""SELECT g.generation_id,g.model_profile_id,p.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+  JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.prompt_groups p ON p.prompt_group_id=v.prompt_group_id
   JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id AND t.text_view_id='raw-final-v1'
   JOIN dbo.semantic_vectors s ON s.text_artifact_id=t.text_artifact_id AND s.embedding_profile_id='qwen3-embedding-0.6b' AND s.representation_id='whole-raw-final-v1' WHERE g.campaign_id={campaign}"""),
- "semantic1024-bge-raw-final-v1":("semantic1024-bge-v1",f"""SELECT g.generation_id,g.model_profile_id,g.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+ "semantic1024-bge-raw-final-v1":("semantic1024-bge-v1",f"""SELECT g.generation_id,g.model_profile_id,p.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+  JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.prompt_groups p ON p.prompt_group_id=v.prompt_group_id
   JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id AND t.text_view_id='raw-final-v1'
   JOIN dbo.semantic_vectors s ON s.text_artifact_id=t.text_artifact_id AND s.embedding_profile_id='bge-large-en-v1.5' AND s.representation_id='whole-raw-final-v1' WHERE g.campaign_id={campaign}"""),
- "style512-raw-final-v1":("style512-v1",f"""SELECT g.generation_id,g.model_profile_id,g.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+ "style512-raw-final-v1":("style512-v1",f"""SELECT g.generation_id,g.model_profile_id,p.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g
+  JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.prompt_groups p ON p.prompt_group_id=v.prompt_group_id
   JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id AND t.text_view_id='raw-final-v1'
   JOIN dbo.style_vectors s ON s.text_artifact_id=t.text_artifact_id AND s.representation_id='style512-v1' WHERE g.campaign_id={campaign}"""),
- "fingerprint64-v1":(None,f"SELECT g.generation_id,g.model_profile_id,g.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g JOIN dbo.fingerprint_vectors s ON s.generation_id=g.generation_id AND s.representation_id='fingerprint64-v1' WHERE g.campaign_id={campaign}"),
+ "fingerprint64-v1":(None,f"SELECT g.generation_id,g.model_profile_id,p.split,CAST(s.embedding AS nvarchar(max)) vector FROM dbo.generations g JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.prompt_groups p ON p.prompt_group_id=v.prompt_group_id JOIN dbo.fingerprint_vectors s ON s.generation_id=g.generation_id AND s.representation_id='fingerprint64-v1' WHERE g.campaign_id={campaign}"),
 }
 eval_vectors=pd.read_sql("SELECT v.evaluation_item_id,v.representation_id,v.vector_json FROM dbo.evaluation_vectors v JOIN dbo.evaluation_items e ON e.evaluation_item_id=v.evaluation_item_id WHERE e.run_id=%s",conn,params=(run_id,))
 eval_map={(int(row.evaluation_item_id),row.representation_id):parse(row.vector_json) for row in eval_vectors.itertuples()}
