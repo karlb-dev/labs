@@ -26,6 +26,7 @@
     "embeddings:build": "node --import tsx scripts/build-features.ts --stage embeddings",
     "style:build": "node --import tsx scripts/build-features.ts --stage style",
     "features:build": "node --import tsx scripts/build-features.ts --stage all",
+    "features:audit": "node --import tsx scripts/audit-features.ts",
     "derived:build": "./scripts/python.sh analysis/build_derived.py",
     "phrases:build": "./scripts/python.sh analysis/build_phrases.py",
     "controls:build": "node --import tsx scripts/build-evaluation-controls.ts",
