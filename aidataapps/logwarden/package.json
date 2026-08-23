@@ -19,6 +19,8 @@
     "db:setup": "node --import tsx scripts/setup-database.ts",
     "capture:drain": "node --import tsx scripts/ingest-sources.ts",
     "scenarios:build": "node --import tsx scripts/scenarios-build.ts",
+    "scenarios:generate-standard": "node --import tsx scripts/generate-standard-catalog.ts",
+    "gate:scenario-catalog": "node --import tsx scripts/scenario-catalog-gate.ts",
     "scenarios:inject": "node --import tsx scripts/scenarios-inject.ts",
     "capture:verify": "node --import tsx scripts/capture-verify.ts",
     "gate:errorlog-rotation": "node --import tsx scripts/errorlog-recovery-gate.ts --mode rotation",

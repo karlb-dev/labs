@@ -319,3 +319,32 @@ place and receive a later disposition.
   SQL integration receipt
   `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`,
   and 31 unit tests in 12 files all pass.
+- 2026-08-23T05:30:58Z — Built and reconciled the unfrozen
+  `logwarden-standard-v1` catalog: 60 scenario templates, 600 deterministic
+  variants, ten governed families, all five K/C/U/M/N regimes, exact role
+  counts of 60 dev, 60 calibration, 300 test-ID, 120 test-variant-holdout, and
+  60 test-unknown, zero cross-role groups, zero truth/tool-budget/runbook
+  violations, and at least 40 held-out ID/variant episodes per family. Catalog
+  file hash is
+  `b39b3a91107c094b0b7d461cca77deffed69659c07b1d84341dd9d17b477b58f`,
+  campaign manifest hash is
+  `492ca25b89b21d83a3ca10a56e36b769f6b03d1cd1c1737515ca6c741cb525d5`,
+  schedule hash is
+  `617ec3731b116f5a2db7163bae2010ca8b523ee8ebb774c1c7c23b660e01ae76`,
+  and structural-gate receipt is
+  `dd7b8af23dc13f39b191f33cc3a5d53ba632b7f062c0b8c337a6f4836653e0d3`.
+  The explicit `--replace-building-manifest` operation replaced the earlier
+  ten-scenario smoke manifest only on the still-mutable, never-frozen campaign;
+  it changed no captured smoke rows and the standard schedule has injected zero
+  episodes.
+- 2026-08-23T05:30:58Z — Adapted the base packet-spacing plan before standard
+  capture. Ten variants in one scenario group are intentionally one second
+  apart to preserve recurrence/burst context; adjacent scenario groups are
+  separated by the sum of their packet before/after windows plus a measured
+  one-second margin. This reduces the planned capture from roughly 20 hours to
+  8,039 seconds (about 2 h 14 min) without permitting evidence-window overlap
+  across independently scored groups. Impact: variants within a group are
+  deliberately correlated and must be scored with group-aware splitting and
+  paired statistics; they are not independent episode-level replicates. The
+  gate records 60 groups of exactly ten, a nonnegative cross-group margin, and
+  the intentional-overlap policy in the hashed schedule configuration.

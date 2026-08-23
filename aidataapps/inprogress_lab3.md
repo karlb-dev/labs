@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 05:18 UTC
+Last manually updated: 2026-08-23 05:31 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -47,11 +47,11 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twenty-two hash-locked control migrations and six versioned
+- Twenty-three hash-locked control migrations and six versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 12
-  test files and 31 unit tests. The capture-specific XE predicate excludes
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 13
+  test files and 35 unit tests. The capture-specific XE predicate excludes
   agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -108,13 +108,25 @@ and its effect on the evidence ceiling must be recorded append-only in
   and `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
   The corpus remains unfrozen pending Qwen embeddings, hybrid retrieval, and
   the standard scenario leakage audit.
+- The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
+  group-isolated templates and 600 deterministic variants across all ten
+  incident families and all five regimes. Exact role allocation is 60 dev, 60
+  calibration, 300 test-ID, 120 test-variant-holdout, and 60 test-unknown;
+  every family has at least 40 held-out ID/variant episodes and no group crosses
+  a split. Catalog, manifest, schedule, and structural-gate hashes are
+  `b39b3a91107c094b0b7d461cca77deffed69659c07b1d84341dd9d17b477b58f`,
+  `492ca25b89b21d83a3ca10a56e36b769f6b03d1cd1c1737515ca6c741cb525d5`,
+  `617ec3731b116f5a2db7163bae2010ca8b523ee8ebb774c1c7c23b660e01ae76`,
+  and `dd7b8af23dc13f39b191f33cc3a5d53ba632b7f062c0b8c337a6f4836653e0d3`.
+  Schedule `standard-v1` has 600 pending items and a final planned offset of
+  8,039,000 ms; it remains building and has injected zero episodes.
 - Current doctor snapshot:
   `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`
   (`PASS`); SQL integration receipt:
   `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`
   (8/8).
-- Next incomplete milestone: the 60-template/600-variant supported incident
-  catalog and its missing deadlock/blocking/log-full injectors, followed by
+- Next incomplete milestone: prove the missing deadlock/blocking/log-full
+  injectors, exact episode correlation, and context snapshots, followed by
   Qwen embeddings, hybrid retrieval, and the bounded agent loop. A
   small embedding or qwen-smoke port may then load
   for the remaining real `/metrics` gate; no long chat campaign may load yet.
@@ -182,8 +194,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db` (`PASS`)
 - SQL integration receipt: `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae` (8/8 passed)
-- Last durable Git checkpoint: `9b9d570` (recovery/tool security watchdog
-  handoff); the lexical runbook layer is being committed now
+- Last durable Git checkpoint: `293795e` (governed runbook corpus); the standard
+  scenario catalog is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
