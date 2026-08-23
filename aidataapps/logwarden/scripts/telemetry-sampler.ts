@@ -17,12 +17,33 @@ const phase = argument("--phase") ?? "development";
 const watch = process.argv.includes("--watch");
 const epochId = randomUUID();
 const { journal, path: journalPath } = await createComponentTelemetryJournal(runDirectory, run.runId, "systems-sampler", epochId);
+const stopController = new AbortController();
+let stopSignal: NodeJS.Signals | null = null;
+const requestStop = (signal: NodeJS.Signals): void => {
+  stopSignal ??= signal;
+  stopController.abort();
+};
+const onSigint = (): void => requestStop("SIGINT");
+const onSigterm = (): void => requestStop("SIGTERM");
+process.on("SIGINT", onSigint);
+process.on("SIGTERM", onSigterm);
 
-do {
-  await sampleOnce();
-  if (!watch) break;
-  await delay(config.telemetrySampleSeconds * 1000);
-} while (true);
+try {
+  do {
+    // A stop request lets an in-flight sample finish so its durable span always
+    // receives a matching end record. The abort signal only wakes the idle delay.
+    await sampleOnce();
+    if (!watch || stopSignal !== null) break;
+    await delay(config.telemetrySampleSeconds * 1000, stopController.signal);
+  } while (stopSignal === null);
+  if (stopSignal !== null) {
+    await journal.record("point", "sampler.shutdown", {}, { epochId, phase, signal: stopSignal, disposition: "GRACEFUL" });
+    await journal.flush();
+  }
+} finally {
+  process.off("SIGINT", onSigint);
+  process.off("SIGTERM", onSigterm);
+}
 
 async function sampleOnce(): Promise<void> {
   const sampledAt = new Date();
@@ -326,6 +347,6 @@ function normalizeCounts(value: Record<string, unknown>): Record<string, unknown
 function numberOrNull(value: string | undefined): number | null { const parsed=Number(value); return value===undefined||!Number.isFinite(parsed)?null:parsed; }
 function round(value:number):number{return Math.round(value*1000)/1000;}
 function safeError(error:unknown):{message:string}{return{message:(error as {message?:string}).message??String(error)};}
-function delay(milliseconds:number):Promise<void>{return new Promise((resolve)=>setTimeout(resolve,milliseconds));}
+function delay(milliseconds:number,signal?:AbortSignal):Promise<void>{return new Promise((resolve)=>{let timer:NodeJS.Timeout;const done=():void=>{clearTimeout(timer);signal?.removeEventListener("abort",done);resolve();};timer=setTimeout(done,milliseconds);if(signal?.aborted)done();else signal?.addEventListener("abort",done,{once:true});});}
 function argument(name:string):string|undefined{const index=process.argv.indexOf(name);return index<0?undefined:process.argv[index+1];}
 function commandOutput(command:string,args:string[]):Promise<string>{return new Promise((resolve,reject)=>execFile(command,args,{encoding:"utf8",maxBuffer:16*1024*1024},(error,stdout,stderr)=>error===null?resolve(stdout):reject(new Error(`${command} failed: ${stderr.trim()||error.message}`))));}

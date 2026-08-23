@@ -1461,3 +1461,64 @@ place and receive a later disposition.
 - 2026-08-23T19:43:27.390Z — Derived 480 predictions for A-router over test_id,test_variant_holdout,test_unknown and qwen-3.8-27b; receipt 104190270f4761ede775eda69b47a3f091c73aa0058074323c46bc40f5a64e5a.
 
 - 2026-08-23T19:45:35.512Z — Scored 1850 primary test_id,test_variant_holdout,test_unknown predictions for qwen-3.8-27b across A-direct,A-rag,A-tools,A-router; receipt ac1a72a6ff621afce68f01ecc901ef5f3006b967c98df5c4b3240810c66b470c.
+
+- 2026-08-23T19:51:21.421Z — qwen-3.8-27b control error-number-mask-v1 retained 96 cells across test_id,test_unknown and A-tools with 92 decisions, 4 failures, and 226 model requests; receipt bfb1b35b06b93572e3183b590c2a01169e2ce0622f27c9aa3f97c27feb6d8b28.
+
+- 2026-08-23T19:51:33.755Z — Scored 96 control error-number-mask-v1 test_id,test_unknown predictions for qwen-3.8-27b across A-tools; receipt 600d5eeca816328f6b01172959c22cb4587ce912d6c340e07d0eff13ad5fb223.
+
+- 2026-08-23T19:51:47.976Z — Compared 96 qwen-3.8-27b/error-number-mask-v1 predictions with their frozen primary sources: raw=0/96, decision=0.058824/85, tools=0.541667/96, invariance=NOT_APPLICABLE; receipt db150170e7eeb0e0fa8243aacecaa66d84ddfcc0ae72756d34f6490013e4bfd1.
+
+- 2026-08-23T19:56:29.249Z — qwen-3.8-27b control shuffled-runbooks-v1 retained 96 cells across test_id,test_unknown and A-tools with 88 decisions, 8 failures, and 212 model requests; receipt e9fc229705d053a52c6ce6ff5072d120bd9d91ca112555c00b125261cd2263ef.
+
+- 2026-08-23T19:56:40.863Z — Scored 96 control shuffled-runbooks-v1 test_id,test_unknown predictions for qwen-3.8-27b across A-tools; receipt eeb5b844ef3bb036735b50e8abb4699a46b0a3cc63337b8eadad5b8932ab60eb.
+
+- 2026-08-23T19:56:50.574Z — Compared 96 qwen-3.8-27b/shuffled-runbooks-v1 predictions with their frozen primary sources: raw=0/96, decision=0.229885/87, tools=0.864583/96, invariance=NOT_APPLICABLE; receipt dedda3d30680cb71e562bed2d8fd056b19afc94fd0cabbf94adc79c60bfe5334.
+
+- 2026-08-23T20:04:46.828Z — qwen-3.8-27b control batching-sequential-v1 retained 48 cells across test_id,test_unknown and A-tools with 44 decisions, 4 failures, and 106 model requests; receipt 09f666af17c1203ea0ef197bd90d7fad15a050cc1e5c146c3f24137a6ca4607f.
+
+- 2026-08-23T20:04:55.421Z — Scored 48 control batching-sequential-v1 test_id,test_unknown predictions for qwen-3.8-27b across A-tools; receipt 35f59af8f7a80b840b2c90710b9f9c7d97b24a852c247aa9ca20e147dd5b89a9.
+
+- 2026-08-23T20:05:02.085Z — Compared 48 qwen-3.8-27b/batching-sequential-v1 predictions with their frozen primary sources: raw=0/48, decision=0.227273/44, tools=0.958333/48, invariance=NON_INVARIANT; receipt af5f5c0c2f7df7df68c12953d3fdd9750a6ae66b8d12cd7344d7c53822575566.
+
+- 2026-08-23T20:05:09.502Z — Diagnosed qwen-3.8-27b/batching-sequential-v1: REQUEST_LEVEL_NON_INVARIANT; exact-input normalized outputs 46/48, first-turn choices 46/48; receipt b53f562588619abc3dec278abe25a1018f7dde82fb09f2f79426053608ef96bb.
+
+- 2026-08-23T20:08:00Z — Closed all three Qwen controls without a model-
+  service failure, length finish, or preemption. Error-number masking retained
+  96/96 cells (92 decisions, four agent-policy failures, 226 requests), with
+  58/96 semantic-decision and 52/96 ordered-tool agreement, a +0.041667 mean
+  action-score delta, and comparison receipt
+  `db150170e7eeb0e0fa8243aacecaa66d84ddfcc0ae72756d34f6490013e4bfd1`.
+  Shuffled runbooks retained 96/96 cells (88 decisions, eight failures, 212
+  requests), with 86/96 semantic-decision and 83/96 ordered-tool agreement, a
+  -0.041667 mean action-score delta, and receipt
+  `dedda3d30680cb71e562bed2d8fd056b19afc94fd0cabbf94adc79c60bfe5334`.
+  Single-worker batching retained 48/48 cells (44 decisions, four failures,
+  106 requests); 46/48 byte-identical first-turn inputs changed neither the
+  normalized response nor tool sequence, while two did. It is therefore
+  `REQUEST_LEVEL_NON_INVARIANT`, receipt
+  `b53f562588619abc3dec278abe25a1018f7dde82fb09f2f79426053608ef96bb`.
+  Impact: these are measured sensitivity/repeatability outcomes, not runtime
+  adaptations; every original and control row remains immutable.
+
+- 2026-08-23T20:11:00Z — Operator SIGINT stopped the Qwen residency sampler
+  after all inference and controls but between the final sample's durable
+  `span_start` and `span_end`. The first 2,581 records ingested exactly under
+  receipt `b427b07fdbb2bf489a10ab043b49109030f1e80c4f1a05df27dc136af58353f6`;
+  strict reconciliation then rejected the one open span. The existing
+  append-only interruption workflow recorded an explicit recovery point plus
+  `interrupted` end (receipt
+  `47f3d500984d5fb5671d9d9ad8ccc1e663b17ed71fa866eec8f2d089feefc7ee`),
+  and re-ingestion added exactly those two records with 2,581 duplicates
+  (receipt `07b913e55e958bc29cb0ad186db30f6cba06ad11746bfc7b67543fd4bee2e502`).
+  The sampler now handles SIGINT/SIGTERM by finishing any in-flight sample,
+  waking its idle delay, and appending a terminal `sampler.shutdown` point.
+  A live Ctrl-C proof produced two matched sample spans and one graceful
+  terminal point; its seven records ingested under receipt
+  `dbf45764d5ffaca10adc45caa329e51e6f23bc546913766dcdd5f5215a9a2553`.
+  Build and all 42 test files / 148 tests pass. Global reconciliation then
+  passed across 387 journals / 251,344 records / 20,252 raw artifacts under
+  receipt `8c2de36fe09cdc0905cfa54977b7e32aeb49641360fdc4458e698ad0e7f3cb84`.
+  Impact: no inference, output, score, or completed performance sample changed;
+  the interrupted tail is disclosed as incomplete, and the two proof samples
+  use phase `graceful-stop-gate` so analysis can exclude them from Qwen's
+  governed inference windows.
