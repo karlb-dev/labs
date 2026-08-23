@@ -162,6 +162,13 @@ nohup ./scripts/checkpoint-watchdog.sh --interval-seconds 1200 \
   >/dev/null 2>&1 </dev/null &
 ```
 
+When launching through a Codex execution runner, use a managed persistent
+terminal session for the loop and record/adopt that session; this runner can
+reap an ordinary detached `nohup` child when the launch call ends. The lock
+still prevents duplicates. In a normal notebook terminal, the `nohup` form is
+the fallback, but verify the PID and a new `WATCHDOG started` log record before
+assuming it survived.
+
 The watchdog uses an exclusive lock and exits harmlessly if another copy owns
 the run. Its outputs are under:
 

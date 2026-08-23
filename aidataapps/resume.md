@@ -26,6 +26,49 @@ uncommitted worktree recovery material. A Colab VM can disappear without
 warning and is reclaimed at 24 hours, so neither local-only source nor
 local-only results are acceptable.
 
+Keep static bootstrap instructions here and volatile scientific state in the
+lab-specific `inprogress_labN.md`. The live file must say what is running, its
+owner/PID or managed terminal session, its last durable checkpoint, the exact
+idempotent resume command, and the next incomplete milestone. Update it before
+and after every long launch and at every evidence boundary.
+
+## Fresh-VM preflight
+
+Before installing packages, downloading weights, or resuming science:
+
+1. Record UTC time, VM/GPU identity, driver/runtime versions, local and Drive
+   free space, and whether `/content/drive/MyDrive` is actually mounted.
+2. Verify the Codex permission profile, Git network authentication, and GPU
+   visibility from the same execution context that will launch the long job.
+   A notebook kernel, agent shell, container, and managed terminal can have
+   different environment variables and device access.
+3. Run a real CUDA allocation/synchronization or the lab's GPU hard gate. Never
+   silently fall back to CPU for model-scale work; CPU is appropriate only for
+   explicitly bounded tests, hashing, analysis, plotting, and reports.
+4. Clone and run code on local NVMe under `/content`, fetch the intended branch,
+   and record branch, HEAD, upstream, base commit, worktree, and `git status`.
+5. Recreate local secrets from the approved secret store without printing or
+   copying them into the repo/run/handoff. Notebook environment variables do
+   not necessarily reach agent shells; verify Git and Hugging Face access in
+   the actual launch shell.
+6. Recreate dependencies from tracked manifests and run the fastest no-model
+   conformance tests. On fresh Colab images, run `apt-get update` before an
+   `apt-get install` to avoid stale package-index 404s.
+7. Read the governing plan, then its addendum, then the dynamic in-progress
+   file. Binding addenda and frozen manifests win over older prose.
+
+Do not load model weights through DriveFS. Download or copy pinned snapshots to
+local NVMe, then verify every indexed shard and important config/tokenizer hash
+before serving. A partial Hub snapshot can sometimes be completed from a Drive
+cache with `rsync`, but Drive remains the source of a copy, not the live model
+filesystem. Never delete or alter DriveFS's internal cache or `chunks.db`.
+
+Before downloading the next residency, require enough local free space for the
+new pinned snapshot plus working data and checkpoint headroom; 1.5 times the
+snapshot size is a useful minimum gate. Delete only an exact, rehydratable
+local model cache, and only after results, SQL backup, manifests, hashes, and
+Drive mirror for that residency have been verified.
+
 ## Mandatory multi-agent isolation
 
 One agent owns one Git worktree and one branch. Never run `git switch`,
@@ -105,6 +148,43 @@ cycle should:
 Commit and push manually at meaningful milestones. A watchdog must never invent
 milestone commits, commit transient run output, force-push, or merge branches.
 
+The 20-minute cadence is the external durability ceiling, not necessarily the
+scientific job's own checkpoint interval. Where practical, make per-item output
+append-only and checkpoint an atomic resume cursor at least every 10 minutes.
+Persist the model revision, image/runtime, prompt/config/bank hashes, campaign
+identity, and next offset with the cursor; a resume must refuse a mismatch.
+Rerunning the exact command should no-op completed items rather than overwrite
+them. Finalization sentinels should make completed stages exactly-once unless a
+new governed run is intentionally created.
+
+Before resuming any apparently dead job, reconcile all of these signals:
+
+- process command and parent/child PIDs;
+- actual advisory-lock owner (a zero-byte lock file alone proves nothing);
+- GPU allocations and listening ports;
+- last complete log record;
+- atomic cursor/checkpoint header and hash; and
+- SQL/job-table state or immutable output inventory.
+
+Never launch a duplicate until those sources agree the run is unowned. A
+detached `nohup` process may be reaped by an agent execution runner even when it
+would survive an ordinary notebook shell; prefer a managed persistent terminal
+session and record its session/PID. After an agent UI restarts, adopt a healthy
+existing process instead of restarting it.
+
+Reserve at least the final 90 minutes of the 24-hour allocation for a stable
+checkpoint, state-of-record update, tests, result inventory/hashes, database
+export, Git commit/push, Drive mirror, and a read-back verification. Start that
+closeout earlier if disk, Drive, or network behavior is degraded.
+
+DriveFS presence is not proof of cloud durability. A write can appear locally
+but remain only in its client cache after `ENOSPC`, quota, rate-limit, or mount
+errors. Treat any such error as a failed backup. Check command exit status,
+size, and SHA-256 from the destination; for critical boundaries, re-open after
+sync (or remount on a fresh VM) and re-hash. Avoid repeatedly rewriting
+multi-gigabyte checkpoints through DriveFS; use bounded atomic files and a
+documented retention policy.
+
 Lab 2 implements this contract in
 `aidataapps/modelprint/scripts/checkpoint-watchdog.sh`. Other labs should copy
 the behavior but use their own lock, run, database, branch, and Drive paths.
@@ -130,6 +210,28 @@ independently of the larger run mirror.
 Recovery priority is: latest consistent Drive run/DB artifacts, GitHub branch,
 Drive Git bundle and patch, then older checkpoints. Check hashes and timestamps
 instead of assuming the file with the newest name is complete.
+
+## Evidence and closeout discipline
+
+- A claim-bearing result should carry the producing Git commit, exact command,
+  model revision, config/input hashes, environment identity, and output hash.
+- Keep raw outputs immutable. Correct or supersede them with a new artifact and
+  an explicit reason; do not silently edit historical evidence.
+- Make milestone commits result-bearing and leave the tree clean at governed
+  evidence boundaries. Heavy/ignored outputs belong in a hash inventory on
+  Drive, not an oversized Git commit.
+- Between model residencies, ensure the prior API/engine process exited, its
+  port is free, and GPU memory returned to the expected embedding/idle baseline.
+  Do not rotate two large model families in one long-lived process.
+- A run is not complete until restore/reproduction has been tested from its
+  exported artifacts and the final regenerated reports match the registered
+  metrics.
+
+These general lessons were consolidated from the current and historical
+handoffs under `/content/drive/MyDrive/interpret`, its `special-lab-1` JSpace
+work, and `/content/drive/MyDrive/interpret/preference`. Their experiment names,
+old branches, stale paths, and scientific claims are intentionally not copied
+into this shared bootstrap.
 
 ## Starting or resuming an agent
 
