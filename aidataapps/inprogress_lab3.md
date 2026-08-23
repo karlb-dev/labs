@@ -433,10 +433,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 ## Active processes and checkpoints
 
 <!-- lab3-watchdog-status:start -->
-- Last watchdog checkpoint: 2026-08-23T16:19:11.498Z
-- Last watchdog Git head: `2474ab5730b074171f90f5cac70695ea00e77c86` on `aidataapps-logwarden`
+- Last watchdog checkpoint: 2026-08-23T16:39:49.469Z
+- Last watchdog Git head: `21d9e8701bef5129fcaaa6a91a4bbe992730f8f0` on `aidataapps-logwarden`
 - Last watchdog disposition: clean source checkpoint
-- Last watchdog database receipt: `dc8df337eb6c072d9ac60923ae1b21ec0f7b9d8cccce1585f6eff9d5765ed77e`
+- Last watchdog database receipt: `6f4c739bbc35c36c03249025af68fe95d773c2b56503bcc937a76e37d904b3b3`
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
