@@ -38,7 +38,10 @@ const toolRequestSchema = z.object({
 const replySchema = z.discriminatedUnion("kind", [decisionSchema, toolRequestSchema]);
 type Reply = z.infer<typeof replySchema>;
 
-const LEGAL_REPAIRS = new Set(["think_strip", "channel_strip", "fence_strip", "leading_text_strip", "trailing_text_strip"]);
+// reasoning_field: the serving stack itself split the model's reasoning
+// channel into message.reasoning (observed with mlx_lm.server + Gemma 4 MoE);
+// the visible content is already channel-separated, analogous to think_strip.
+const LEGAL_REPAIRS = new Set(["think_strip", "channel_strip", "fence_strip", "leading_text_strip", "trailing_text_strip", "reasoning_field"]);
 
 interface ParsedReply {
   reply?: Reply;
@@ -162,11 +165,13 @@ async function chat(variantId: string, messages: Array<{ role: string; content: 
     const latencyMs = Date.now() - startedAt;
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${(await response.text()).slice(0, 300)}`);
     const body = await response.json() as {
-      choices?: Array<{ message?: { content?: string } }>;
+      choices?: Array<{ message?: { content?: string; reasoning?: string } }>;
       usage?: { completion_tokens?: number; prompt_tokens?: number };
     };
+    const message = body.choices?.[0]?.message;
     return {
-      raw: body.choices?.[0]?.message?.content ?? "",
+      raw: message?.content ?? "",
+      reasoning: message?.reasoning ?? "",
       latencyMs,
       completionTokens: body.usage?.completion_tokens ?? 0,
       promptTokens: body.usage?.prompt_tokens ?? 0,
@@ -238,6 +243,10 @@ try {
     for (let turn = 0; turn < maxModelTurns; turn += 1) {
       const completion = await chat(variantId, messages, maxTokens, temperature);
       const parsed = parseModelReply(completion.raw);
+      if (completion.reasoning.length > 0) {
+        parsed.repairs.unshift("reasoning_field");
+        if (parsed.contractLevel === "first_pass") parsed.contractLevel = "legal_repair";
+      }
       turns.push({
         latencyMs: completion.latencyMs,
         completionTokens: completion.completionTokens,
