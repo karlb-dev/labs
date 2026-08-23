@@ -55,5 +55,5 @@ A clean null is valid; a safety violation or unfinished Tier 1 state is not.
 
 The frozen Tier-1 campaign is complete for Muse, Gemma, and Qwen; OLMo is `STOP_PORT`. Deterministic B1 reached `0.917` acceptable-action accuracy. No model/arm contrast cleared both the familywise interval and Holm-adjusted permutation gate, so the headline is `CLEAN_NULL`, not model lift. The Tier-1 safety audit passed. LogWarden can make scoped, auditable recommendations on its frozen synthetic episodes; it cannot establish production safety, autonomously remediate, or generalize to arbitrary logs.
 
-See [the state of record](LOGWARDEN_STATE_OF_RECORD.md), [claims](LOGWARDEN_CLAIMS_TABLE.md), [performance evidence](LOGWARDEN_PERFORMANCE_REPORT.md), and [limitations](LOGWARDEN_LIMITATIONS.md).
+Open the self-contained [interactive model-comparison report](docs/reports/logwarden-tier1-model-comparison-20260823.html), or inspect its [receipt-bearing JSON payload](docs/reports/logwarden-tier1-model-comparison-20260823-data.json). See also [the state of record](LOGWARDEN_STATE_OF_RECORD.md), [claims](LOGWARDEN_CLAIMS_TABLE.md), [performance evidence](LOGWARDEN_PERFORMANCE_REPORT.md), and [limitations](LOGWARDEN_LIMITATIONS.md).
 <!-- logwarden-results:end -->

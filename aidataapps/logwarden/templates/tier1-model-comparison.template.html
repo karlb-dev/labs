@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>LogWarden Tier 1 · Model comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --page:#f7f7f3; --surface:#fff; --ink:#10100f; --ink2:#4f4e49; --muted:#85827a;
+  --grid:#deddd5; --soft:#efeee8; --ring:rgba(15,15,14,.11); --shadow:0 14px 42px rgba(22,22,18,.06);
+  --blue:#2a78d6; --green:#14956a; --red:#df514f; --orange:#df7a26; --purple:#6757c8;
+  --good:#168348; --warn:#c68600; --bad:#c13b3b; --neutral:#b4b1a7; --rules:#171716;
+  --code:#f0efe9;
+}
+:root[data-theme="dark"] {
+  color-scheme:dark;
+  --page:#0d0e0d; --surface:#181917; --ink:#f7f7f3; --ink2:#c5c3bc; --muted:#8d8a82;
+  --grid:#30312e; --soft:#22231f; --ring:rgba(255,255,255,.10); --shadow:none;
+  --blue:#4b95e9; --green:#2db986; --red:#e66a68; --orange:#ef984d; --purple:#9284eb;
+  --good:#42bc76; --warn:#e0ac38; --bad:#e46a69; --neutral:#575852; --rules:#f1f0eb;
+  --code:#252620;
+}
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme:dark;
+    --page:#0d0e0d; --surface:#181917; --ink:#f7f7f3; --ink2:#c5c3bc; --muted:#8d8a82;
+    --grid:#30312e; --soft:#22231f; --ring:rgba(255,255,255,.10); --shadow:none;
+    --blue:#4b95e9; --green:#2db986; --red:#e66a68; --orange:#ef984d; --purple:#9284eb;
+    --good:#42bc76; --warn:#e0ac38; --bad:#e46a69; --neutral:#575852; --rules:#f1f0eb;
+    --code:#252620;
+  }
+}
+* { box-sizing:border-box }
+html { scroll-behavior:smooth }
+body { margin:0; background:var(--page); color:var(--ink); font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif }
+.wrap { width:min(1180px,calc(100% - 36px)); margin:0 auto 84px }
+.mono,code,.eyebrow,.meta,.kicker,th,.metric-label,.receipt-key { font-family:"IBM Plex Mono",ui-monospace,monospace }
+header { padding:52px 0 20px; position:relative }
+.eyebrow,.kicker { color:var(--muted); font-size:11px; letter-spacing:.13em; text-transform:uppercase }
+h1,h2,h3,.big { font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif }
+h1 { max-width:920px; margin:10px 0 14px; font-size:clamp(39px,6vw,70px); line-height:.98; letter-spacing:-.035em }
+h2 { margin:5px 0 6px; font-size:clamp(25px,3.1vw,36px); line-height:1.08; letter-spacing:-.02em }
+h3 { margin:0 0 5px; font-size:18px }
+.subtitle { max-width:78ch; margin:0 0 18px; color:var(--ink2); font-size:17px }
+.meta { display:flex; flex-wrap:wrap; gap:8px 22px; color:var(--muted); font-size:11.5px }
+.theme { position:absolute; right:0; top:48px; border:1px solid var(--ring); background:var(--surface); color:var(--ink2); border-radius:999px; padding:7px 11px; cursor:pointer; font:11px "IBM Plex Mono",monospace }
+.status { display:inline-flex; gap:8px; align-items:center; margin-top:22px; padding:7px 11px; border:1px solid color-mix(in srgb,var(--warn) 42%,var(--ring)); border-radius:999px; background:color-mix(in srgb,var(--warn) 8%,var(--surface)); font:600 11px "IBM Plex Mono",monospace; letter-spacing:.06em }
+.status::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--warn) }
+section { margin-top:66px }
+.lede { max-width:78ch; margin:8px 0 22px; color:var(--ink2) }
+.panel { border:1px solid var(--ring); border-radius:13px; background:var(--surface); box-shadow:var(--shadow) }
+.verdict { display:grid; grid-template-columns:1.2fr .8fr; gap:26px; padding:28px }
+.verdict-copy p { margin:0 0 13px; color:var(--ink2); font-size:16px }
+.verdict-copy strong { color:var(--ink) }
+.tiles { display:grid; grid-template-columns:1fr 1fr; gap:11px }
+.tile { border-radius:10px; background:var(--soft); padding:14px 15px }
+.tile .label { color:var(--muted); font:10.5px "IBM Plex Mono",monospace; letter-spacing:.08em; text-transform:uppercase }
+.tile .big { margin:3px 0 1px; font-size:28px; line-height:1.05; font-weight:700 }
+.tile .small { color:var(--ink2); font-size:11.5px }
+.callout { margin-top:17px; border-left:3px solid var(--warn); background:color-mix(in srgb,var(--warn) 7%,var(--surface)); padding:13px 15px; color:var(--ink2); border-radius:0 8px 8px 0 }
+.tablewrap { overflow-x:auto; border:1px solid var(--ring); border-radius:11px; background:var(--surface) }
+table { border-collapse:collapse; width:100%; min-width:780px }
+th { padding:9px 10px; color:var(--muted); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:500; text-align:right; border-bottom:1px solid var(--grid); white-space:nowrap }
+td { padding:9px 10px; border-bottom:1px solid var(--grid); text-align:right; font:11.5px "IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; white-space:nowrap }
+tr:last-child td { border-bottom:0 }
+th:first-child,td:first-child { text-align:left }
+td:first-child { font-family:"IBM Plex Sans",sans-serif; font-size:12.5px; font-weight:500 }
+tr.rules-row { background:color-mix(in srgb,var(--good) 8%,var(--surface)) }
+.good { color:var(--good); font-weight:600 }.bad { color:var(--bad); font-weight:600 }.muted { color:var(--muted) }
+.chip { width:9px; height:9px; display:inline-block; border-radius:3px; margin-right:7px; vertical-align:0 }
+.tag { display:inline-block; padding:2px 6px; border-radius:5px; background:var(--soft); color:var(--ink2); font:9.5px "IBM Plex Mono",monospace; margin-left:5px }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px }
+.chart { padding:18px 20px }
+.chart-note { margin:0 0 14px; color:var(--muted); font-size:12px }
+.metric-row { display:grid; grid-template-columns:148px 1fr 51px; gap:9px; align-items:center; margin:6px 0 }
+.metric-label { color:var(--ink2); font-size:10.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.track { height:13px; position:relative; background:var(--soft); border-radius:4px }
+.track .reference { position:absolute; top:-3px; bottom:-3px; width:1px; background:var(--rules); opacity:.5; z-index:2 }
+.fill { height:100%; min-width:2px; border-radius:4px }
+.metric-value { color:var(--ink2); font:10.5px "IBM Plex Mono",monospace; text-align:right }
+.legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin:12px 0 0; color:var(--ink2); font-size:11.5px }
+.legend span { white-space:nowrap }
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px }
+.card { padding:17px 18px; border-top:3px solid var(--card-color,var(--neutral)) }
+.card .facts { margin:5px 0 10px; color:var(--muted); font:10.5px "IBM Plex Mono",monospace }
+.card p { margin:0; color:var(--ink2); font-size:13px }
+.delta { font-family:"Bricolage Grotesque",sans-serif; font-size:27px; font-weight:700 }
+.stack-row { display:grid; grid-template-columns:150px 1fr 43px; gap:10px; align-items:center; margin:7px 0 }
+.stack { display:flex; height:17px; overflow:hidden; border-radius:4px; background:var(--soft) }
+.segment { min-width:1px; height:100% }
+.figure-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px }
+.figure { margin:0; overflow:hidden }
+.figure img { display:block; width:100%; background:white; border-bottom:1px solid var(--ring) }
+.figure figcaption { padding:14px 16px 16px; color:var(--ink2); font-size:12.5px }
+.figure figcaption strong { display:block; color:var(--ink); margin-bottom:3px }
+.receipt-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px }
+.receipt { border:1px solid var(--ring); background:var(--surface); border-radius:8px; padding:11px 13px }
+.receipt-key { color:var(--muted); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase }
+.receipt code { display:block; margin-top:4px; color:var(--ink2); font-size:10px; word-break:break-all }
+details { border:1px solid var(--ring); border-radius:9px; background:var(--surface); padding:11px 14px; margin-top:12px }
+summary { cursor:pointer; color:var(--ink2); font-weight:500 }
+ul.caveats { max-width:88ch; padding-left:20px; color:var(--ink2) }
+ul.caveats li { margin:8px 0 }
+.footer { margin-top:64px; padding-top:18px; border-top:1px solid var(--grid); color:var(--muted); font-size:11px }
+.tip { position:fixed; z-index:20; pointer-events:none; opacity:0; max-width:310px; padding:7px 9px; border-radius:6px; background:var(--ink); color:var(--page); font:10.5px "IBM Plex Mono",monospace }
+svg text { font-family:"IBM Plex Mono",monospace }
+@media (max-width:850px) {
+  .verdict,.grid2 { grid-template-columns:1fr }
+  .cards { grid-template-columns:1fr }
+  .figure-grid { grid-template-columns:1fr }
+  .receipt-grid { grid-template-columns:1fr }
+}
+@media (max-width:560px) {
+  .wrap { width:min(100% - 24px,1180px) }
+  header { padding-top:34px }.theme { top:30px }
+  .tiles { grid-template-columns:1fr }
+  .metric-row,.stack-row { grid-template-columns:112px 1fr 42px }
+}
+@media print {
+  :root { color-scheme:light; --page:#fff; --surface:#fff; --ink:#000; --ink2:#333; --muted:#666; --grid:#ccc; --soft:#f2f2f2; --ring:#ccc; --shadow:none }
+  body { font-size:11px }.theme { display:none }.wrap { width:100%; max-width:none }.panel,.card,.figure { break-inside:avoid } section { margin-top:36px }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <button class="theme" id="themeButton" type="button">theme</button>
+  <div class="eyebrow">LogWarden · governed Tier 1 · SQL Server incident triage</div>
+  <h1 id="title"></h1>
+  <p class="subtitle" id="subtitle"></p>
+  <div class="meta" id="meta"></div>
+  <div class="status" id="status"></div>
+</header>
+
+<section>
+  <div class="panel verdict">
+    <div class="verdict-copy">
+      <div class="kicker">The result</div>
+      <div id="verdict"></div>
+      <div class="callout"><strong>Decision:</strong> keep deterministic rules for the known incident head; gate retrieval/model assistance to unresolved residuals. This benchmark does not support an autonomous remediation agent.</div>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Model × arm scoreboard</div>
+  <h2>One baseline, nine governed agent cells</h2>
+  <p class="lede">Failures count as failures; missing cells are not imputed. B1 is the executable deterministic comparator. Lower cost-weighted loss and latency are better; higher values are better elsewhere.</p>
+  <div class="tablewrap"><table id="scoreTable"></table></div>
+</section>
+
+<section>
+  <div class="kicker">Quality and speed</div>
+  <h2>Retrieval lifts the models—but not over rules</h2>
+  <p class="lede">The reference line is B1 action accuracy. The scatter uses end-to-end agent p95, not model-only latency, and shows the cost of each architecture/arm combination.</p>
+  <div class="grid2">
+    <div class="panel chart"><h3>Action accuracy</h3><p class="chart-note">B1 reference at <span id="rulesRef"></span></p><div id="actionBars"></div><div class="legend" id="modelLegend"></div></div>
+    <div class="panel chart"><h3>Action accuracy × p95 latency</h3><p class="chart-note">Color = model · label = arm · lower/right is not automatically better</p><div id="latencyScatter"></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Arm effects</div>
+  <h2>RAG helps; tool context is usually a tax</h2>
+  <p class="lede">Paired episode-level differences are descriptive after multiplicity control. Every Holm-adjusted p-value is retained, and no row is promoted into a positive formal claim.</p>
+  <div class="cards" id="ragCards"></div>
+  <div class="tablewrap" style="margin-top:18px"><table id="armContrastTable"></table></div>
+</section>
+
+<section>
+  <div class="kicker">Failure anatomy</div>
+  <h2>Correct transport is not correct triage</h2>
+  <p class="lede">The mutually exclusive funnel identifies the first reason an episode cannot count as end-to-end success. Contract/policy failures and wrong actions dominate different cells.</p>
+  <div class="panel chart"><div id="failureStack"></div><div class="legend" id="failureLegend"></div></div>
+</section>
+
+<section>
+  <div class="kicker">Retrieval and tools</div>
+  <h2>The evidence plane works; using it well is model-dependent</h2>
+  <div class="grid2">
+    <div><p class="lede">Hybrid led the executable search benchmark descriptively. The oracle runbook row is an information ceiling.</p><div class="tablewrap"><table id="retrievalTable"></table></div></div>
+    <div><p class="lede">Tool arms expose required-tool recall, forbidden calls, argument validity, and snapshot misses.</p><div class="tablewrap"><table id="toolTable"></table></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="kicker">Systems performance</div>
+  <h2>Qwen is fastest; Muse spends the most time and tokens</h2>
+  <p class="lede">Residency metrics span each full model window, including calibration, primary replay, and controls. Agent latency includes orchestration, retrieval, tool, validation, and persistence phases.</p>
+  <div class="cards" id="speedCards"></div>
+  <div class="tablewrap" style="margin-top:18px"><table id="serviceTable"></table></div>
+</section>
+
+<section>
+  <div class="kicker">Negative controls</div>
+  <h2>Sensitivity is uneven—and sometimes useful</h2>
+  <p class="lede">Masking removes exact error cues; shuffled runbooks inject wrong evidence; sequential batching probes request/output stability. Agreement is semantic, not raw-byte equality.</p>
+  <div class="tablewrap"><table id="controlTable"></table></div>
+</section>
+
+<section>
+  <div class="kicker">Calibration</div>
+  <h2>Confidence is not yet a dependable control surface</h2>
+  <p class="lede">Calibration was fit on 60 calibration episodes per arm before protected-test access. Nonconverged fits remain visible rather than being discarded.</p>
+  <div class="tablewrap"><table id="calibrationTable"></table></div>
+</section>
+
+<section>
+  <div class="kicker">Evidence gallery</div>
+  <h2>Six views of the retained result</h2>
+  <p class="lede">These PNGs are embedded for portability. Their frozen CSV sources—not renderer-specific PNG bytes—are the scientific state of record.</p>
+  <div class="figure-grid" id="figures"></div>
+</section>
+
+<section>
+  <div class="kicker">The fourth model</div>
+  <h2>OLMo stopped at the contract boundary</h2>
+  <div class="panel" style="padding:22px 24px" id="olmo"></div>
+</section>
+
+<section>
+  <div class="kicker">Evidence and limits</div>
+  <h2>Auditable by construction</h2>
+  <p class="lede">The HTML is a deterministic view over hash-verified outputs. Row-only and fresh-database reconstruction both passed before publication.</p>
+  <div class="receipt-grid" id="receipts"></div>
+  <details><summary>Source artifact hashes</summary><div class="receipt-grid" id="sources" style="margin-top:12px"></div></details>
+  <ul class="caveats" id="caveats"></ul>
+</section>
+
+<div class="footer" id="footer"></div>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+const DATA = __DATA_JSON__;
+const $ = id => document.getElementById(id);
+const put = (id, html) => { $(id).innerHTML = html; };
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = value => value === null || value === undefined ? "—" : `${(value * 100).toFixed(1).replace(/\.0$/,"")}%`;
+const pp = value => value === null || value === undefined ? "—" : `${value >= 0 ? "+" : ""}${(value * 100).toFixed(1)} pp`;
+const num = (value, digits=2) => value === null || value === undefined ? "—" : Number(value).toFixed(digits).replace(/\.00$/,"");
+const integer = value => value === null || value === undefined ? "—" : Math.round(value).toLocaleString();
+const sec = value => value === null || value === undefined ? "—" : `${(value / 1000).toFixed(value >= 10000 ? 1 : 2)}s`;
+const duration = value => value === null || value === undefined ? "—" : value >= 3600 ? `${(value/3600).toFixed(1)}h` : `${(value/60).toFixed(1)}m`;
+const modelColor = key => ({"qwen-3.8-27b":"var(--blue)","gemma-4-31b":"var(--green)","muse-glimmer-30b":"var(--red)","olmo-3.1-32b-instruct":"var(--orange)"}[key] ?? "var(--neutral)");
+const chip = key => `<span class="chip" style="background:${modelColor(key)}"></span>`;
+const cellName = row => `${row.modelShort} · ${row.arm}`;
+const signedClass = value => value > 0 ? "good" : value < 0 ? "bad" : "muted";
+const rules = DATA.rules;
+
+// Theme, hero, and verdict.
+let savedTheme = null;
+try { savedTheme = localStorage.getItem("lw-tier1-theme"); } catch { /* Drive/file previews may deny storage. */ }
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+$("themeButton").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("lw-tier1-theme", next); } catch { /* Theme still works for this page view. */ }
+});
+put("title", esc(DATA.title));
+put("subtitle", esc(DATA.subtitle));
+put("meta", [DATA.runId, `${integer(DATA.summary.predictions)} predictions`, `${integer(DATA.summary.formalContrasts)} formal contrasts`, `final boundary ${DATA.publishedFromFinalBoundaryAtUtc}`].map(x => `<span>${esc(x)}</span>`).join(""));
+put("status", `${DATA.primaryAdjudication} · ${DATA.summary.formalPositiveCount}/${DATA.summary.formalContrasts} positive claims`);
+put("verdict", `
+  <p><strong>The deterministic B1 rules arm remains the winner:</strong> ${pct(rules.actionAccuracy)} action accuracy and ${num(rules.costWeightedLoss)} cost-weighted loss.</p>
+  <p>The best learned cell was <strong>${esc(DATA.summary.bestAgent.model)} · ${esc(DATA.summary.bestAgent.arm)}</strong> at ${pct(DATA.summary.bestAgent.actionAccuracy)} action accuracy—useful, but still below rules.</p>
+  <p>Retrieval improved marginal decisions for every completed model. Adding the full tool context generally reduced action quality and exposed argument/snapshot fragility.</p>
+  <p>No contrast cleared both the familywise confidence-bound and Holm-adjusted p-value gates. The correct conclusion is <strong>CLEAN_NULL</strong>, not “models failed to run.”</p>`);
+put("tiles", [
+  ["Rules action",pct(rules.actionAccuracy),"B1-rules-v1"],
+  ["Best agent",pct(DATA.summary.bestAgent.actionAccuracy),`${DATA.summary.bestAgent.model} · ${DATA.summary.bestAgent.arm}`],
+  ["Formal wins",`${DATA.summary.formalPositiveCount}/${DATA.summary.formalContrasts}`,"CI-low > 0 and Holm p ≤ .05"],
+  ["Paired model I/O",integer(DATA.summary.telemetry.model_request_count),"all request/response hashes reconciled"],
+].map(([label,big,small]) => `<div class="tile"><div class="label">${label}</div><div class="big">${big}</div><div class="small">${small}</div></div>`).join(""));
+
+// Scoreboard.
+const scoreboardRows = [rules, ...DATA.agents];
+const scoreCols = [
+  ["Cell", row => `${row.profileKey === "baseline" ? '<span class="chip" style="background:var(--rules)"></span>' : chip(row.profileKey)}${esc(row.profileKey === "baseline" ? "B1 rules" : cellName(row))}`],
+  ["N", row => integer(row.eligible)], ["Action", row => pct(row.actionAccuracy)], ["E2E", row => pct(row.endToEndSuccess)],
+  ["Macro F1", row => num(row.macroF1,3)], ["Loss ↓", row => num(row.costWeightedLoss,2)], ["Contract", row => pct(row.contractSuccess)],
+  ["Retrieval R@5", row => pct(row.retrievalRecallAt5)], ["p50", row => sec(row.agentLatencyP50Ms)], ["p95", row => sec(row.agentLatencyP95Ms)],
+  ["tokens / ep", row => integer(row.tokensPerEpisode)], ["Δ action vs B1", row => row.profileKey === "baseline" ? "reference" : pp(row.actionDeltaVsB1)],
+  ["Holm p", row => row.profileKey === "baseline" ? "—" : num(row.actionDeltaHolmP,3)],
+];
+put("scoreTable", `<thead><tr>${scoreCols.map(([name]) => `<th>${name}</th>`).join("")}</tr></thead><tbody>` + scoreboardRows.map(row => {
+  const klass = row.profileKey === "baseline" ? "rules-row" : "";
+  return `<tr class="${klass}">${scoreCols.map(([name,render],index) => {
+    const valueClass = name === "Δ action vs B1" && row.profileKey !== "baseline" ? signedClass(row.actionDeltaVsB1) : "";
+    return `<td class="${valueClass}">${render(row)}</td>`;
+  }).join("")}</tr>`;
+}).join("") + "</tbody>");
+
+// Action bars and model legend.
+put("rulesRef", pct(rules.actionAccuracy));
+put("actionBars", DATA.agents.map(row => `<div class="metric-row" data-tip="${esc(cellName(row))}: ${pct(row.actionAccuracy)} action accuracy; ${pct(row.endToEndSuccess)} end-to-end success">
+  <div class="metric-label">${esc(cellName(row))}</div><div class="track"><span class="reference" style="left:${rules.actionAccuracy*100}%"></span><div class="fill" style="width:${(row.actionAccuracy ?? 0)*100}%;background:${modelColor(row.profileKey)};opacity:${row.armId === 'A-rag' ? 1 : .68}"></div></div><div class="metric-value">${pct(row.actionAccuracy)}</div></div>`).join(""));
+put("modelLegend", DATA.models.map(model => `<span>${chip(model.profileKey)}${esc(model.short)}</span>`).join("") + `<span><span class="chip" style="background:var(--rules)"></span>B1 reference</span>`);
+
+// Latency scatter.
+(function buildScatter(){
+  const W=560,H=390,L=52,R=18,T=18,B=48;
+  const points=DATA.agents.filter(row => row.agentLatencyP95Ms && row.actionAccuracy !== null);
+  const minX=8000,maxX=100000;
+  const xp=value => L+(Math.log10(Math.max(minX,value))-Math.log10(minX))/(Math.log10(maxX)-Math.log10(minX))*(W-L-R);
+  const yp=value => T+(1-value)*(H-T-B);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Agent p95 latency versus action accuracy" style="width:100%;height:auto">`;
+  [0,.25,.5,.75,1].forEach(value => { svg+=`<line x1="${L}" y1="${yp(value)}" x2="${W-R}" y2="${yp(value)}" stroke="var(--grid)"/><text x="${L-7}" y="${yp(value)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${value*100}%</text>`; });
+  [10,20,40,80].forEach(value => { const x=xp(value*1000); svg+=`<line x1="${x}" y1="${T}" x2="${x}" y2="${H-B}" stroke="var(--grid)"/><text x="${x}" y="${H-B+18}" text-anchor="middle" font-size="10" fill="var(--muted)">${value}s</text>`; });
+  svg+=`<line x1="${L}" y1="${yp(rules.actionAccuracy)}" x2="${W-R}" y2="${yp(rules.actionAccuracy)}" stroke="var(--rules)" stroke-dasharray="4 4" opacity=".6"/><text x="${W-R}" y="${yp(rules.actionAccuracy)-5}" text-anchor="end" font-size="9" fill="var(--muted)">B1 ${pct(rules.actionAccuracy)}</text>`;
+  points.forEach((row,index) => { const x=xp(row.agentLatencyP95Ms),y=yp(row.actionAccuracy); const dy=row.armId==='A-rag'?-10:row.armId==='A-tools'?16:(index%2?-10:15); svg+=`<circle cx="${x}" cy="${y}" r="7" fill="${modelColor(row.profileKey)}" opacity=".9" stroke="var(--surface)" stroke-width="2" data-tip="${esc(cellName(row))}: ${sec(row.agentLatencyP95Ms)} p95 · ${pct(row.actionAccuracy)} action"/><text x="${x+10}" y="${y+dy}" font-size="9.5" fill="var(--ink2)">${esc(row.modelShort)} ${esc(row.arm)}</text>`; });
+  svg+=`<text x="${(L+W-R)/2}" y="${H-7}" text-anchor="middle" font-size="10" fill="var(--muted)">end-to-end p95 latency · log scale</text></svg>`;
+  put("latencyScatter",svg);
+})();
+
+// Arm deltas.
+const actionContrasts=DATA.ragAndToolContrasts.filter(row => row.metric === "acceptable_action_accuracy");
+const ragContrasts=actionContrasts.filter(row => row.contrastId.includes("A-rag-vs-A-direct"));
+put("ragCards", ragContrasts.map(row => `<div class="panel card" style="--card-color:${modelColor(row.profileKey)}"><h3>${chip(row.profileKey)}${esc(row.model)}</h3><div class="delta ${signedClass(row.difference)}">${pp(row.difference)}</div><div class="facts">RAG − direct · 99.5% familywise CI ${pp(row.ciLow)} to ${pp(row.ciHigh)}</div><p>Observed action lift on ${row.sampleCount} paired episodes. Holm p = ${num(row.holmP,3)}; descriptive, not promoted.</p></div>`).join(""));
+put("armContrastTable", `<thead><tr><th>Model</th><th>Contrast</th><th>Metric</th><th>N</th><th>Difference</th><th>99.5% CI</th><th>Holm p</th></tr></thead><tbody>` + DATA.ragAndToolContrasts.map(row => `<tr><td>${chip(row.profileKey)}${esc(row.model)}</td><td>${esc(row.contrastId.includes("A-rag-vs-A-direct") ? "RAG − direct" : "Tools − RAG")}</td><td>${esc(row.metric.replaceAll("_"," "))}</td><td>${integer(row.sampleCount)}</td><td class="${signedClass(row.difference)}">${pp(row.difference)}</td><td>${pp(row.ciLow)} … ${pp(row.ciHigh)}</td><td>${num(row.holmP,3)}</td></tr>`).join("") + `</tbody>`);
+
+// Failure funnel.
+const failureColors={success:"var(--good)",action_wrong:"var(--warn)",severity_wrong:"var(--orange)",classification_wrong:"var(--red)",terminal_failure:"var(--purple)",contract_failure:"var(--bad)",policy_failure:"var(--bad)"};
+const failureLabels={success:"success",action_wrong:"action",severity_wrong:"severity",classification_wrong:"class",terminal_failure:"terminal",contract_failure:"contract",policy_failure:"policy"};
+const groupedFailures={};
+DATA.failures.forEach(row => { const key=`${row.profileKey}|${row.armId}`; (groupedFailures[key]??=[]).push(row); });
+put("failureStack",DATA.agents.map(cell => { const values=groupedFailures[`${cell.profileKey}|${cell.armId}`]??[]; const total=values.reduce((sum,row)=>sum+row.episodes,0); return `<div class="stack-row"><div class="metric-label">${esc(cellName(cell))}</div><div class="stack">${values.map(row=>`<span class="segment" style="width:${total?row.episodes/total*100:0}%;background:${failureColors[row.failure]??'var(--neutral)'}" data-tip="${esc(cellName(cell))} · ${esc(failureLabels[row.failure]??row.failure)}: ${row.episodes}/${total}"></span>`).join("")}</div><div class="metric-value">${total}</div></div>`; }).join(""));
+const usedFailures=[...new Set(DATA.failures.map(row=>row.failure))];
+put("failureLegend",usedFailures.map(key=>`<span><span class="chip" style="background:${failureColors[key]??'var(--neutral)'}"></span>${esc(failureLabels[key]??key)}</span>`).join(""));
+
+// Retrieval and tools.
+put("retrievalTable",`<thead><tr><th>Method</th><th>R@5</th><th>MRR</th><th>NDCG@5</th><th>No-answer</th></tr></thead><tbody>`+DATA.retrievalBenchmarks.map(row=>`<tr><td>${esc(row.method.replaceAll("_"," "))}</td><td>${pct(row.recallAt5)}</td><td>${num(row.mrr,3)}</td><td>${num(row.ndcgAt5,3)}</td><td>${pct(row.noAnswerAccuracy)}</td></tr>`).join("")+`</tbody>`);
+const toolCells=DATA.agents.filter(row=>row.armId==='A-tools');
+put("toolTable",`<thead><tr><th>Model</th><th>Required recall</th><th>Forbidden</th><th>Args valid</th><th>Snapshot miss</th></tr></thead><tbody>`+toolCells.map(row=>`<tr><td>${chip(row.profileKey)}${esc(row.model)}</td><td>${pct(row.requiredToolRecall)}</td><td>${pct(row.forbiddenToolRate)}</td><td>${pct(row.argumentValidRate)}</td><td>${pct(row.snapshotMissRate)}</td></tr>`).join("")+`</tbody>`);
+
+// Speed and residency.
+const directs=DATA.agents.filter(row=>row.armId==='A-direct');
+put("speedCards",directs.map(row=>`<div class="panel card" style="--card-color:${modelColor(row.profileKey)}"><h3>${chip(row.profileKey)}${esc(row.model)}</h3><div class="delta">${sec(row.agentLatencyP50Ms)}</div><div class="facts">direct-agent p50 · p95 ${sec(row.agentLatencyP95Ms)}</div><p>${integer(row.tokensPerEpisode)} tokens/episode; ${pct(row.contractSuccess)} final contract success.</p></div>`).join(""));
+put("serviceTable",`<thead><tr><th>Model residency</th><th>Window</th><th>Prompt tok</th><th>Generation tok</th><th>Mean GPU</th><th>Max VRAM</th><th>Max power</th><th>Max running</th><th>Waiting</th><th>Preemptions</th></tr></thead><tbody>`+DATA.service.map(row=>`<tr><td>${chip(row.profileKey)}${esc(row.model)}</td><td>${duration(row.residencySeconds)}</td><td>${integer(row.promptTokens)}</td><td>${integer(row.generationTokens)}</td><td>${pct(row.meanGpuUtilizationPct/100)}</td><td>${row.maxGpuMemoryUsedMiB===null?'—':`${num(row.maxGpuMemoryUsedMiB/1024,1)} GiB`}</td><td>${row.maxGpuPowerDrawW===null?'—':`${num(row.maxGpuPowerDrawW,0)} W`}</td><td>${integer(row.maxRunningRequests)}</td><td>${integer(row.maxWaitingRequests)}</td><td class="${row.preemptions>0?'bad':''}">${integer(row.preemptions)}</td></tr>`).join("")+`</tbody>`);
+
+// Controls.
+const controlLabel={"error-number-mask-v1":"error mask","shuffled-runbooks-v1":"shuffled runbook","batching-sequential-v1":"sequential batch"};
+put("controlTable",`<thead><tr><th>Model</th><th>Control</th><th>Pairs</th><th>Semantic agreement</th><th>Tool-order agreement</th><th>Action delta</th><th>Classification</th></tr></thead><tbody>`+DATA.controls.map(row=>`<tr><td>${chip(row.profile)}${esc(DATA.models.find(m=>m.profileKey===row.profile)?.name??row.profile)}</td><td>${esc(controlLabel[row.control]??row.control)}</td><td>${integer(row.pairCount)}</td><td>${pct(row.semanticDecisionAgreement.rate)}</td><td>${pct(row.orderedToolCallAgreement.rate)}</td><td class="${signedClass(row.meanActionScoreDelta)}">${pp(row.meanActionScoreDelta)}</td><td>${esc(row.invariance)}</td></tr>`).join("")+`</tbody>`);
+
+// Calibration.
+put("calibrationTable",`<thead><tr><th>Cell</th><th>Raw ECE</th><th>Calibrated ECE</th><th>Selective accuracy</th><th>Coverage</th><th>Fit converged</th><th>Test rows</th></tr></thead><tbody>`+DATA.calibration.map(row=>`<tr><td>${chip(row.profileKey)}${esc(`${row.model} · ${row.arm}`)}</td><td>${num(row.rawEce,3)}</td><td>${num(row.calibratedEce,3)}</td><td>${pct(row.selectiveAccuracy)}</td><td>${pct(row.selectiveCoverage)}</td><td class="${row.converged?'good':'bad'}">${row.converged?'yes':'no'}</td><td>${integer(row.testRows)}</td></tr>`).join("")+`</tbody>`);
+
+// Embedded figures.
+put("figures",DATA.figures.map(figure=>`<figure class="panel figure"><img loading="lazy" src="${figure.dataUri}" alt="${esc(figure.title)}"><figcaption><strong>${esc(figure.title)}</strong>${esc(figure.caption)}<br><span class="mono muted">source ${esc(figure.source)} · ${esc(figure.sourceSha256.slice(0,12))}…</span></figcaption></figure>`).join(""));
+
+// OLMo.
+if(DATA.olmo){
+  put("olmo",`<p style="margin-top:0"><strong>${chip(DATA.olmo.profileKey)}OLMo 3.1 32B is ${esc(DATA.olmo.disposition)}</strong> after ${DATA.olmo.gateCount} independent unconstrained gates. Requests stopped normally, but every structured decision omitted required contract fields.</p><p style="margin-bottom:0;color:var(--ink2)">A separate guided-JSON gate passed 9/9 and is useful Tier-2 portability evidence. It is not silently substituted into Tier 1 and contributes no scorecard row here.</p>`);
+} else put("olmo","No port exclusion was recorded.");
+
+// Receipts, sources, caveats, footer.
+const receiptLabels={campaignAnalysis:"campaign analysis",telemetryReconciliation:"telemetry reconciliation",resultsFinalization:"result persistence",rowReproduction:"row-only reproduction",restoreReproduction:"fresh-SQL reproduction",finalBackup:"final database backup",expectedOutputs:"expected report outputs",figureManifest:"figure manifest"};
+put("receipts",Object.entries(DATA.receipts).map(([key,value])=>`<div class="receipt"><div class="receipt-key">${esc(receiptLabels[key]??key)}</div><code>${esc(value)}</code></div>`).join(""));
+put("sources",DATA.sourceArtifacts.map(source=>`<div class="receipt"><div class="receipt-key">${esc(source.relativePath)}</div><code>${esc(source.sha256)}</code></div>`).join(""));
+put("caveats",DATA.caveats.map(item=>`<li>${esc(item)}</li>`).join(""));
+put("footer",`Generated deterministically from frozen run <span class="mono">${esc(DATA.runId)}</span> · report payload receipt <span class="mono">${esc(DATA.receiptSha256)}</span> · ${integer(DATA.summary.taxonomyRows)} taxonomy rows · ${integer(DATA.summary.claimRows)} claims · ${integer(DATA.summary.reportSnapshots)} persisted report snapshots.`);
+
+// Tooltips.
+const tip=$("tip");
+document.addEventListener("mousemove",event=>{ const target=event.target.closest("[data-tip]"); if(!target){tip.style.opacity=0;return} tip.textContent=target.getAttribute("data-tip"); tip.style.opacity=1; tip.style.left=`${Math.min(event.clientX+14,innerWidth-330)}px`; tip.style.top=`${event.clientY+14}px`; });
+</script>
+</body>
+</html>

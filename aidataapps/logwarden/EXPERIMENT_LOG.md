@@ -1649,3 +1649,97 @@ place and receive a later disposition.
   Tier-1 claim ceiling remains offline frozen replay on synthetic incidents;
   no live, throughput, production-safety, raw-correlation, ANN, or SQL-native-AI
   claim is made.
+
+- 2026-08-23T21:15:38.238Z — Persisted and hash-locked 206 taxonomy rows, 41 claims, and 15 report snapshots; receipt 38c3d2950939f5271a208d3adf97a3e4977b3ce57b99378c81ef50171c8a1823.
+
+- 2026-08-23T21:18:29.828Z — Stopped the rolling watchdog after final result
+  persistence and created the post-ledger database boundary. Both backups
+  passed `VERIFYONLY`, in-place restore, and physical `CHECKDB`: control
+  1,047,756,800 bytes / SHA-256
+  `278c17722df0106d8b7bc390832e950da5b07708347ae4144a4da6a74ebf251a`;
+  workload 774,144 bytes / SHA-256
+  `53481e310b6cb66a229d3e7d258cd45aa20d3484cdda30b86e0c9067dce70568`.
+  Backup receipt:
+  `d8316dd88e172f9951f55a3afc0443265d1b6c53efd4b192c14b68f87c27eac1`.
+  Pinned it as `tier1-final`, then bounded retention removed six redundant
+  local/Drive copies (2,096,950,416 bytes) while preserving the freeze, all
+  four model-profile boundaries, Tier-1 final, two rolling recovery points,
+  and two recovery bundles. Retention receipt:
+  `b5fcae06f2297ddf0cb2ed6398835dfee2cc432ba6db5d4ba6d177901b3e9604`.
+  Impact: durability and storage only; no report input, scientific row, pinned
+  boundary, or required recovery point was removed.
+
+- 2026-08-23T21:31:51.642Z — Repeated the fresh-SQL reproduction gate against
+  the final post-ledger backup. New isolated databases passed `CHECKDB`; the
+  control contained 82 tables, all 32 migrations, 206 taxonomy rows, 41
+  claims, and 15 report snapshots; the workload contained five tables. The 17
+  restored SQL exports plus 33 signed evidence artifacts reproduced the exact
+  retained 85,596-row manifest, and all claim-bearing reports rebuilt without
+  drift. Stable restore receipt:
+  `843c0c7efa97f02bb2dd99300eaa663b17ed4e90708e476dd07d213af4c5df0e`;
+  execution receipt:
+  `d31e14fe95a52660cd63f35f1e57be28985e8e831f1ac68499ecb84a10ad9f2f`;
+  restored-database receipt:
+  `aafd5cbeb857bec5e3970cd1a7f199491e045c1834ef1279399ddae6efb349f2`.
+
+- 2026-08-23T21:34:30Z — Hardened rootless-Colab reproduction teardown after
+  observing that SQL Server can respawn once between a direct signal and a
+  Docker removal request. Cleanup now validates an exact random ephemeral SQL
+  port plus the exact SQL executable, starts removal of the uniquely named
+  Compose container, and drains only matching processes concurrently. Docker
+  calls and exact volume/network fallbacks are bounded by timeouts. A targeted
+  test removed the isolated container, both volumes, network, staging copy,
+  SQL processes, and shim in under one second; the primary SQL service on port
+  1434 remained healthy. Impact: teardown reliability only. All scientific and
+  report gates had already passed, and no primary database or evidence row was
+  touched.
+
+- 2026-08-23T21:35:00Z — Closed the optional Foundry follow-up using the
+  already-merged Mac evidence rather than installing an inapplicable runtime on
+  this Linux x86_64 Colab VM. `docs/MAC_PROFILE.md` records a verified M4 Max
+  Foundry Local 0.10.3 chat canary (`qwen3-4b`, about 60 tokens/s warm) and
+  1024-dimensional embedding canary; the generated Mac report covers multiple
+  Foundry ONNX and MLX servings. Those are explicitly separate Mac-plane rows,
+  with different artifacts/runtimes, and remain excluded from the digest-pinned
+  CUDA/vLLM Tier-1 campaign. Impact: portability evidence only; no Tier-1
+  inference, score, or adjudication changed.
+
+- 2026-08-23T21:38:00Z — Generated the definitive run inventory and mirrored
+  the complete retained run to Drive. Local and Drive
+  `ARTIFACT_INVENTORY.json` files have identical SHA-256
+  `6be86a7777294ec3269c73a3001c008b9395837958a5ac3a903d97a7f48b5e26`.
+  The completed Lab-3 handoff, append-only experiment log, and root performance
+  report were also copied to their stable Drive paths and verified byte-for-byte.
+  Impact: durability only; no scientific or report content changed.
+
+- 2026-08-23T21:39:00Z — Stopped the completed Qwen embedding Compose service
+  cleanly after all inference, report, persistence, backup, and reproduction
+  gates passed. The model/cache volumes and all evidence are retained; no GPU
+  compute process remains. Primary SQL Server remains healthy on port 1434 for
+  inspection. Impact: runtime resource release only.
+
+- 2026-08-23T22:06:00Z — Added the requested self-contained Tier-1 HTML model-
+  comparison report and a companion deterministic JSON payload. The generator
+  fails closed against the frozen-output, campaign, telemetry, finalization,
+  reproduction, backup, and figure receipts; embeds six retained figures; and
+  exposes the full baseline/agent scorecard, arm contrasts, failure funnel,
+  retrieval/tool quality, calibration, negative controls, GPU/vLLM residency,
+  receipts, source hashes, and evidence limits. Payload receipt:
+  `b49a5b3860b54782d93cdb76a0ae24ed3c611fd382a3e929b9d208335e3de61b`;
+  HTML SHA-256:
+  `80915f567b664780016b56399542e0acc35ce6df9c5d72639b6fe1cbad5a50ed`;
+  JSON SHA-256:
+  `a5feee5f51d0ea3b7973017d5f8acbce83914c96d109d4eb1d6f6ac3f11332fc`.
+  The checked-in snapshot rebuilt byte-for-byte, its browser script parsed and
+  populated all 29 targets without invalid values, and all 43 test files / 152
+  tests passed. Impact: presentation and discoverability only. No frozen input,
+  scientific row, persisted report snapshot, inference result, claim, or
+  adjudication changed.
+
+- 2026-08-23T22:07:17Z — Refreshed the complete Drive run mirror after adding
+  the HTML and JSON presentation artifacts. Local and Drive
+  `ARTIFACT_INVENTORY.json` files are byte-identical at SHA-256
+  `951bf7c836ab7212588f03cd011dacf4c0d13e25bb6fa8428a88c0e51e2c5c03`.
+  Stable top-level Drive copies of the HTML, payload, handoff, and experiment
+  log were also refreshed for discoverability. Impact: durability only; the
+  frozen science and final SQL boundary remain unchanged.
