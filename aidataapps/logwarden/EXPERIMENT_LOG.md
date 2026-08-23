@@ -1309,3 +1309,30 @@ place and receive a later disposition.
   per-worker retry/wait totals plus the policy in replay receipts. Build and 42
   test files / 148 tests passed. Impact: later invocations tolerate transient
   queue lock cycles without retrying or changing any scientific cell.
+
+- 2026-08-23T17:46:15.774Z — gemma-4-31b control batching-sequential-v1 retained 48 cells across test_id,test_unknown and A-tools with 48 decisions, 0 failures, and 66 model requests; receipt 4287cfd610a2bc2ae9bb96335148c736618dc509f6fe517e7900e5859b6ee602.
+
+- 2026-08-23T17:46:24.944Z — Scored 48 control batching-sequential-v1 test_id,test_unknown predictions for gemma-4-31b across A-tools; receipt e764af9f6d5aefac97d532d489b024c8dd3a2e48cffdae8071c0f509b1d8e433.
+
+- 2026-08-23T17:46:31.215Z — Compared 48 gemma-4-31b/batching-sequential-v1 predictions with their frozen primary sources: raw=0/48, decision=0.416667/48, tools=1/48, invariance=NON_INVARIANT; receipt fd9e052a8a834b3c55e28647189d927d3d970bb88135bdb610bc661ea1cff317.
+
+- 2026-08-23T17:46:35.867Z — Diagnosed gemma-4-31b/batching-sequential-v1: REQUEST_LEVEL_NON_INVARIANT; exact-input normalized outputs 29/48, first-turn choices 29/48; receipt 1fc735aff7fb324b5a6c0dc85e97b391edb3a6912fe6fb78e79dd940c69d9b44.
+
+- 2026-08-23T17:51:25Z — Closed the Gemma residency epoch
+  `bde528a1-bb5c-4b66-91b5-ac19591487dd` and ingested 2,361/2,361 sampler
+  records with zero duplicates (receipt
+  `4e9f74e6de17d3ca51e9412051fe44d33bf9b5db404b7421198c259064474bd7`).
+  Global reconciliation passed across 296 journals / 179,223 records / 13,724
+  raw artifacts: 8,583 traces and 46,632 spans are all closed; 6,767 model
+  requests have 6,767 responses and zero bad hashes; 3,373,339 metric samples
+  and 13,646 raw snapshots have unique keys. Reconciliation receipt:
+  `7584e66698da11704ba36bfff4da6c8acbc226b334f1701688e3d6af7be2f5f1`.
+  A fresh verified database backup was mirrored and pinned as
+  `gemma-4-31b` at receipt
+  `317146edecfe64bc209d07ec3e0008179356cdc59d8916cb38fbde4a5b0e15c2`.
+  Exact bounded retention then removed six redundant local/Drive files
+  (1,605,381,262 bytes) while preserving the freeze and Muse/Gemma pinned
+  boundaries plus two rolling recovery points; receipt
+  `6bb1a32e5d08c969f078d958d8d9adfd55a74273a461af3edf6051985fa89170`.
+  Impact is durability/storage only; all scientific and performance evidence,
+  including Gemma's one preemption and deadlock receipts, remains retained.

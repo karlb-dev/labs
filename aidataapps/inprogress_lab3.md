@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 16:28 UTC
+Last manually updated: 2026-08-23 17:50 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -45,19 +45,14 @@ and its effect on the evidence ceiling must be recorded append-only in
   evaluation, search freeze, database restore test, run archive, and Drive
   mirror all passed. The global pre-freeze reconciliation receipt is
   `2a5f0a4e39bb2831eec506067de3186ab2eb1aeb2965e322161b69f5fb0287c8`.
-- `muse-glimmer-30b` is the active governed residency. Exact container
-  `9602d24544f974bdf1d0287136d7bb9c8a3da1dec67aa33dabf25d10bb3e9a40`
-  is running on port 8010 with the frozen image, model, revision, profile hash,
-  16K context, max-num-seqs 64, and batch-invariant kernels. The first cold
-  cache startup stopped before HTTP/model requests in the same tokenizer race
-  retained by Lab 2; the settled-cache service passed two formal nine-call
-  gates with zero length/error/preemption outcomes and exact repeated output.
-  PASS receipts:
-  `4fd5df4af5c5fe6a3d73cfa759bb2de372e59e027687ad144b88f15952a6ad56`
-  and
-  `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
-  The cold failure and one log-classifier false positive remain retained and
-  are disclosed in `EXPERIMENT_LOG.md`; neither produced scientific rows.
+- `gemma-4-31b` is scientifically closed and remains temporarily resident only
+  for an orderly profile transition. Exact container
+  `0255633c0a827de59d0935b371ce8bbaf2e94ee037d61736e95bd39fc43b4533`
+  is on port 8010; no replay or profile sampler is active. The Qwen embedding
+  service remains on port 8011 and SQL Server remains healthy on port 1434.
+  Next: stop the exact Gemma service, evict only its reproducible weight cache,
+  remove the ignored Gemma-only 0.79 resource override, then start and gate
+  `olmo-3.1-32b-instruct`. Do not rerun any completed Muse or Gemma row.
 - Muse whole-residency sampling is closed. Epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
   global reconciliation then passed across 193 journals, 119,595 records,
@@ -161,9 +156,32 @@ and its effect on the evidence ceiling must be recorded append-only in
   and four calibration-only models were fit with zero prior Gemma test
   predictions (receipt
   `cfaae197a0c42323f5f73ea405b6fd3e2dcf4a3e70d0d1d4ae489f0451dbbe83`).
-  Next: launch Gemma protected primary replay (1,370 cells, 16 workers), then
-  derive router and score. Do not relaunch completed Muse/Gemma calibration or
-  the retained failed Gemma cold gate.
+  Gemma protected work is now also closed. Primary coverage is 1,370/1,370
+  terminal cells, 1,318 decisions, 52 policy failures, and 1,938/1,938
+  successful stop-finished requests. One vLLM scheduler preemption at 96.5% KV
+  made the original inference metric gate strictly fail under receipt
+  `368496f8a89c8b9f5e43af2a83b6c33e904c25d62754eae0f0961cf29d059c02`;
+  a zero-request coverage resume verified immutable rows under receipt
+  `4b25775a105fa9765d39d27352f88dddfcd249f647d201d60f8584989fa81583`.
+  Performance reporting must retain the preemption; quality rows are complete.
+  A-router derived 480 rows and all 1,850 protected rows scored under receipts
+  `4e58860875c4235f7ce1f73fc185bf95c9615eae266eb3af282c16d5bc238a5e`
+  and `91c0436a027ac454601addbccce5ef85d0d3956b7830576f6cd241e4adf129e5`.
+  Masking, shuffled-runbook, and sequential-batching controls all completed,
+  scored, and compared. The shuffled run retained an orchestration-only SQL
+  deadlock failure plus complete journal recovery and zero-request verification;
+  bounded queue-only 1205 retry is durable at `5fe8b82`. Gemma batching is
+  `REQUEST_LEVEL_NON_INVARIANT`: 19/48 exact first-turn inputs changed normalized
+  output, while tool sequences agreed 48/48; diagnostic receipt
+  `1fc735aff7fb324b5a6c0dc85e97b391edb3a6912fe6fb78e79dd940c69d9b44`.
+  Final reconciliation passed across 296 journals / 179,223 records / 13,724
+  raw artifacts, with 8,583 closed traces, 46,632 closed spans, 6,767 paired
+  requests/responses, 3,373,339 unique metric samples, and 13,646 raw snapshots;
+  receipt `7584e66698da11704ba36bfff4da6c8acbc226b334f1701688e3d6af7be2f5f1`.
+  The Gemma boundary is pinned at database receipt
+  `317146edecfe64bc209d07ec3e0008179356cdc59d8916cb38fbde4a5b0e15c2`;
+  bounded-retention receipt
+  `6bb1a32e5d08c969f078d958d8d9adfd55a74273a461af3edf6051985fa89170`.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
@@ -440,14 +458,15 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay is active; Gemma calibration is
-  closed before test access and protected primary replay is now authorized.
+- Long-running scientific process: no replay or profile sampler is active;
+  Gemma is complete through protected scoring, all controls, reconciliation,
+  and its pinned database boundary. OLMo is next.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Telemetry: continuous `gemma-4-31b-residency` whole-system sampler is retained
-  in exec session `65883` (node PID 595355), epoch
-  `bde528a1-bb5c-4b66-91b5-ac19591487dd`; it includes download, load, compile,
-  the cold failure, retry, gates, and subsequent inference
+- Telemetry: `gemma-4-31b-residency` epoch
+  `bde528a1-bb5c-4b66-91b5-ac19591487dd` is stopped and fully ingested
+  (2,361 records; receipt
+  `4e9f74e6de17d3ca51e9412051fe44d33bf9b5db404b7421198c259064474bd7`)
 - Watchdog: recurring bounded 20-minute backup/Git-bundle/push/run-mirror
   supervisor is retained in exec session `11505` (bash PID 589796); its first
   complete bounded cycle passed and temporary SQL staging cleanup was verified
@@ -457,8 +476,9 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `614546e` (labeled runtime-only GPU
-  memory override with model profile/hash unchanged; all 140 tests pass)
+- Last durable implementation checkpoint: `5fe8b82` (batched telemetry linking
+  plus queue-only SQL deadlock retry; all 148 tests pass); latest watchdog head
+  is `93060a7`
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -481,13 +501,13 @@ nvidia-smi
 ```
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
-SQL job/work-item state, current Muse port-gate receipt, and Drive checkpoint
+SQL job/work-item state, current Gemma closure receipts, and Drive checkpoint
 before launching anything. The campaign is frozen/running and Muse is
-complete through calibration, protected primary, deterministic router,
-protected scoring, all three controls, telemetry reconciliation, and its pinned
-database checkpoint. Resume by stopping/evicting Muse and starting Gemma as
-shown in the authoritative state section. Do not start another chat model while
-the Muse container is resident.
+complete through Muse and Gemma calibration, protected primary, deterministic
+router, protected scoring, all three controls, telemetry reconciliation, and
+their pinned database checkpoints. Resume by stopping/evicting Gemma and
+starting OLMo as shown in the authoritative state section. Do not start another
+chat model while the Gemma container is resident.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
