@@ -19,7 +19,7 @@ work because all required vectors and likelihoods are persisted in SQL and the
 run artifacts.
 
 The clean-stop snapshot at the end of this document will record how many of
-the 12 attribution representations and five chunking variants completed before
+the 13 attribution-probe representations and five chunking variants completed before
 the VM checkpoint. Every completed probe representation has an atomic
 `manifests/probe-result-*.pkl` checkpoint; `--resume-completed` validates its
 inputs/configuration before skipping it. ANN was deliberately not started at
@@ -132,6 +132,17 @@ rootless-container profile. Let the setup script create a new one.
 
 ## Prepare CPU dependencies and restore SQL
 
+Install Node 20, Python 3.13, `jq`, `unzip`, and `rsync` first. On macOS with
+Homebrew, one suitable starting point is:
+
+```bash
+brew install node@20 python@3.13 jq rsync
+```
+
+Ensure the selected Node and Python executables are first on `PATH` before
+running the setup script. Python packages and Node packages are rebuilt from
+the pinned lock files; do not transfer `.venv` or `node_modules` from Colab.
+
 For a local x86-64 SQL container:
 
 ```bash
@@ -149,8 +160,10 @@ For an external x86-64 SQL Server:
 
 ```bash
 cd labs/aidataapps/modelprint
+# Run once to create .env and install locked dependencies.
 ./scripts/cpu-analysis-init.sh --external-sql
-# Set SQLSERVER_HOST, SQLSERVER_PORT, MSSQL_SA_PASSWORD, and MSSQL_DATABASE in .env.
+# Set SQLSERVER_HOST, SQLSERVER_PORT, MSSQL_SA_PASSWORD, and MSSQL_DATABASE in .env,
+# then validate the reachable restored database.
 npm run db:verify-handoff
 ```
 

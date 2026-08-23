@@ -28,6 +28,8 @@ if [[ -z "$expected_sha" && -f "$bacpac.sha256" ]]; then expected_sha="$(awk 'NR
 [[ "$actual_sha" == "$expected_sha" ]] || { echo "BACPAC digest mismatch: expected $expected_sha, got $actual_sha" >&2; exit 2; }
 
 "$script_dir/install-sqlpackage.sh" >/dev/null
-connection="Server=${SQLSERVER_HOST:-127.0.0.1},${SQLSERVER_PORT:-1433};Initial Catalog=${target};User ID=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False;TrustServerCertificate=True;Connection Timeout=60"
-"$lab_dir/tools/sqlpackage/sqlpackage" /Action:Import /SourceFile:"$bacpac" /TargetConnectionString:"$connection" /p:CommandTimeout=3600 /p:LongRunningCommandTimeout=0
+"$lab_dir/tools/sqlpackage/sqlpackage" /Action:Import /SourceFile:"$bacpac" \
+  /TargetServerName:"${SQLSERVER_HOST:-127.0.0.1},${SQLSERVER_PORT:-1433}" /TargetDatabaseName:"$target" \
+  /TargetUser:sa /TargetPassword:"$MSSQL_SA_PASSWORD" /TargetEncryptConnection:False /TargetTrustServerCertificate:True \
+  /p:CommandTimeout=3600 /p:LongRunningCommandTimeout=0
 MSSQL_DATABASE="$target" MODELPRINT_GIT_HEAD="$(git rev-parse HEAD)" npm run db:verify-handoff

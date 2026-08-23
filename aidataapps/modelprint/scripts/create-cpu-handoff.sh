@@ -45,10 +45,16 @@ latest_bacpac="$(ls -1t "$run_dir"/database/*.bacpac 2>/dev/null | head -1 || tr
 [[ -n "$latest_backup" && -f "$latest_backup" ]] || { echo "No native backup is available." >&2; exit 2; }
 backup_sha="$(sha256_file "$latest_backup")"
 if [[ -f "$latest_backup.sha256" ]]; then [[ "$backup_sha" == "$(awk 'NR==1 {print $1}' "$latest_backup.sha256")" ]] || { echo "Native backup sidecar mismatch." >&2; exit 2; }; fi
+drive_backup="$drive_run/database/$(basename "$latest_backup")"
+[[ -f "$drive_backup" && -f "$drive_backup.sha256" && -f "$drive_backup.json" ]] || { echo "Latest native backup and sidecars have not been mirrored to Drive." >&2; exit 2; }
+[[ "$(sha256_file "$drive_backup")" == "$backup_sha" ]] || { echo "Drive native backup digest mismatch." >&2; exit 2; }
 bacpac_name="";bacpac_sha="";bacpac_bytes=0
 if [[ -n "$latest_bacpac" && -f "$latest_bacpac" ]]; then
   bacpac_name="$(basename "$latest_bacpac")";bacpac_sha="$(sha256_file "$latest_bacpac")";bacpac_bytes="$(stat -c %s "$latest_bacpac")"
   if [[ -f "$latest_bacpac.sha256" ]]; then [[ "$bacpac_sha" == "$(awk 'NR==1 {print $1}' "$latest_bacpac.sha256")" ]] || { echo "BACPAC sidecar mismatch." >&2; exit 2; }; fi
+  drive_bacpac="$drive_run/database/$bacpac_name"
+  [[ -f "$drive_bacpac" && -f "$drive_bacpac.sha256" && -f "$drive_bacpac.json" ]] || { echo "Latest BACPAC and sidecars have not been mirrored to Drive." >&2; exit 2; }
+  [[ "$(sha256_file "$drive_bacpac")" == "$bacpac_sha" ]] || { echo "Drive BACPAC digest mismatch." >&2; exit 2; }
 fi
 jq -n \
   --arg runId "$run_id" --arg driveRun "$drive_run" \
@@ -61,7 +67,8 @@ for file in "$stage"/*; do [[ -f "$file" && "$(basename "$file")" != "TRANSFER_S
 jq -n \
   --arg createdAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg runId "$run_id" --arg branch "$branch" --arg gitHead "$(git -C "$repo_dir" rev-parse HEAD)" \
   --arg driveTarget "$drive_target" --arg runArchive "$run_id-run-state.tar.gz" --arg runArchiveSha256 "$(sha256_file "$stage/$run_id-run-state.tar.gz")" \
-  '{schemaVersion:1,createdAt:$createdAt,runId:$runId,branch:$branch,gitHead:$gitHead,driveTarget:$driveTarget,runState:{file:$runArchive,sha256:$runArchiveSha256,excludes:["database/","checkpoints/"]},excludedMachineState:[".env","node_modules/",".venv/","tools/","Docker volumes","Hugging Face model caches","vLLM caches"]}' \
+  --argjson runArchiveBytes "$(stat -c %s "$stage/$run_id-run-state.tar.gz")" --argjson repositoryBundleBytes "$(stat -c %s "$stage/repository.bundle")" \
+  '{schemaVersion:1,createdAt:$createdAt,runId:$runId,branch:$branch,gitHead:$gitHead,driveTarget:$driveTarget,repositoryBundleBytes:$repositoryBundleBytes,runState:{file:$runArchive,sha256:$runArchiveSha256,bytes:$runArchiveBytes,excludes:["database/","checkpoints/"]},excludedMachineState:[".env","node_modules/",".venv/","tools/","Docker volumes","Hugging Face model caches","vLLM caches"]}' \
   >"$stage/TRANSFER_MANIFEST.json"
 # Refresh the checksum list after writing the manifest itself.
 for file in "$stage"/*; do [[ -f "$file" && "$(basename "$file")" != "TRANSFER_SHA256.txt" ]] && printf '%s  %s\n' "$(sha256_file "$file")" "$(basename "$file")"; done | sort >"$stage/TRANSFER_SHA256.txt"

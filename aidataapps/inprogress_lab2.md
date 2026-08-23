@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 14:52 UTC
+Last manually updated: 2026-08-23 15:22 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- parallel-probe milestone: `d5c2f29`; use `git rev-parse HEAD` for the live tip
+- CPU-handoff tooling milestone: `c9b7d6a`; use `git rev-parse HEAD` for the live tip
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -75,24 +75,38 @@ also complete.
 Active jobs to adopt and never duplicate:
 
 - attribution probes/LOFO: session `55709`, PID 913301, 48 workers,
-  `--resume-completed`; first representation is complete, while the second has
-  complete suite nulls plus one atomic eligible-family null checkpoint
+  `--resume-completed`; two complete representation result checkpoints exist;
+  clean-stop gate session `59724` sends SIGINT only after four complete result
+  checkpoints exist
 - exact retrieval: complete across 12 representations; 1,621,280 neighbors,
   81,064 predictions, and 500/500 SQL/NumPy list equivalence
 - exact chunk retrieval: session `38173`, PID 882882, six workers; restarted
   with stable generation/segment composite query identities after run 5 rolled
-  back with zero accepted neighbors
+  back with zero accepted neighbors; `paragraph-v1` and
+  `sentence-pack-128-v1` are complete and `sql-chunks-v1` is active
 - checkpoint watchdog: session `16623`, PID 545189
 
-The exact evaluators bind scans to `MAXDOP 1`; their SQL grants are healthy.
-ANN is intentionally paused until chunk evaluation finishes. Its preview DDL
+The exact evaluators bind scans to `MAXDOP 1`. ANN is intentionally deferred
+to the CPU continuation and its automatic launch gate was canceled. Its preview DDL
 and scratch schema are corrected, including the legacy ANN requirement for a
 single four-byte `INT` clustered identity key. Run ANN alone afterward.
 
-Remaining order: complete probes and chunks, run OOD after probes, run ANN
-after chunk exact scans, render reports, verify API/tests, create final native
-backup and BACPAC, archive/mirror, restore/reproduce, then commit/push/tag. The
-four dirty root reports are partial generated output and must be regenerated.
+Current clean-handoff order: stop probes after the fourth atomic representation,
+let all five chunk segmenters finish, verify no active search run, create and
+restore-test a fresh native backup, export a BACPAC, create the compact Drive
+transfer set, refresh handoff documents, commit/push, and run a final Drive
+checksum cycle. OOD, ANN, final reports, final archive/reproduction, and the
+result tag remain for CPU. The four dirty root reports are partial generated
+output and must be regenerated.
+
+This VM booted at `2026-08-22 17:38:53 UTC`. Treat 17:38 UTC as the hard
+24-hour point. The requested CPU transfer boundary is targeted for roughly
+15:45–16:00 UTC. The detailed guide is tracked at
+`aidataapps/handoff_lab02_to_cpu.md` and copied to both
+`MyDrive/aidataapps/handoff_lab02_to_cpu.md` and the Lab 02 Drive directory.
+The compact transfer folder deliberately excludes model weights, `.venv`,
+`node_modules`, Docker volumes, redundant watchdog checkpoints, and all but
+the one exact database export named in its manifest.
 
 ## Historical detailed state (superseded where noted above)
 
