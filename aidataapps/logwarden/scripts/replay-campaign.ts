@@ -694,6 +694,13 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
 async function selectedClaimableWorkCount(selectedJobIdsJson: string): Promise<number> {
   const result = await control.request().input("ids", sql.NVarChar(sql.MAX), selectedJobIdsJson)
     .query<{ claimable_count: number }>(`
+      -- node-mssql/tedious retains a transaction's isolation level on the
+      -- pooled SQL session after COMMIT. Evidence transactions deliberately
+      -- use SERIALIZABLE, but this read-only queue probe must use the
+      -- database's READ_COMMITTED_SNAPSHOT semantics or concurrent probes can
+      -- take RangeS-S locks and deadlock with work-item state transitions.
+      -- SET is scoped to this sp_executesql RPC and precedes the probe.
+      SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
       WITH selected AS (SELECT CONVERT(bigint,value) job_id FROM OPENJSON(@ids))
       SELECT COUNT(*) claimable_count
       FROM ops.work_items item INNER JOIN selected ON selected.job_id=item.job_id
