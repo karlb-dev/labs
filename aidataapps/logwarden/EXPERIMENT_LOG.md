@@ -670,3 +670,15 @@ place and receive a later disposition.
   tokens/episode versus ~51 for E4B's direct answers. The MoE becomes the
   recommended primary mac agent arm; report regenerated from rows with the
   seven-model narrative and snapshot updated under docs/reports/.
+- 2026-08-23T07:32:00Z — Standard-capture preflight confirmed exactly 600/600
+  `standard-v1` items pending, zero prior standard executions, and a final
+  immutable planned offset of 8,039,000 ms. Review of the injector before the
+  long launch found that row idempotence was correct but a restarted process
+  would create a new timing origin after skipping completed rows. The injector
+  now reconstructs the original origin from the earliest durable execution's
+  start time and planned offset; elapsed offsets execute without a second wait,
+  while future offsets retain the original schedule clock. The receipt records
+  whether it resumed and the reconstructed origin. Four focused timing tests
+  pass. Impact: no standard episode had run, so scientific data are unchanged;
+  the adjustment prevents restart downtime from stretching or re-spacing the
+  governed schedule.

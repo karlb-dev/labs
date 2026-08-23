@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 07:27 UTC
+Last manually updated: 2026-08-23 07:32 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -55,7 +55,8 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Thirty hash-locked control migrations and seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 19 test files and 64 unit tests. The capture-specific
+  `npm run check` passes 20 test files and 68 unit tests, including the new
+  four-case resumable schedule timing gate. The capture-specific
   XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -172,6 +173,11 @@ and its effect on the evidence ceiling must be recorded append-only in
   and `5535d9f8c29d58d6b1ec222b3ab0842c20de0c669d01367d3118ff07e1f17f82`.
   Schedule `standard-v1` has 600 pending items and a final planned offset of
   8,039,000 ms; it remains building and has injected zero episodes.
+- Long-run preflight fixed the injector's schedule-clock resume semantics
+  before any standard row existed. A resumed process now reconstructs the
+  original clock from the earliest durable execution rather than waiting the
+  full planned duration again; the terminal receipt records the reconstructed
+  origin and resume state. This changes no scientific input or captured data.
 - All eight real incident injector families passed the three-signal
   development feasibility gate: 8/8 capture verification receipt
   `0ff81209e857278a56c9920c233281cb34d4b97815d60936efff9291b407e79a`
@@ -197,13 +203,14 @@ and its effect on the evidence ceiling must be recorded append-only in
   (8/8); least-privilege tool receipt:
   `fca0eaa2e865c00082141f98527c85b9e6f83f77caeae10a2254c0f4a879126f`
   (9 positive/11 negative).
-- The five user-supplied Mac/Foundry/report commits through `725cdae` are
+- The user-supplied Mac/Foundry/report series and follow-ups through `443c17e`
+  are
   merged. Their platform-separated Foundry/MLX registry, Apple Silicon
   Docker/Rosetta setup, 16-episode dev harness, six-model retained results, and
   report generator coexist with the Colab path. Colab Compose validation,
   doctor, SQL, security, backup/restore, and all pre-merge tests pass; the
-  committed 6 x 16 HTML report rebuilds byte-for-byte from retained data and
-  its template. Foundry is absent on this Linux VM and, by user direction,
+  committed seven-model x 16-episode HTML report rebuilds byte-for-byte from
+  retained data and its template. Foundry is absent on this Linux VM and, by user direction,
   remains a post-governed-model validation lane with non-comparable results.
 - Next incomplete milestone: run standard capture, build/audit its packets,
   assess held-out retrieval, and freeze the corpus. The qwen-smoke chat service
@@ -278,8 +285,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `bf2ae68` (governed bounded agent
-  loop, deep phase evidence, and RCSI-safe queue claims)
+- Last durable Git checkpoint: `b64ae0f` (bounded agent loop, merged
+  Mac/Foundry/report follow-ups, verified backup, run mirror, and handoff)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -303,9 +310,10 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is Qwen embeddings and the bounded tool gateway/agent loop;
-do not load a
-long-running model until the remaining real-service observability gate can run.
+this checkpoint is the resumable `standard-v1` capture with the recurring
+watchdog and telemetry sampler, followed by packet audit, held-out retrieval,
+and freeze. Do not load a long-running chat model until its separate
+real-service observability gate can run.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.

@@ -6,6 +6,7 @@ import type { SnapshotPlanItem } from "../src/context-snapshots.js";
 import { canonicalJson, hashJson } from "../src/hash.js";
 import { connect } from "../src/repository.js";
 import { atomicWrite, resolveRunDirectory } from "../src/run.js";
+import { scheduleDelayMs, scheduleOriginEpochMs } from "../src/schedule-timing.js";
 import {
   executeScenarioInjector,
   isExpectedSignal,
@@ -62,8 +63,24 @@ const schedule = await control.request()
   `);
 if (schedule.recordset.length === 0) throw new Error(`Schedule not found or empty: ${scheduleName}`);
 
+const priorExecution = await control.request()
+  .input("run", sql.VarChar(120), run.runId)
+  .input("schedule", sql.BigInt, schedule.recordset[0]!.schedule_id)
+  .query<{ started_at_utc: Date; planned_offset_ms: string }>(`
+    SELECT TOP (1) execution.started_at_utc,item.planned_offset_ms
+    FROM workload.injection_executions AS execution
+    INNER JOIN workload.schedule_items AS item ON item.schedule_item_id=execution.schedule_item_id
+    WHERE execution.run_id=@run AND item.schedule_id=@schedule
+    ORDER BY item.ordinal;
+  `);
+const checkpoint = priorExecution.recordset[0];
+const scheduleOriginMs = scheduleOriginEpochMs(checkpoint === undefined ? undefined : {
+  plannedOffsetMs: Number(checkpoint.planned_offset_ms),
+  startedAtUtc: checkpoint.started_at_utc,
+}, Date.now());
+const resumed = checkpoint !== undefined;
+
 const summary: Array<Record<string, unknown>> = [];
-const started = performance.now();
 try {
   for (const item of schedule.recordset.slice(0, maxItems)) {
     const injector = item.injector_procedure.replace(/^driver:/, "");
@@ -89,7 +106,7 @@ try {
       continue;
     }
     if (!noWait) {
-      const remaining = Number(item.planned_offset_ms) - (performance.now() - started);
+      const remaining = scheduleDelayMs(scheduleOriginMs, Number(item.planned_offset_ms), Date.now());
       if (remaining > 0) await delay(remaining);
     }
     const episodeId = `lw-${scheduleName}-${String(item.ordinal).padStart(4, "0")}-${item.job_key.slice(0, 8)}`;
@@ -220,7 +237,15 @@ try {
   await Promise.allSettled([control.close(), marker.close()]);
 }
 
-const receiptBody = { schemaVersion: 2, runId: run.runId, scheduleName, noWait, episodes: summary };
+const receiptBody = {
+  schemaVersion: 2,
+  runId: run.runId,
+  scheduleName,
+  noWait,
+  resumed,
+  scheduleOriginUtc: new Date(scheduleOriginMs).toISOString(),
+  episodes: summary,
+};
 const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
 const receiptName = scheduleName === "smoke-v1" ? "injection-summary.json" : `injection-summary-${safeName(scheduleName)}.json`;
 await atomicWrite(`${runDirectory}/capture/${receiptName}`, `${JSON.stringify(receipt, null, 2)}\n`);
