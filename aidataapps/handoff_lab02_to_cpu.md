@@ -288,6 +288,11 @@ self-referential hash inside the archive itself.
   It passed checksum and full ZIP/BCP integrity checks, imported into a fresh
   database in 3:14, passed validation after the required preview setup, and the
   temporary database was dropped.
+- Drive readback: an earlier in-flight 861,923,324-byte BACPAC mirror was
+  detected by the final independent size/hash gate and replaced through a
+  unique temporary upload. The final Drive path now re-reads at 5,188,484,189
+  bytes with the hash above. Mirroring refuses sidecar-less in-progress BACPACs
+  and requires size/hash verification before and after promotion.
 - migration/schema gate: PASS. A fresh five-migration database matches live
   across 57 tables, 454 columns, 139 index-column records, 37 foreign-key
   records, and 61 constraints with no differences.

@@ -112,6 +112,12 @@ Optional portable BACPAC:
 - SHA-256 `1dddedcc8211717e6a831dfe82b5eb5777002260ef441622ba728bcb9c9d8bfd`
 - full ZIP/BCP scan and isolated import/full validator: PASS
 
+The final independent Drive readback caught and replaced an earlier
+861,923,324-byte in-flight BACPAC copy. The final Drive object re-reads at the
+full 5,188,484,189 bytes with the hash above. The mirror script now refuses
+unfinished exports and promotes a unique verified upload only after both size
+and digest pass.
+
 BACPAC does not retain database-scoped `PREVIEW_FEATURES`. The tested import
 wrapper now sets compatibility 170 and preview features before validation.
 The validator refuses SQL Server below 2025, compatibility other than 170,
