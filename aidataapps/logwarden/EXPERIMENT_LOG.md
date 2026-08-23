@@ -1090,3 +1090,9 @@ place and receive a later disposition.
   Impact: this is operational queue hardening after freeze, not a scientific
   input change; it prevents silent worker retirement and adds explicit claim
   contention measurements for protected replay and later model residencies.
+
+- 2026-08-23T12:41:22.380Z — Derived 60 predictions for A-router over calibration and muse-glimmer-30b; receipt b2b0bdea164ea862da2da7321f08e5692dbbb51a0acaf4680259a68118699904.
+
+- 2026-08-23T12:41:44.733Z — Scored 240 primary calibration predictions for muse-glimmer-30b across A-direct,A-rag,A-tools,A-router; receipt a9555119068794d857dcefaaa6bf6cbd21f472ecbb87b3f3ee41def3351f3741.
+
+- 2026-08-23T12:41:50.922Z — Fitted and hash-locked 4 calibration-only models for muse-glimmer-30b before test inference; receipt 61b5ccffadacffc05e6a97f0aced1a0db3a7acae25013e6f3c88c4252e5dcb16.

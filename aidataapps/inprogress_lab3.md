@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 12:41 UTC
+Last manually updated: 2026-08-23 12:43 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -83,16 +83,21 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Current source is clean and pushed through `1c471f6`.
   Foundry/Mac/report support is merged; Linux Foundry validation
   remains deferred until the four governed GPU profiles finish.
-- Next scientific boundary is to derive `A-router` for Muse calibration, score
-  the four inference arms, fit and hash-lock Muse calibration, and only then
-  open every frozen protected test role in one replay.
+- Muse calibration chronology is closed before test access: `A-router` derived
+  60 rows (receipt `b2b0bdea164ea862da2da7321f08e5692dbbb51a0acaf4680259a68118699904`),
+  all 240 four-arm rows scored (receipt
+  `a9555119068794d857dcefaaa6bf6cbd21f472ecbb87b3f3ee41def3351f3741`),
+  and four calibration-only models hash-locked with test authorization
+  (receipt `61b5ccffadacffc05e6a97f0aced1a0db3a7acae25013e6f3c88c4252e5dcb16`).
+  The guard confirmed zero Muse test predictions at fit time.
+- Next scientific command opens all 480 frozen test episodes together for
+  `A-direct` and `A-tools`, plus the 410 preregistered retrieval-covered cells
+  for `A-rag`: 1,370 protected inference cells total, using 16 workers.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
 source scripts/runtime-env.sh
-npm run campaign:derive -- --roles calibration --arms A-router --profiles muse-glimmer-30b
-npm run campaign:score -- --roles calibration --profiles muse-glimmer-30b --arms A-direct,A-rag,A-tools,A-router
-npm run campaign:calibrate -- --profile muse-glimmer-30b
+npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_variant_holdout,test_unknown --arms A-direct,A-rag,A-tools --workers 16
 ```
 
 ## Historical setup context (superseded where conflicting)
