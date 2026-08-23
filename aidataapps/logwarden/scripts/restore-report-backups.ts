@@ -34,6 +34,13 @@ if (receipt.runId !== basename(runDirectory)) throw new Error("Backup receipt ru
 if (receipt.artifacts.length !== 2 || new Set(receipt.artifacts.map((item) => item.kind)).size !== 2) {
   throw new Error("Expected exactly one control and one workload backup");
 }
+const finalization = JSON.parse(await readFile(`${runDirectory}/metrics/results-finalization.json`, "utf8")) as {
+  runId: string; taxonomyRows: number; claimRows: number; reportSnapshots: number; receiptSha256: string; [key: string]: unknown;
+};
+const { receiptSha256: finalizationReceiptSha256, ...finalizationBody } = finalization;
+if (finalization.runId !== receipt.runId || hashJson(finalizationBody) !== finalizationReceiptSha256) {
+  throw new Error("Results-finalization receipt validation failed");
+}
 
 const config = loadConfig();
 const composeProject = process.env.COMPOSE_PROJECT_NAME ?? "aidataapps-logwarden";
@@ -79,6 +86,18 @@ try {
           ${artifact.kind === "control" ? "(SELECT CONVERT(int,COUNT(*)) FROM control.schema_migrations)" : "NULL"} migration_count
         FROM sys.tables WHERE is_ms_shipped=0;`);
       if (artifact.kind === "control") await waitForFullText(database);
+      const finalRows = artifact.kind === "control"
+        ? (await database.request().input("run", sql.VarChar(120), receipt.runId).query<{
+            taxonomy_rows: number; claim_rows: number; report_snapshots: number;
+          }>(`SELECT
+                (SELECT CONVERT(int,COUNT(*)) FROM eval.taxonomy_assignments WHERE run_id=@run) taxonomy_rows,
+                (SELECT CONVERT(int,COUNT(*)) FROM eval.claims WHERE run_id=@run) claim_rows,
+                (SELECT CONVERT(int,COUNT(*)) FROM reporting.report_snapshots WHERE run_id=@run) report_snapshots;`)).recordset[0]
+        : undefined;
+      if (finalRows !== undefined && (finalRows.taxonomy_rows !== finalization.taxonomyRows ||
+          finalRows.claim_rows !== finalization.claimRows || finalRows.report_snapshots !== finalization.reportSnapshots)) {
+        throw new Error(`Restored result-ledger counts differ from finalization receipt: ${JSON.stringify(finalRows)}`);
+      }
       restored.push({
         kind: artifact.kind,
         database: target,
@@ -88,6 +107,10 @@ try {
         tableCount: check.recordset[0]?.table_count,
         migrationCount: check.recordset[0]?.migration_count,
         fullTextPopulation: artifact.kind === "control" ? "PASS" : "not_applicable",
+        ...(finalRows === undefined ? {} : {
+          taxonomyRows: finalRows.taxonomy_rows, claimRows: finalRows.claim_rows, reportSnapshots: finalRows.report_snapshots,
+          resultsFinalizationReceiptSha256: finalizationReceiptSha256,
+        }),
       });
     } finally {
       await database.close();

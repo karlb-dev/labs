@@ -75,20 +75,69 @@ fi
 cleanup_restore() {
   local status=$?
   local container_pid=""
+  local candidate_pid=""
+  local candidate_ppid=""
+  local removal_pid=""
   trap - EXIT INT TERM
   set +e
-  if ((status != 0)); then docker compose logs --no-color --tail=160 sqlserver >&2; fi
-  container_pid="$(docker inspect "$LOGWARDEN_REPRO_SQL_CONTAINER" --format '{{.State.Pid}}' 2>/dev/null)"
-  if [[ "$container_pid" =~ ^[0-9]+$ && -r "/proc/$container_pid/environ" ]] &&
-     tr '\0' '\n' <"/proc/$container_pid/environ" | grep -Fxq "MSSQL_TCP_PORT=$SQLSERVER_INTERNAL_PORT"; then
+  if ((status != 0)); then timeout 10 docker compose logs --no-color --tail=160 sqlserver >&2; fi
+
+  is_repro_sql_pid() {
+    local pid="$1"
+    local command_line=""
+    [[ "$pid" =~ ^[0-9]+$ && -r "/proc/$pid/environ" && -r "/proc/$pid/cmdline" ]] || return 1
+    grep -zFxq "MSSQL_TCP_PORT=$SQLSERVER_INTERNAL_PORT" "/proc/$pid/environ" || return 1
+    command_line="$(tr '\0' ' ' <"/proc/$pid/cmdline")"
+    [[ "$command_line" == /opt/mssql/bin/sqlservr* ||
+       "$command_line" == /bin/bash\ /opt/mssql/bin/launch_sqlservr.sh* ]]
+  }
+
+  kill_repro_sql_pids() {
+    local environ_path=""
+    local pid=""
+    for environ_path in /proc/[0-9]*/environ; do
+      pid="${environ_path#/proc/}"
+      pid="${pid%/environ}"
+      if is_repro_sql_pid "$pid"; then kill -KILL "$pid" 2>/dev/null; fi
+    done
+  }
+
+  container_pid="$(timeout 5 docker inspect "$LOGWARDEN_REPRO_SQL_CONTAINER" --format '{{.State.Pid}}' 2>/dev/null)"
+  if ! is_repro_sql_pid "$container_pid"; then
+    container_pid=""
+    for candidate_environ in /proc/[0-9]*/environ; do
+      candidate_pid="${candidate_environ#/proc/}"
+      candidate_pid="${candidate_pid%/environ}"
+      is_repro_sql_pid "$candidate_pid" || continue
+      candidate_ppid="$(awk '{print $4}' "/proc/$candidate_pid/stat" 2>/dev/null)"
+      if ! is_repro_sql_pid "$candidate_ppid"; then
+        container_pid="$candidate_pid"
+        break
+      fi
+    done
+  fi
+  if is_repro_sql_pid "$container_pid"; then
+    echo "Stopping isolated SQL PID $container_pid on port $SQLSERVER_INTERNAL_PORT" >&2
     kill -TERM "$container_pid" 2>/dev/null
     for _attempt in $(seq 1 10); do
       kill -0 "$container_pid" 2>/dev/null || break
       sleep 0.2
     done
+    if kill -0 "$container_pid" 2>/dev/null; then kill -KILL "$container_pid" 2>/dev/null; fi
   fi
-  timeout 20 docker rm -f "$LOGWARDEN_REPRO_SQL_CONTAINER" >/dev/null 2>&1
-  docker compose down --volumes --remove-orphans >/dev/null 2>&1
+  timeout 20 docker rm -f "$LOGWARDEN_REPRO_SQL_CONTAINER" >/dev/null 2>&1 &
+  removal_pid=$!
+  for _attempt in $(seq 1 80); do
+    kill_repro_sql_pids
+    kill -0 "$removal_pid" 2>/dev/null || break
+    sleep 0.25
+  done
+  wait "$removal_pid" 2>/dev/null
+  timeout 20 docker compose down --volumes --remove-orphans >/dev/null 2>&1
+  timeout 10 docker volume rm \
+    "${COMPOSE_PROJECT_NAME}-run-exports" \
+    "${COMPOSE_PROJECT_NAME}-sqlserver-data" >/dev/null 2>&1
+  timeout 10 docker network rm "${COMPOSE_PROJECT_NAME}_default" >/dev/null 2>&1
   node --import tsx scripts/stage-repro-backups.ts --run "$run_dir" --cleanup >/dev/null 2>&1
   exit "$status"
 }
