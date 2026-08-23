@@ -153,6 +153,8 @@ for (const job of pending) {
         model: profile.servedModelId, messages,
         temperature: 0, top_p: 1, max_tokens: decodeConfig.max_tokens,
         stream: false, logprobs: true,
+        ...(profile.reasoningPolicy?.chatTemplateKwargs
+          ? { chat_template_kwargs: profile.reasoningPolicy.chatTemplateKwargs } : {}),
       }),
       signal: AbortSignal.timeout(600_000),
     });

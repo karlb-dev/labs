@@ -136,3 +136,25 @@
   extrapolate from a prefix of an ordered case list. Claims row written
   (H1 NOT_SUPPORTED, e4b). The four 27–32B target profiles are the actual
   H1 test; E4B remains the dev/batch vehicle.
+
+- 2026-08-24 — GT-11 port gates complete. Results: qwen-3.8-27b PASS,
+  gemma-4-26b-a4b PASS, olmo-3.1-32b PASS, gemma-4-e4b PASS,
+  muse-glimmer-30b WARN. Findings:
+  (1) Qwen: the registry's /no_think prefix does NOT disable thinking on
+      mlx_lm.server 0.32.1 — all output died in the reasoning field
+      (initial gate FAIL with three empty canaries). Fixed with
+      chat_template_kwargs {"enable_thinking": false}: clean content,
+      stop finish, deterministic, logprobs OK. Registry updated; the
+      runner and gate now send chatTemplateKwargs per profile.
+  (2) Gate harness fix: mlx servers list a model only after first load, so
+      the listing check now re-runs post-canaries (pre-load false-fail).
+  (3) Muse WARN: NON-DETERMINISTIC at temperature 0 with the DFlash
+      drafter (two identical canary calls differ) — the addendum A-7
+      batch-invariance concern realized as speculation nondeterminism.
+      Muse campaign rows are labeled non-deterministic-decode; exact
+      repeatability claims are out of scope for this profile. Muse also
+      abstained on all three synthetic gate canaries while answering a
+      plain probe — conservative under the strict canary contract; watch
+      abstention behavior on real package prompts during its campaign.
+  Pins (system fingerprints, logprobs support, determinism) recorded in
+  control.model_profiles.port_gate_json for all five profiles.

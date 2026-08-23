@@ -22,7 +22,10 @@
       "baseUrl": "http://127.0.0.1:8020/v1",
       "quantization": "mlx-4bit",
       "reasoningPolicy": {
-        "promptPrefixEveryUserTurn": "/no_think"
+        "chatTemplateKwargs": {
+          "enable_thinking": false
+        },
+        "note": "Port-gate evidence: /no_think prefix does NOT disable thinking on mlx_lm.server 0.32.1 (content dies in the reasoning field); chat_template_kwargs.enable_thinking=false yields clean content with stop finish."
       },
       "notes": "MTP drafter variant exists (mlx-community/Qwen3.8-27B-MTP-4bit) for Tier-3 speculation.",
       "reasoningAllowanceTokens": 0

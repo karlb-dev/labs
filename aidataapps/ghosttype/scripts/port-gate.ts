@@ -85,6 +85,8 @@ for (const profileId of profileIds) {
         body: JSON.stringify({
           model: profile.servedModelId, messages, temperature: 0, top_p: 1,
           max_tokens: 192 + (profile.reasoningAllowanceTokens ?? 0), stream: false, logprobs: true,
+          ...(profile.reasoningPolicy?.chatTemplateKwargs
+            ? { chat_template_kwargs: profile.reasoningPolicy.chatTemplateKwargs } : {}),
         }),
         signal: AbortSignal.timeout(300_000),
       });
@@ -105,6 +107,12 @@ for (const profileId of profileIds) {
       empty: extraction.extracted === "", preview: extraction.extracted.slice(0, 80),
     });
   }
+  // Re-check the listing after the canaries: mlx servers list a model only
+  // once it has been loaded, so a pre-load check false-fails fresh profiles.
+  try {
+    const relist = await (await fetch(`${profile.baseUrl}/models`, { signal: AbortSignal.timeout(10_000) })).json() as { data: Array<{ id: string }> };
+    gate.modelListed = relist.data.some((m) => m.id === profile.servedModelId);
+  } catch { /* keep the pre-canary value */ }
   gate.systemFingerprint = fingerprint;
   gate.logprobsSupported = logprobsSupported;
   gate.deterministicAtT0 = deterministic;
