@@ -708,3 +708,18 @@ place and receive a later disposition.
   remains the authoritative superset. All 22 test files/73 tests pass. Impact:
   implementation-only; no scientific packet, target inference, or active
   capture row changed.
+
+- 2026-08-23T09:10:00.000Z — Added Muse Glimmer 30B via its platform-native
+  MLX serving (mlx-community/Muse-Glimmer-30B-4bit through mlx_vlm.server
+  0.6.12; Muse is multimodal, so its MLX architecture lives in mlx-vlm, not
+  mlx-lm). Result: an exact episode-for-episode replication of the Foundry
+  ONNX bundle's decisions — 100% class, 100% action, 87.5% exact-triple with
+  the identical two severity judgment calls (ep12, ep14), perfect tools,
+  correct unknown-abstention — at 22.6 tok/s versus 16.4 (38.4 versus 52.1 s
+  per episode). The best-decisions result is now a three-way tie (Gemma 4
+  MoE, Muse ONNX, Muse MLX) sharing the same two misses, pinning those as
+  ground-truth ambiguity; judgment surviving two quantizations and two
+  serving stacks unchanged is the bench's strongest robustness evidence.
+  The MLX serving replaces the ONNX bundle as the Muse reference arm.
+  Report regenerated from rows (eight servings, runtimes labeled); snapshot
+  updated under docs/reports/.

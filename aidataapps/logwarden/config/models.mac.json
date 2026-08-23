@@ -100,6 +100,19 @@
       "baseUrl": "http://127.0.0.1:8020/v1",
       "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
       "maxTokensOverride": 1400
+    },
+    "muse-glimmer-30b-mlx": {
+      "description": "Muse Glimmer 30B via mlx-vlm server (mlx-community 4-bit); the platform-native serving of the same base model as the Foundry ONNX bundle. Requires mlx-vlm (image-text model type), not mlx-lm.",
+      "family": "muse",
+      "foundryAlias": "mlx-community/Muse-Glimmer-30B-4bit",
+      "foundryVariantId": "",
+      "executionProvider": "MLX-Metal",
+      "contextLength": 131072,
+      "fileSizeMb": 19400,
+      "role": "agent",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "servedModelId": "mlx-community/Muse-Glimmer-30B-4bit",
+      "maxTokensOverride": 1400
     }
   },
   "embeddingProfiles": {
