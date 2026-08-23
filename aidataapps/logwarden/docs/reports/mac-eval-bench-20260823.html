@@ -178,7 +178,7 @@ a { color: inherit; }
 
 <script>
 const DATA = {
- "generatedAt": "2026-08-23T05:24:57.043Z",
+ "generatedAt": "2026-08-23T07:26:15.796Z",
  "runId": "logwarden-smoke-20260823T041027Z",
  "episodeSet": "mac-eval-v1",
  "meta": [
@@ -305,6 +305,26 @@ const DATA = {
    "spur": 0,
    "tps": 71.1,
    "lat": 4.5,
+   "load": null,
+   "dec": "16/16"
+  },
+  {
+   "key": "gemma-4-26b-a4b-mlx",
+   "name": "Gemma 4 26B-A4B",
+   "slot": 7,
+   "runtime": "MLX 4-bit (MoE)",
+   "gb": 18.8,
+   "cls": 1,
+   "sev": 0.875,
+   "act": 1,
+   "triple": 0.875,
+   "fp": 0,
+   "legal": 1,
+   "toolFirst": 1,
+   "args": 1,
+   "spur": 0,
+   "tps": 70,
+   "lat": 13.8,
    "load": null,
    "dec": "16/16"
   }
@@ -499,12 +519,30 @@ const DATA = {
    "triple",
    "wrong",
    "triple"
+  ],
+  "gemma-4-26b-a4b-mlx": [
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "triple",
+   "class",
+   "triple",
+   "class",
+   "triple",
+   "triple"
   ]
  },
  "narrative": {
   "eyebrow": "aidataapps · lab 03 · mac plane · development evidence",
   "title": "LogWarden Mac Bench",
-  "subtitle": "Six local models auditioning for LogWarden's incident-triage agent on an M4 Max — Foundry Local ONNX arms, Karl's Muse Glimmer conversion, and an MLX-served Gemma 4 — scored on sixteen frozen SQL Server incident episodes under the lab's structured-JSON transport.",
+  "subtitle": "Seven local models auditioning for LogWarden's incident-triage agent on an M4 Max — Foundry Local ONNX arms, Karl's Muse Glimmer conversion, and two MLX-served Gemma 4 variants including the 26B-A4B MoE — scored on sixteen frozen SQL Server incident episodes under the lab's structured-JSON transport.",
   "meta": [
    "2026-08-22 · MacBook Pro M4 Max · 48 GB",
    "foundry local 0.10.3 · :8010 · mlx_lm 0.31.3 · :8020",
@@ -547,28 +585,34 @@ const DATA = {
     "name": "Gemma 4 E4B",
     "slot": 6,
     "runtime": "MLX 4-bit"
+   },
+   {
+    "profileKey": "gemma-4-26b-a4b-mlx",
+    "name": "Gemma 4 26B-A4B",
+    "slot": 7,
+    "runtime": "MLX 4-bit (MoE)"
    }
   ],
   "verdict": [
-   "<strong><span class=\"chip\" style=\"background:var(--s5)\"></span>Muse Glimmer 30B — your ONNX conversion — is the best triage brain on this Mac, and about 25× too slow to be the only one.</strong> Given the reasoning budget the Lab 03 addendum sanctions (max_tokens 1400) and a final-channel parser, it scores a perfect 16/16 on incident class, a perfect 16/16 on the action rubric no other model can follow, 87.5% exact-triple, and flawless tool discipline — at 52 seconds per episode.",
-   "The workhorse slot went to a late entrant: <span class=\"chip\" style=\"background:var(--s6)\"></span><strong>Gemma 4 E4B</strong> (MLX 4-bit, added after the Foundry catalog turned out to carry no Gemma) posts 75% exact-triple — second only to Muse — with 100% first-pass-clean JSON, perfect tool discipline, and the fastest usable decode on the bench at 71 tok/s. Behind it, <span class=\"chip\" style=\"background:var(--s2)\"></span><strong>qwen3-8b</strong> and <span class=\"chip\" style=\"background:var(--s3)\"></span><strong>OLMo 3 7B</strong> remain solid arms, <span class=\"chip\" style=\"background:var(--s1)\"></span><strong>qwen3-4b</strong> is the fast smoke arm, and <strong>Muse fits as the reference arm on a control subset</strong> (96 episodes ≈ 1.4 h; a full 600-episode arm ≈ 8.7 h overnight). <span class=\"chip\" style=\"background:var(--s4)\"></span><strong>qwen2.5-0.5b</strong> confirmed the floor: fluent JSON shapes, no agent behavior. Gemma 4 12B stays untested — every MLX conversion declares the <span class=\"mono\">gemma4_unified</span> architecture, which mlx-lm does not support yet.",
-   "Two findings worth carrying into the replay campaign: the catalog models over-escalate severity-high incidents against the action rubric (Muse and E4B prove the rubric is followable, so that is small-model capability, not contract ambiguity) — and E4B's one real flaw is abstention: it confidently dismissed the unknown-signal episode as no_incident, the exact failure an incident agent must not make. Watch it on the unknown regime before trusting it unsupervised."
+   "<strong><span class=\"chip\" style=\"background:var(--s7)\"></span>The Gemma 4 26B-A4B MoE ties Muse for the best decisions on the bench — at four times Muse's speed.</strong> With the same §A-8 reasoning budget, it scores 100% on incident class, 100% on the action rubric, and 87.5% exact-triple, with flawless tool discipline and a correct abstention on the unknown-signal episode. Its only two severity misses are the <em>same two judgment-call episodes</em> Muse misses (ep12, ep14) — evidence those are ground-truth ambiguity, not model failure. 128 experts, ~4B active, 70 tok/s, 13.8 s per episode.",
+   "The lineup that falls out: <span class=\"chip\" style=\"background:var(--s7)\"></span><strong>the MoE as primary mac agent arm</strong>, <span class=\"chip\" style=\"background:var(--s6)\"></span><strong>Gemma 4 E4B</strong> as the fast arm (75% triple at 4.5 s/episode, but it dismissed the unknown-abstention episode), <span class=\"chip\" style=\"background:var(--s5)\"></span><strong>Muse</strong> as the cross-architecture reference on a control subset, and <span class=\"chip\" style=\"background:var(--s2)\"></span><strong>qwen3-8b</strong> / <span class=\"chip\" style=\"background:var(--s3)\"></span><strong>OLMo 3 7B</strong> as catalog alternates. <span class=\"chip\" style=\"background:var(--s1)\"></span><strong>qwen3-4b</strong> stays the smoke arm; <span class=\"chip\" style=\"background:var(--s4)\"></span><strong>qwen2.5-0.5b</strong> is the confirmed floor. Gemma 4 12B remains untested — its MLX conversions declare the unsupported <span class=\"mono\">gemma4_unified</span> architecture.",
+   "The pattern across seven models is now clean: reasoning-channel models (Muse, the MoE) follow the action rubric perfectly and abstain correctly on unknowns; direct-answer models over-escalate and, in E4B's case, dismiss what they don't recognize. The reasoning tax is real — the MoE spends ~968 tokens per episode where E4B spends ~51 — but on this bench thinking buys exactly the failure modes that matter for an incident agent."
   ],
   "tiles": [
    {
-    "lab": "Best judgment",
+    "lab": "Best judgment (tie)",
     "val": "87.5%",
-    "sub": "<span class=\"chip\" style=\"background:var(--s5)\"></span>Muse Glimmer 30B — exact triple; 100% class, 100% action, perfect tools"
+    "sub": "<span class=\"chip\" style=\"background:var(--s7)\"></span>Gemma 4 26B-A4B and <span class=\"chip\" style=\"background:var(--s5)\"></span>Muse — exact triple; both 100% class and action, same two severity misses"
    },
    {
-    "lab": "Best small-model arm",
-    "val": "75%",
-    "sub": "<span class=\"chip\" style=\"background:var(--s6)\"></span>Gemma 4 E4B — exact triple at 71 tok/s and 100% first-pass JSON; next best small model 50%"
+    "lab": "Primary arm economics",
+    "val": "13.8 s",
+    "sub": "<span class=\"chip\" style=\"background:var(--s7)\"></span>MoE per episode at 70 tok/s — Muse-grade decisions, 4× Muse's speed"
    },
    {
-    "lab": "Speed spread",
-    "val": "12×",
-    "sub": "4.5 s/episode (<span class=\"chip\" style=\"background:var(--s6)\"></span>E4B) to 52 s (<span class=\"chip\" style=\"background:var(--s5)\"></span>Muse) for the top two decision-makers"
+    "lab": "Reasoning tax",
+    "val": "19×",
+    "sub": "~968 completion tokens/episode (<span class=\"chip\" style=\"background:var(--s7)\"></span>MoE) vs ~51 (<span class=\"chip\" style=\"background:var(--s6)\"></span>E4B direct) — thinking buys rubric fidelity and abstention"
    }
   ],
   "scoreboard": {
@@ -577,18 +621,25 @@ const DATA = {
   },
   "quality": {
    "title": "Where each model's judgment holds and slips",
-   "lede": "Class = what happened; severity = how bad; action = what to do about it. Every model finds the incident more reliably than it follows the action rubric. The Foundry catalog models' misses skew one way — severity-high incidents get escalated where the rubric reserves escalation for corruption, security, and unknowns — while Muse and Gemma 4 E4B track the rubric closely."
+   "lede": "Class = what happened; severity = how bad; action = what to do about it. Reasoning-channel models (Muse, the 26B-A4B MoE) follow the action rubric perfectly; E4B tracks it closely; the Foundry catalog models over-escalate severity-high incidents where the rubric reserves escalation for corruption, security, and unknowns."
   },
   "scatter": {
    "title": "Quality has a price axis",
-   "lede": "Exact-triple accuracy against decode speed (log scale). Point area tracks on-disk model size. Muse holds the top-left: best decisions, slowest pace. Gemma 4 E4B breaks the expected tradeoff — near-Muse decisions at the fastest usable speed on the bench. The 0.5B proves speed alone is worthless."
+   "lede": "Exact-triple accuracy against decode speed (log scale). Point area tracks on-disk model size. The MoE claims the corner the bench thought impossible: Muse-grade decisions at 70 tok/s. E4B holds the direct-answer frontier; the 0.5B proves speed alone is worthless."
   },
   "grid": {
-   "title": "Sixteen episodes, six models",
+   "title": "Sixteen episodes, seven models",
    "lede": "✓ exact triple · ◐ right class, wrong severity or action · ✗ wrong class · ∅ no decision produced. ⚙ marks episodes requiring a tool round-trip before deciding."
   },
   "dossierTitle": "Signature behaviors, verbatim",
   "dossiers": [
+   {
+    "key": "gemma-4-26b-a4b-mlx",
+    "title": "Gemma 4 26B-A4B — the MoE that ties Muse",
+    "facts": "18.8 GB · 128 experts · ~4B active · 70 tok/s · MLX 4-bit via mlx_lm.server",
+    "body": "Muse's scoreboard at four times Muse's speed: 100% class, 100% action, perfect tools, and a correct unknown-abstention where E4B guessed. mlx_lm.server splits its reasoning channel into a separate response field (recorded as the legal reasoning_field repair), so the visible reply is always clean JSON. The cost is the reasoning itself: ~968 tokens per episode under the same §A-8 max-tokens override Muse uses.",
+    "snip": "{\"kind\":\"decision\",\"incidentClass\":\"unknown\",\"severity\":\"medium\",\n \"action\":\"escalate\",\"rationale\":\"Application-defined error does not\n match any known SQL Server incident classes.\"}  ← ep15: correct abstention"
+   },
    {
     "key": "gemma-4-e4b-mlx",
     "title": "Gemma 4 E4B — the late-entrant workhorse",
@@ -655,7 +706,7 @@ const DATA = {
    "<strong>Disclosed per-model knobs.</strong> Qwen3 profiles carry a <span class=\"mono\">/no_think</span> prefix on every user turn (the Foundry API has no chat-template kwargs; the prefix lapsing after tool results was itself a bench finding). Muse carries the §A-8 max-tokens override to 1400 and a final-channel parser (<span class=\"mono\">to=user&lt;|message|&gt;</span>).",
    "<strong>Repair ladder.</strong> think/channel/fence/leading-text strips count as legal transport repairs; rescuing a JSON object embedded in prose (<span class=\"mono\">balanced_extract</span>) counts as a contract failure even when the rescued decision is right.",
    "<strong>Mac-plane evidence only.</strong> Foundry serves Microsoft-published ONNX builds (Muse: Karl's conversion) on WebGPU/Metal — different artifacts from the digest-pinned vLLM campaign profiles; nothing here is a frozen-campaign row. One run per model, one seed, 16 hand-authored episodes with authored ground truth; treat gaps under ~10 points as noise, not signal.",
-   "<strong>Substitutions and runtimes.</strong> The Foundry catalog has no Gemma at any size, so both Gemma 4 profiles are mlx-community OptiQ 4-bit conversions served by <span class=\"mono\">mlx_lm.server</span> — a third runtime on the bench, disclosed per dossier (quantization and stack differ from the Foundry ONNX builds). Gemma 4 12B is blocked: every conversion declares <span class=\"mono\">gemma4_unified</span>, unsupported by mlx-lm 0.31.3. OLMo ships as OLMo 3 7B Instruct, not the frozen registry's OLMo 3.1 family.",
+   "<strong>Substitutions and runtimes.</strong> The Foundry catalog has no Gemma at any size, so all Gemma 4 profiles are mlx-community OptiQ 4-bit conversions served by <span class=\"mono\">mlx_lm.server</span> — a third runtime on the bench, disclosed per dossier. The server splits the 26B-A4B MoE's reasoning channel into a separate <span class=\"mono\">message.reasoning</span> field, counted as a legal repair. Gemma 4 12B is blocked: every conversion declares <span class=\"mono\">gemma4_unified</span>, unsupported by mlx-lm 0.31.3. OLMo ships as OLMo 3 7B Instruct, not the frozen registry's OLMo 3.1 family.",
    "<strong>Reproduce:</strong> <span class=\"mono\">npm run mac:eval -- --profile &lt;key&gt;</span> then <span class=\"mono\">npm run mac:report</span> on branch <span class=\"mono\">aidataapps-logwarden-mac</span>; rows, metrics, and this page land in the run directory."
   ],
   "scatterLabelOffsets": {
@@ -681,6 +732,10 @@ const DATA = {
    ],
    "gemma-4-e4b-mlx": [
     10,
+    18
+   ],
+   "gemma-4-26b-a4b-mlx": [
+    -10,
     -14
    ]
   },

@@ -658,3 +658,15 @@ place and receive a later disposition.
   Before/after whole-system samples are
   `e4216028fa649ead431ba759f815c46160cdd929af20ba3cd0b92e508b383872`
   and `fc17f756b3268d579923bb153326e4519637e602921c6d4fea1403c315b6afef`.
+- 2026-08-23T08:05:00.000Z — Added Gemma 4 26B-A4B (128-expert MoE, ~4B
+  active; mlx-community OptiQ 4-bit, 18.8 GB) to the mac bench via
+  mlx_lm.server. Under the §A-8 max-tokens override it ties Muse Glimmer 30B
+  for best decisions: 100% class, 100% action, 87.5% exact-triple with the
+  same two severity judgment-call misses (ep12, ep14), perfect tool
+  discipline, and a correct unknown-abstention — at 70 tok/s and 13.8 s per
+  episode, four times Muse's speed. mlx_lm.server splits the MoE's reasoning
+  channel into a separate message.reasoning field; the harness records this
+  as the legal reasoning_field repair. Reasoning cost ~968 completion
+  tokens/episode versus ~51 for E4B's direct answers. The MoE becomes the
+  recommended primary mac agent arm; report regenerated from rows with the
+  seven-model narrative and snapshot updated under docs/reports/.
