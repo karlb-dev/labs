@@ -45,7 +45,7 @@ def exact_one(row):
   VECTOR_DISTANCE('cosine',c.embedding,CAST(%s AS vector(1024))) distance FROM dbo.search_segment_train c JOIN dbo.output_segments o ON o.segment_id=c.segment_id
   WHERE o.segmenter_id=%s AND c.prompt_group_id<>%s ORDER BY distance,c.vector_id), ranked AS
   (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
-  SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id""",
+     SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id OPTION (MAXDOP 1)""",
   (row.vector,row.segmenter_id,row.prompt_group_id));neighbors=list(cursor);return int(row.segment_id),int(row.generation_id),(time.perf_counter()-started)*1000,neighbors
 cursor=conn.cursor();all_metrics={"schemaVersion":1,"runId":run_id,"campaignIds":campaign_ids,"k":args.k,"candidateK":args.candidate_k,"maxPerSuite":args.max_per_suite,"segmenters":{}};predictions=[];neighbor_export=[]
 for segmenter,query_rows in segments.groupby("segmenter_id"):

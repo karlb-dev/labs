@@ -81,7 +81,7 @@ def exact_one(space, query):
   dimension=space["dimension"];table=space["scratch"];candidate=max(200,maximum_k*10);started=time.perf_counter()
   local=conn.cursor();local.execute(f"""SELECT TOP ({candidate}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,
     VECTOR_DISTANCE('cosine',embedding,CAST(%s AS vector({dimension}))) distance FROM dbo.{table}
-    WHERE prompt_group_id<>%s ORDER BY distance,vector_id""",(query.vector,query.prompt_group_id));raw=local.fetchall()
+    WHERE prompt_group_id<>%s ORDER BY distance,vector_id OPTION (MAXDOP 1)""",(query.vector,query.prompt_group_id));raw=local.fetchall()
   return (time.perf_counter()-started)*1000,dedupe(raw,maximum_k)
 
 def ann_one(space, query, multiplier):
@@ -135,7 +135,7 @@ try:
     for prefix in prefixes:
       table=space["scratch"];index=space["index"];dimension=space["dimension"]
       vector_ddl(f"IF OBJECT_ID(N'dbo.{table}',N'U') IS NOT NULL DROP TABLE dbo.{table};")
-      cursor.execute(f"""CREATE TABLE dbo.{table}(vector_id bigint NOT NULL PRIMARY KEY CLUSTERED,model_profile_id varchar(80) NOT NULL,
+      cursor.execute(f"""CREATE TABLE dbo.{table}(row_id int IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED,vector_id bigint NOT NULL,model_profile_id varchar(80) NOT NULL,
         prompt_group_id varchar(120) NOT NULL,text_artifact_id bigint NOT NULL,embedding vector({dimension}) NOT NULL);
         INSERT dbo.{table}(vector_id,model_profile_id,prompt_group_id,text_artifact_id,embedding)
         SELECT TOP ({prefix}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,embedding FROM {space['source']}

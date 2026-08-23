@@ -92,7 +92,7 @@ def exact_one(item, definition):
         WHERE {definition['where']} AND prompt_group_id<>%s ORDER BY distance,vector_id), ranked AS
         (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,
          ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
-        SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id""",
+        SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id OPTION (MAXDOP 1)""",
         (vector_json, prompt_group_id)); rows = list(cursor)
       if len(rows)>=args.k:return generation_id,(time.perf_counter()-started)*1000,rows,candidate_k
       if candidate_k>=2000:raise RuntimeError(f"generation {generation_id}: exact search returned {len(rows)}/{args.k} after {candidate_k} candidates")
