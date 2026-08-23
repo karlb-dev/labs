@@ -153,7 +153,9 @@ async function stopAndRetain(): Promise<void> {
     },
     logs: docker(["logs", "--timestamps", containerName], true),
   };
-  await retainReceipt(`chat-service-stop-${safeName(profile)}.json`, retained);
+  const stoppedAt = retained.stoppedAtUtc.replace(/[-:.]/g, "");
+  const containerId = inspected.Id?.slice(0, 12) ?? "unknown";
+  await retainReceipt(`chat-service-stop-${safeName(profile)}-${stoppedAt}-${safeName(containerId)}.json`, retained);
   docker(["rm", "--force", containerName]);
 }
 

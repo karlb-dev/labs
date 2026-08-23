@@ -1,4 +1,9 @@
-import { chatContainerName, chatDockerRunArguments, chatServerArguments } from "../src/chat-service.js";
+import {
+  chatContainerName,
+  chatDockerRunArguments,
+  chatServerArguments,
+  terminalChatContainerFailure,
+} from "../src/chat-service.js";
 import { resolveModelProfile } from "../src/models.js";
 
 describe("pinned chat service command", () => {
@@ -34,5 +39,18 @@ describe("pinned chat service command", () => {
     expect(args).toContain("host");
     expect(args).not.toContain("--publish");
     expect(args).toContain(profile.vllmImage);
+  });
+
+  it("distinguishes a slow startup from a terminal container", () => {
+    expect(terminalChatContainerFailure({ Status: "running", Running: true, ExitCode: 0 })).toBeNull();
+    expect(terminalChatContainerFailure({ Status: "restarting", Running: false, ExitCode: 1 })).toBeNull();
+    expect(terminalChatContainerFailure({
+      Status: "exited",
+      Running: false,
+      OOMKilled: false,
+      ExitCode: 1,
+      Error: "",
+      FinishedAt: "2026-08-23T11:24:10Z",
+    })).toContain("status=exited running=false exitCode=1 oomKilled=false");
   });
 });

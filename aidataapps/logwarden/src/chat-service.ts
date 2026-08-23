@@ -11,6 +11,29 @@ export interface ChatRuntimeIdentity {
   batchInvariant: boolean;
 }
 
+export interface ChatContainerState {
+  Status?: string;
+  Running?: boolean;
+  OOMKilled?: boolean;
+  ExitCode?: number;
+  Error?: string;
+  StartedAt?: string;
+  FinishedAt?: string;
+}
+
+export function terminalChatContainerFailure(state: ChatContainerState): string | null {
+  const status = state.Status?.toLowerCase() ?? "unknown";
+  if (status === "created" || status === "running" || status === "restarting") return null;
+  return [
+    `status=${status}`,
+    `running=${String(state.Running ?? false)}`,
+    `exitCode=${String(state.ExitCode ?? "unknown")}`,
+    `oomKilled=${String(state.OOMKilled ?? false)}`,
+    `error=${JSON.stringify(state.Error ?? "")}`,
+    `finishedAt=${state.FinishedAt ?? "unknown"}`,
+  ].join(" ");
+}
+
 export function chatContainerName(project: string): string {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(project)) throw new Error("Invalid Compose project name");
   return `${project}-chat`;

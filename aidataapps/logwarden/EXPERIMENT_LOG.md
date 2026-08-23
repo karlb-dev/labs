@@ -997,3 +997,29 @@ place and receive a later disposition.
   evidence rows were added after the prior restore test.
 
 - 2026-08-23T11:10:44.648Z — Standard campaign frozen as e105cfdd5af5345464853406c8d707018232f3326c909ca476970fb7137cbcf6 at Git 98d70dca82db1d9879f9f05227af59a2b7127ee4; 600 packets, control subset 225e6f1d88aefe64cf7d07139155cab8d32e337770004acd22f361f23986ed8a, DB checkpoint 20a468ccbb80f5ada685f74beade3a0919655fc5c8bfe914f539514aa6e9fd06.
+- 2026-08-23T11:35:57Z — The first governed Muse residency stopped before
+  HTTP readiness or any model request after cold-cache population. The exact
+  frozen image downloaded the 55.46 GiB checkpoint, loaded 52.07 GiB of
+  weights, compiled for 64.63 seconds, created an 18.94 GiB KV cache, and then
+  exited 1 while the EngineCore constructed its second tokenizer instance.
+  The terminal exception's generic text suggested installing SentencePiece or
+  tiktoken, but an exact-image diagnostic proved both packages installed and
+  `AutoTokenizer.from_pretrained` passed at the pinned revision with the
+  202,048-token vocabulary. Lab 2's retained Muse record independently shows
+  the same cold-cache tokenizer race followed by a passing unchanged warm-cache
+  restart. This attempt is therefore classified as a cold-cache population
+  race, not a missing dependency or model substitution. The interrupted
+  one-hour readiness wait was closed append-only under recovery epoch
+  `69daf32f-4300-4cae-88c4-f6ddb5ab3e08`; recovery receipt
+  `9e6a16bc9e0eae79aefe960350d26d204fb554ff7a3dbd1b63e836950ec0f097`.
+  Full timestamped service logs and terminal container state are retained in
+  `chat-service-stop-muse-glimmer-30b-20260823T113557166Z-8f57a0e9f065.json`
+  (file SHA-256
+  `9998bf22d5a25689e68d8ab1056bf3fa6c442ea46963ebc9109c6be0e74df5c6`,
+  decoded-log SHA-256
+  `93e5072813eecd78c92c2ae009e89b9d5095557eed217d4b77a01d9071850c1a`).
+  Post-freeze operational hardening now checks Docker state during readiness,
+  retains startup-failure logs immediately, and names stop receipts uniquely;
+  it changes no packet, prompt, decode value, image, model, revision, arm,
+  threshold, or score. The retry uses the exact frozen configuration against
+  the now-complete pinned cache.

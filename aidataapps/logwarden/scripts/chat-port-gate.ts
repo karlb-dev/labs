@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import sql from "mssql";
 import { buildInitialAgentMessages } from "../src/agent-loop.js";
+import { terminalChatContainerFailure, type ChatContainerState } from "../src/chat-service.js";
 import { summarizeChatMetrics, validateChatMetricDelta } from "../src/chat-metrics.js";
 import { loadConfig } from "../src/config.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
@@ -208,6 +209,21 @@ async function waitReady(): Promise<void> {
       lastError = `HTTP ${response.status}`;
     } catch (error) {
       lastError = safeError(error);
+    }
+    let state: ChatContainerState | null = null;
+    try {
+      state = JSON.parse(await command("docker", ["inspect", "--format", "{{json .State}}", containerName])) as ChatContainerState;
+    } catch (error) {
+      lastError = `${lastError}; container inspect failed: ${safeError(error)}`;
+    }
+    if (state !== null) {
+      const terminalFailure = terminalChatContainerFailure(state);
+      if (terminalFailure !== null) {
+        const logs = await command("docker", ["logs", "--timestamps", containerName]).catch((error) => `docker logs failed: ${safeError(error)}\n`);
+        const logPath = `${rawDirectory}/service-startup-failure.log`;
+        await atomicWrite(logPath, logs, 0o600);
+        throw new Error(`Chat container became terminal before readiness: ${terminalFailure}; logs=${logPath}; logsSha256=${sha256(logs)}`);
+      }
     }
     await delay(5_000);
   }
