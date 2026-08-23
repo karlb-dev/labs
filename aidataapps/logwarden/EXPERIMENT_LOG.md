@@ -723,3 +723,19 @@ place and receive a later disposition.
   The MLX serving replaces the ONNX bundle as the Muse reference arm.
   Report regenerated from rows (eight servings, runtimes labeled); snapshot
   updated under docs/reports/.
+
+- 2026-08-23T08:04:08Z — Integrated upstream Mac commit `8459584` (Muse
+  Glimmer MLX serving and eight-serving report) into the live Lab 3 branch.
+  Its report snapshot had retained a seven-model cardinality assertion; updated
+  that invariant to eight and proved the complete 8 x 16 grid. Added resumable
+  held-out retrieval evaluation over packet-visible queries with lexical,
+  vector, hybrid, oracle, and deliberately wrong shuffled controls; every cell
+  is evaluator-only, retains SQL/raw/journal evidence, and uses unique-runbook
+  recall, MRR, nDCG, no-answer accuracy, and latency metrics. Added a fail-closed
+  exact-search freeze gate and deterministic paired scenario-group power
+  simulation with Holm correction and an explicit DESIGN_ONLY state until
+  qwen-smoke dev pairs empirically calibrate dependence. No migration or
+  scientific evaluation ran during the active capture. The capture remained
+  healthy at 131/600 executed, zero failed/unclean, and zero XE loss counters;
+  all 24 test files/77 tests and TypeScript build pass. Durable implementation
+  commit: `91c5e7d`.

@@ -287,7 +287,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 
 - Long-running scientific process: `standard-v1` injector retained in Codex
   exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; latest
-  check was 60/60 terminal with zero failed/unclean rows and zero XE loss counters
+  check was 131/600 executed (ordinals 0–130) with zero failed/unclean rows and
+  zero XE loss counters
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `standard-capture` whole-system sampler retained in
@@ -303,8 +304,9 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `ddf9c8e` (resumable governed
-  schedule clock); launch watchdog checkpoint: `89b42ff`
+- Last durable implementation checkpoint: `91c5e7d` (held-out retrieval,
+  search-freeze, and paired grouped power gates); launch watchdog checkpoint:
+  `89b42ff`
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -328,9 +330,13 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the resumable `standard-v1` capture with the recurring
-watchdog and telemetry sampler, followed by packet audit, held-out retrieval,
-and freeze. Do not load a long-running chat model until its separate
+this checkpoint is to let the resumable `standard-v1` capture finish under the
+recurring watchdog and telemetry sampler, then drain/verify, build and audit
+packets, apply migration 031, run held-out retrieval, empirically calibrate the
+power receipt with qwen-smoke dev pairs, and freeze. Retrieval evaluation is
+resumable and persists five evaluator-only modes per packet; the search freeze
+proves complete embeddings/full-text/evaluation inventories. Do not load a
+target chat model until the campaign freeze authorizes it and the separate
 real-service observability gate can run.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
