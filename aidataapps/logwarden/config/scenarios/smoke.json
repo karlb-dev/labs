@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "logwarden-smoke-v1",
+  "scenarios": [
+    {
+      "id": "smoke-conversion",
+      "groupId": "dev-conversion",
+      "family": "schema_data_errors",
+      "regime": "K",
+      "description": "A deterministic varchar-to-int conversion error.",
+      "injector": "conversion_error",
+      "expectedClass": "data_type_conversion",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 245, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-missing-object",
+      "groupId": "dev-missing-object",
+      "family": "schema_data_errors",
+      "regime": "K",
+      "description": "A deterministic missing-table query.",
+      "injector": "missing_object",
+      "expectedClass": "missing_object",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 208, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-duplicate-key",
+      "groupId": "dev-duplicate-key",
+      "family": "schema_data_errors",
+      "regime": "K",
+      "description": "A deterministic duplicate primary-key insert.",
+      "injector": "duplicate_key",
+      "expectedClass": "constraint_violation",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 2627, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-truncation",
+      "groupId": "dev-truncation",
+      "family": "schema_data_errors",
+      "regime": "K",
+      "description": "A deterministic string truncation error.",
+      "injector": "truncation_error",
+      "expectedClass": "data_truncation",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 2628, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-controlled",
+      "groupId": "dev-controlled",
+      "family": "integrity_signal",
+      "regime": "C",
+      "description": "A lab-authored severity-16 integrity warning written WITH LOG.",
+      "injector": "controlled_signal",
+      "expectedClass": "integrity_warning",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 50000, "minimumCount": 1 }, { "source": "errorlog", "event": "errorlog", "errorNumber": 50000, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-auth",
+      "groupId": "dev-auth",
+      "family": "authentication_access",
+      "regime": "K",
+      "description": "A failed login from a disposable nonexistent identity.",
+      "injector": "bad_login",
+      "expectedClass": "authentication_failure",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "errorlog", "event": "errorlog", "errorNumber": 18456, "minimumCount": 1 }, { "source": "xe", "event": "error_reported", "errorNumber": 18456, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-backup",
+      "groupId": "dev-backup",
+      "family": "backup_restore_recovery",
+      "regime": "K",
+      "description": "A backup attempt to a controlled inaccessible destination.",
+      "injector": "backup_failure",
+      "expectedClass": "backup_failure",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 3201, "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-query-pressure",
+      "groupId": "dev-query-pressure",
+      "family": "query_resource_pressure",
+      "regime": "K",
+      "description": "A bounded CPU/query workload recorded in Query Store.",
+      "injector": "query_pressure",
+      "expectedClass": "query_pressure",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [{ "source": "xe", "event": "sql_batch_completed", "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-benign",
+      "groupId": "dev-benign",
+      "family": "benign_noise",
+      "regime": "N",
+      "description": "Successful bounded activity that should not trigger action.",
+      "injector": "benign_noise",
+      "expectedClass": "benign",
+      "expectedSeverity": "none",
+      "shouldAbstain": true,
+      "expectedEvidence": [{ "source": "xe", "event": "sql_batch_completed", "minimumCount": 1 }]
+    },
+    {
+      "id": "smoke-ambiguous",
+      "groupId": "dev-ambiguous",
+      "family": "unknown_ambiguous",
+      "regime": "U",
+      "description": "An intentionally ambiguous lab signal requiring human review.",
+      "injector": "ambiguous_signal",
+      "expectedClass": "unknown",
+      "expectedSeverity": "unknown",
+      "shouldAbstain": true,
+      "expectedEvidence": [{ "source": "xe", "event": "error_reported", "errorNumber": 50000, "minimumCount": 1 }]
+    }
+  ]
+}

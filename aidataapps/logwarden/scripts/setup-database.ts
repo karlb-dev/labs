@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
-import { canonicalJson, hashJson } from "../src/hash.js";
+import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { applyControlMigrations, applyUntrackedMigrations } from "../src/migrations.js";
 import { loadModelRegistry } from "../src/models.js";
 import { connect, sqlIdentifier } from "../src/repository.js";
@@ -146,6 +146,7 @@ async function upsertLogin(
 }
 
 async function seedControlMetadata(pool: sql.ConnectionPool, run: RunManifest): Promise<void> {
+  await seedIngestionSources(pool);
   const registry = loadModelRegistry();
   for (const [profileId, profile] of Object.entries(registry.profiles)) {
     const profileJson = canonicalJson(profile);
@@ -229,4 +230,59 @@ async function seedControlMetadata(pool: sql.ConnectionPool, run: RunManifest): 
         INSERT control.runs(run_id, campaign_id, run_kind, status, config_hash, git_commit, started_at_utc, notes)
         VALUES(@run_id, @campaign_id, 'capture', 'initialized', @config_hash, @git_commit, @started, 'LW-0 foundation run; no scientific freeze');
     `);
+}
+
+async function seedIngestionSources(pool: sql.ConnectionPool): Promise<void> {
+  const xePath = `${LAB_ROOT}/db/server/002_xe_capture_contract.sql`;
+  const errorlogParserPath = `${LAB_ROOT}/src/errorlog.ts`;
+  const errorlogParserSha256 = sha256(await readFile(errorlogParserPath, "utf8"));
+  const definitions = [
+    {
+      id: "xe-logwarden-capture",
+      kind: "xe_event_file",
+      name: "logwarden_capture",
+      hash: sha256(await readFile(xePath, "utf8")),
+      config: {
+        schemaVersion: 1,
+        targetPattern: "/var/opt/mssql/log/logwarden_capture*.xel",
+        cursor: "file_name+file_offset",
+        dispatchLatencySeconds: 2,
+        definitionPath: "db/server/002_xe_capture_contract.sql",
+      },
+    },
+    {
+      id: "errorlog",
+      kind: "errorlog_file_tail",
+      name: "SQL Server ERRORLOG",
+      hash: hashJson({ parser: "errorlog-file-v1", parserSha256: errorlogParserSha256, cursor: "generation+ordinal", transport: "docker-exec-read-only" }),
+      config: {
+        schemaVersion: 1,
+        files: "/var/opt/mssql/log/errorlog*",
+        parserVersion: "errorlog-file-v1",
+        parserSha256: errorlogParserSha256,
+        parserPath: "src/errorlog.ts",
+        cursor: "generation_identity+ordinal",
+        transport: "docker-exec-read-only",
+      },
+    },
+  ];
+  for (const definition of definitions) {
+    await pool.request()
+      .input("id", sql.VarChar(80), definition.id)
+      .input("kind", sql.VarChar(40), definition.kind)
+      .input("name", sql.VarChar(120), definition.name)
+      .input("hash", sql.Char(64), definition.hash)
+      .input("json", sql.NVarChar(sql.MAX), canonicalJson(definition.config))
+      .query(`
+        IF NOT EXISTS (SELECT 1 FROM ingest.sources WHERE source_id=@id)
+          INSERT ingest.sources(source_id, source_kind, source_name, definition_sha256, config_json)
+          VALUES(@id, @kind, @name, @hash, @json);
+        ELSE
+          UPDATE ingest.sources
+          SET source_kind=@kind, source_name=@name, definition_sha256=@hash, config_json=@json
+          WHERE source_id=@id;
+        IF NOT EXISTS (SELECT 1 FROM ingest.source_cursors WHERE source_id=@id)
+          INSERT ingest.source_cursors(source_id, cursor_json) VALUES(@id, N'{}');
+      `);
+  }
 }

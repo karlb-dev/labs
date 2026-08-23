@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 03:39 UTC
+Last manually updated: 2026-08-23 03:58 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -32,7 +32,7 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0/LW-1 foundation and SQL control plane complete; beginning LW-2/LW-3 capture implementation.
+- Phase: LW-0/LW-1 complete; LW-2/LW-3 development smoke capture passed; beginning packet/recovery gates.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -45,13 +45,26 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twelve hash-locked control migrations plus one workload and one server/XE
-  migration apply idempotently. `npm run doctor` passes all required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 5
-  test files and 11 unit tests.
-- Next incomplete milestone: implement the deterministic smoke scenario
-  catalog, safe injectors, XE/ERRORLOG cursor ingestion, verification/cleanup,
-  and frozen incident-packet builder before loading an embedding or chat model.
+- Sixteen hash-locked control migrations and two versioned server/XE assets now
+  apply idempotently. `npm run doctor` passes all required probes;
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 7
+  test files and 14 unit tests. The capture-specific XE predicate excludes
+  agent/ingest traffic.
+- Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
+  gates and all required XE/ERRORLOG evidence rules passed. Capture verification
+  receipt: `7271b30792a9e054b8f95cedb057df153dda4434517f348b8894cc11fe6bbd5`.
+- Raw ERRORLOG replay is idempotent (0 inserted / 461 duplicates on immediate
+  replay). XE uses file + block offset + within-block ordinal after runtime
+  discovery that offsets are block-scoped.
+- Current doctor snapshot:
+  `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e`
+  (`PASS`); SQL integration receipt:
+  `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156`
+  (8/8).
+- Next incomplete milestone: build protected incident packets and leakage
+  audit, test ERRORLOG rotation/container recovery, implement verified SQL
+  backup/restore and watchdog durability, then expand the supported catalog
+  before the standard packet freeze. No embedding or chat model may load yet.
 
 ## Fresh-VM preflight
 
@@ -106,7 +119,7 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `72dd444ac65f7b1203c711c1383878e100f78cffd33fa2e4bc8b775a9f6d88e3` (`PASS`)
 - SQL integration receipt: `8ecaf7cd8f3693b96554b9fb3a0e2108fe698de301c0f5c7f649282ddd9a4ebd` (8/8 passed)
-- Last durable Git checkpoint: `3b42bbf` (`Harden LogWarden Colab runtime`); the verified schema checkpoint is being committed now
+- Last durable Git checkpoint: `cf6cf5e` (`Build LogWarden SQL control plane`); the verified capture checkpoint is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, implement and launch one

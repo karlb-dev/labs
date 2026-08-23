@@ -100,3 +100,32 @@ place and receive a later disposition.
   passed, including concurrent distinct claims, invalid-transition rejection,
   expired mid-state recovery, negative permissions, constraint rejection,
   full-text population, and exact 1024-dimensional vector retrieval.
+- 2026-08-23T03:58:44Z — Installed the capture-specific XE v2 contract before
+  scenario data: `LogWarden-Inject%` is the primary predicate, `LW_%` is the
+  server/database fallback, and Lab/Admin/Agent/Ingest traffic is excluded.
+  Added attention and file-growth coverage while retaining error, RPC/batch,
+  deadlock, and blocked-process events. The session is running with the frozen
+  2-second dispatch latency. The earlier v1 XEL files remain development-only
+  input and must be cleared with the source cursors before standard capture.
+- 2026-08-23T03:58:44Z — The first transactional XE drain proved that
+  `file_offset` identifies an event-file block rather than a unique event: 134
+  legitimate events shared one offset. The failed transaction inserted no
+  rows. Forward migrations changed the stable source key to file + block
+  offset + deterministic within-block ordinal and changed optional numeric XML
+  fields to `TRY_CONVERT`. The next drain inserted 836 raw/canonical rows and
+  its immediate retry read zero. Impact: source identity correctness only; no
+  eligible episode existed at the time.
+- 2026-08-23T03:58:44Z — Completed a development smoke capture of ten benign,
+  bounded scenarios (conversion, missing object, duplicate key, truncation,
+  controlled integrity signal, bad login, failed backup, bounded query
+  pressure, benign activity, and ambiguous review). `--no-wait` was used only
+  for feasibility; this smoke run is not a frozen quality sample. All ten
+  cleaned up and passed required-evidence verification, including both XE and
+  ERRORLOG rows for error 18456 and both sources for the logged controlled
+  signal. Receipt
+  `7271b30792a9e054b8f95cedb057df153dda4434517f348b8894cc11fe6bbd5`
+  records 10/10 and capture rate 1.0. The driver exposes failed-login status as
+  `ELOGIN` without a numeric field, so driver classification accepts the
+  explicit login-failed message; authoritative source verification still
+  requires error number 18456. ERRORLOG replay inserted 0/461 on the immediate
+  duplicate scan, proving the initial idempotency path.
