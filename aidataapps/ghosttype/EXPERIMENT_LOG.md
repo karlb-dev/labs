@@ -62,3 +62,17 @@
   manifest manifests/parse-oracle.json; evidence event PASS_WITH_FINDINGS.
   Plan adjustment: GT-2-lite (catalog contexts) moves ahead of GT-5
   baselines because grammar-aware B2 consumes catalog snapshots.
+
+- 2026-08-23 — GT-2-lite complete. Catalog snapshots: migration 005 adds
+  catalog.snapshots/objects/columns/extras; scripts/snapshot-catalog.ts loads
+  all 14 package catalog files (raw text authoritative + sha256, tolerant
+  structured parse for grammar-aware B2 and binding validators). Wipe-and-
+  reload idempotent. Results: 14 snapshots, 520 objects, 2,440 columns,
+  2 annotation extras, 0 unparsed lines, 0 gate failures. Parser handles
+  bracketed/unicode identifiers, unbracketed space names (Northwind views),
+  SYSTEM_VERSIONED + PERIOD/HISTORY_TABLE/CONSTRAINT annotations, synonyms,
+  names-only lists, system-object shapes (sys./INFORMATION_SCHEMA/
+  queryinsights). Cross-audit: 566/566 case must_reference_objects resolve
+  against their snapshot's parsed objects. Fixture DDL execution stays
+  deferred (dispositioned at intake); catalog text is what prompts embed,
+  so the replay plane is unaffected.
