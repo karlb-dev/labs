@@ -14,10 +14,10 @@ describe("mac evaluation report snapshot", () => {
     expect(template.replace("__DATA_JSON__", JSON.stringify(data, null, 1))).toBe(actual);
   });
 
-  it("contains a complete eight-model by sixteen-episode grid", () => {
-    expect(data.models).toHaveLength(8);
+  it("contains a complete nine-serving by sixteen-episode grid", () => {
+    expect(data.models).toHaveLength(9);
     expect(data.episodes).toHaveLength(16);
-    expect(Object.values(data.grid)).toHaveLength(8);
+    expect(Object.values(data.grid)).toHaveLength(9);
     expect(Object.values(data.grid).every((states) => states.length === 16)).toBe(true);
   });
 });

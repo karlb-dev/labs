@@ -755,6 +755,20 @@ place and receive a later disposition.
   row now carries the drafter, disclosed in the registry (draftModel field)
   and report. This is Muse's practical speed ceiling on this stack.
 
+- 2026-08-23T08:56:00Z — Froze executable B0/B2/B3 and replay-router policy
+  while standard SQL capture was active, before packet construction, target
+  inference, target scoring, or campaign freeze. B0 is recomputed from only the
+  predeclared 60-row dev role (benign/no-action floor, empirical confidence
+  0.5); B2 uses the first returned runbook's frozen class/severity metadata and
+  a frozen action map; B3 copies protected truth only under the evaluator and
+  remains ineligible for application claims; A-router composes resolved B1 or
+  the profile-matched A-tools row without another model call and attributes the
+  selected source's cost. This late executable-policy addition cannot alter
+  capture, but its timing is disclosed in the preregistration and hashed into
+  the campaign inputs. Merged Mac OLMo/report commits `8736c9f` and `ecec5f4`;
+  their new ninth serving exposed a stale 8x16 snapshot assertion, corrected to
+  the retained 9x16 grid. Full TypeScript build and 29-file/96-test suite pass.
+
 - 2026-08-23T10:40:00.000Z — Added OLMo 3.1 32B Instruct
   (lmstudio-community MLX 4-bit via mlx_lm.server; the frozen campaign
   target's base family, served as a different artifact and therefore
