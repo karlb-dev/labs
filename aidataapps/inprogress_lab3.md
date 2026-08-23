@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 18:24 UTC
+Last manually updated: 2026-08-23 18:45 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -69,9 +69,23 @@ and its effect on the evidence ceiling must be recorded append-only in
   preemptions, and exact repeated outputs; receipts
   `520779ca4ec48f5b0b1d6c245d0bdf2722eb1d47d2f95526f69dffa366cd6efd`
   and `b17b6f4cb8a28594fea036054bbe283538a79c929144d819737eb41313765881`.
-  Next: run Qwen calibration (180 primary cells), derive its 60 calibration
-  router rows, score all 240 rows, and fit the four calibration models before
-  opening any Qwen protected-test prediction.
+  Qwen calibration is now closed before protected-test access: 180/180 primary
+  cells completed as decisions with 305/305 clean stop-finished requests and
+  no vLLM length/error/preemption outcomes. A pooled-session isolation leak
+  made 11 workers fail only after all inference completed; 73 `system_health`
+  graphs / 103 victims reconcile to 92 journaled availability-probe retries
+  plus 11 final failures. The repaired probe explicitly uses READ COMMITTED
+  under RCSI (`c46fd23`), all 6,781 original journal records are ingested, and
+  an exact 16-worker resume passed with zero new model requests and a zero vLLM
+  metric delta. PASS receipt:
+  `6954c344a9186a1e73130da74d371f90b944d3683b01f8fa1fa072d0313a11a6`.
+  A-router derived 60 rows, all 240 four-arm calibration rows scored, and four
+  calibration-only models were fit with the zero-test-prediction chronology
+  guard intact. Receipts: `5fd6edf4bb7a8c39ca467f192d9a704c75efa15a5f077f52bbbbeceb27d9545e`,
+  `deed862fd9bfd107e2644cb5cd8164cf91d5cebb303fbb7286da9ea8a1874295`,
+  and `19ec484c4a714501826ff678a1564877e3c051db585bd6a1e12155c1cfb45d61`.
+  Next: run Qwen's 1,370 protected primary cells, then derive/score and execute
+  the three inference controls before closing the profile boundary.
 - Muse whole-residency sampling is closed. Epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
   global reconciliation then passed across 193 journals, 119,595 records,

@@ -1421,3 +1421,37 @@ place and receive a later disposition.
   repeated outputs, exact model/revision/image/profile/decode identities, and
   approximately 80,104 MiB total GPU residency. Impact: Qwen 3.8 is authorized
   for governed calibration replay; no resource or decode override is present.
+
+- 2026-08-23T18:43:53.662Z — qwen-3.8-27b primary replay retained 180 cells across calibration and A-direct,A-rag,A-tools with 180 decisions, 0 failures, and 305 model requests; receipt 6954c344a9186a1e73130da74d371f90b944d3683b01f8fa1fa072d0313a11a6.
+
+- 2026-08-23T18:44:19.405Z — Derived 60 predictions for A-router over calibration and qwen-3.8-27b; receipt 5fd6edf4bb7a8c39ca467f192d9a704c75efa15a5f077f52bbbbeceb27d9545e.
+
+- 2026-08-23T18:44:43.384Z — Scored 240 primary calibration predictions for qwen-3.8-27b across A-direct,A-rag,A-tools,A-router; receipt deed862fd9bfd107e2644cb5cd8164cf91d5cebb303fbb7286da9ea8a1874295.
+
+- 2026-08-23T18:44:47.843Z — Fitted and hash-locked 4 calibration-only models for qwen-3.8-27b before test inference; receipt 19ec484c4a714501826ff678a1564877e3c051db585bd6a1e12155c1cfb45d61.
+
+- 2026-08-23T18:45:00Z — Qwen calibration inference itself completed cleanly
+  in the original invocation: all 180 cells reached `complete`, all 180
+  predictions are decisions, and the 305/305 model request/response pairs
+  ended `stop` with zero vLLM length, error, or preemption outcomes. The
+  invocation nevertheless returned FAIL (receipt
+  `4a46b70d5cc537f9a5f262ff4e02c3bbe062c96fb55a407e2e3d29c60c6f603f`)
+  after 11 workers exhausted bounded SQL 1205 retries on the read-only selected
+  queue availability probe. `system_health` retained 73 matching deadlock
+  graphs with 103 victims from 18:25:39.636Z through 18:26:08.708Z; these
+  reconcile exactly to 92 journaled retries plus 11 final failures. The graphs
+  show pooled sessions retaining `SERIALIZABLE` after evidence transactions,
+  causing probe `RangeS-S` locks on `ix_work_items_claim` to cycle with
+  work-item transitions. The probe now explicitly enters `READ COMMITTED`
+  inside its own RPC, thereby using the database's existing RCSI policy while
+  leaving evidence transactions serializable; source commit `c46fd23`. All 148
+  unit tests and the TypeScript build passed, and a deliberately contaminated
+  pooled session verified effective isolation 2 inside the repaired probe.
+  The 16 original journals contributed 6,781/6,781 new records with zero
+  duplicates (receipt
+  `987dc6abf9edc67e67b41c569216b922592fa5668e45133591391c905cf4928b`).
+  An exact 16-worker resume then passed under receipt
+  `6954c344a9186a1e73130da74d371f90b944d3683b01f8fa1fa072d0313a11a6`
+  with zero new model requests and zero delta in every vLLM counter. Impact:
+  orchestration and throughput reporting only; no packet, prompt, decode,
+  model output, prediction, or quality row was retried or changed.
