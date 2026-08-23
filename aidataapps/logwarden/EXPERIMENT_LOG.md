@@ -1336,3 +1336,45 @@ place and receive a later disposition.
   `6bb1a32e5d08c969f078d958d8d9adfd55a74273a461af3edf6051985fa89170`.
   Impact is durability/storage only; all scientific and performance evidence,
   including Gemma's one preemption and deadlock receipts, remains retained.
+
+- 2026-08-23T17:55:49Z — Began governed OLMo residency epoch
+  `56559cbd-e997-4cbb-bb09-713ae851d83b` before service startup. After the
+  reconciled and pinned Gemma boundary, terminated only the verified-idle
+  stuck Gemma EngineCore during rootless-Docker teardown and evicted only its
+  59 GiB reproducible Hugging Face cache. The embedding EngineCore and SQL
+  remained resident. Impact: storage/lifecycle only; the deleted cache is
+  recoverable by digest-pinned redownload and no retained evidence was removed.
+
+- 2026-08-23T18:01:51Z — The pinned `allenai/Olmo-3.1-32B-Instruct`
+  revision `ac0587e4a7744a551c059d8cd17ba220bc940dae` became ready under image
+  digest `0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967`
+  (vLLM 0.27.1). The 60.04 GiB checkpoint downloaded in 183.71 s, weights
+  loaded in 6.35 s, full startup/compilation took 114.38 s, and the frozen
+  0.78 residency exposed 12.18 GiB / 49,863 tokens of KV cache. Impact: none;
+  these are cold-start and capacity measurements for the exact frozen profile.
+
+- 2026-08-23T18:05:09Z — OLMo's cold and warm unconstrained Tier-1 port gates
+  both emitted `STOP_PORT`, receipts
+  `bf46e7717b67ea7485ac2dae4e7c79c145d54a310f9d07fd802f19be71368be0`
+  and `ed330394f62e61dce90a87c65a56ef4b9c55e8a3bda8982ae0f29cd7dbb597d4`.
+  All 18/18 requests completed on GPU with finish reason `stop`; every response
+  was valid JSON and omitted exactly the same three required decision fields:
+  `citedChunkIds`, `confidence`, and `abstain`. This is a first-pass contract
+  reliability failure, not a serving or semantic-output failure. Per the
+  frozen addendum, no silent repair, prompt change, or constrained decoding is
+  allowed in the primary cell, so OLMo receives `STOP_PORT` and no Tier-1
+  campaign replay is run. Impact: the four-profile primary campaign will report
+  OLMo as port-excluded rather than fabricate comparable quality scores.
+
+- 2026-08-23T18:07:18Z — Added the preregistered Tier-2 `--guided-json` port
+  path without changing the primary gate: it sends the same first user turn
+  plus a response-format JSON schema generated from the authoritative Zod
+  discriminated union, records the actual schema/transport in requests and
+  receipts, and persists evidence under a separate Tier-2 stage. Build and all
+  42 test files / 148 tests passed. OLMo then passed 9/9 guided canaries with
+  9 `stop`, zero length/error/preemption outcomes, 6,946 prompt and 1,252
+  generation tokens, and 6/6 exact repeated outputs; receipt
+  `c1ee96f0edeb5984351be40ceabc81cfe870945a036efc70cd4118289045ae37`.
+  Classification: `GUIDED_DECODING_RECOVERS`. Impact: production-style guided
+  decoding demonstrably recovers OLMo's contract, but this Tier-2 result is not
+  pooled with or substituted for the unconstrained Tier-1 campaign.

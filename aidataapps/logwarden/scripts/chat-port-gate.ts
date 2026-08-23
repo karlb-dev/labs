@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { promisify } from "node:util";
 import sql from "mssql";
+import { z } from "zod";
 import { buildInitialAgentMessages } from "../src/agent-loop.js";
 import {
   effectiveGpuMemoryUtilization,
@@ -12,6 +13,7 @@ import {
 } from "../src/chat-service.js";
 import { summarizeChatMetrics, validateChatMetricDelta } from "../src/chat-metrics.js";
 import { loadConfig } from "../src/config.js";
+import { agentResponseSchema } from "../src/contracts.js";
 import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { callOpenAiCompatibleModel, type GatewayCallResult } from "../src/model-gateway.js";
 import { resolveModelProfile } from "../src/models.js";
@@ -22,6 +24,8 @@ import { createComponentTelemetryJournal } from "../src/telemetry.js";
 
 const execFile = promisify(execFileCallback);
 const profileKey = argument("--profile") ?? process.env.MODEL_PROFILE ?? "qwen-smoke";
+const guidedJson = process.argv.includes("--guided-json");
+const transportMode = guidedJson ? "guided-json" : "unconstrained-json";
 const maxTokens = Number(argument("--max-tokens") ?? "900");
 if (!Number.isSafeInteger(maxTokens) || maxTokens < 256 || maxTokens > 4_096) throw new Error("--max-tokens must be an integer from 256 through 4096");
 const profile = resolveModelProfile(profileKey);
@@ -30,10 +34,24 @@ const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as { runId: string };
 const gateId = randomUUID();
 const startedAtUtc = new Date().toISOString();
-const rawDirectory = `${runDirectory}/raw/chat-port-gate/${profileKey}/${gateId}`;
-const receiptPath = `${runDirectory}/metrics/chat-port-gate-${profileKey}.json`;
+const rawDirectory = guidedJson
+  ? `${runDirectory}/raw/chat-port-gate-guided-json/${profileKey}/${gateId}`
+  : `${runDirectory}/raw/chat-port-gate/${profileKey}/${gateId}`;
+const receiptPath = guidedJson
+  ? `${runDirectory}/metrics/chat-port-gate-guided-json-${profileKey}.json`
+  : `${runDirectory}/metrics/chat-port-gate-${profileKey}.json`;
 const containerName = process.env.CHAT_CONTAINER_NAME ?? `${process.env.COMPOSE_PROJECT_NAME ?? "aidataapps-logwarden"}-chat`;
-const created = await createComponentTelemetryJournal(runDirectory, run.runId, `chat-port-gate-${profileKey}`);
+const componentName = guidedJson ? `chat-port-gate-guided-json-${profileKey}` : `chat-port-gate-${profileKey}`;
+const created = await createComponentTelemetryJournal(runDirectory, run.runId, componentName);
+const guidedResponseSchema = guidedJson ? portableJsonSchema(z.toJSONSchema(agentResponseSchema)) : undefined;
+const responseFormat = guidedResponseSchema === undefined ? undefined : {
+  type: "json_schema",
+  json_schema: {
+    name: "logwarden_agent_response_v2",
+    strict: true,
+    schema: guidedResponseSchema,
+  },
+};
 const gateSpan = await created.journal.startSpan("chat.port_gate", {}, {
   gateId,
   profileKey,
@@ -41,6 +59,7 @@ const gateSpan = await created.journal.startSpan("chat.port_gate", {}, {
   revision: profile.revision,
   image: profile.vllmImage,
   maxTokens,
+  transportMode,
 });
 
 try {
@@ -116,7 +135,9 @@ try {
     finishedAtUtc: new Date().toISOString(),
     model: { modelId: profile.modelId, revision: profile.revision, image: profile.vllmImage, profileHash: hashJson(profile) },
     maxTokens,
+    transportMode,
     decode,
+    responseFormat,
     service,
     health: endpointReceipt(health),
     models: endpointReceipt(models),
@@ -156,6 +177,7 @@ try {
   await created.journal.endSpan(gateSpan, "failed", { gateId, profileKey, errorDetail }).catch(() => undefined);
   await created.journal.flush().catch(() => undefined);
   const ingestion = await ingestJournal().catch((ingestionError) => ({ status: "failed", errorDetail: safeError(ingestionError) }));
+  const failureDisposition = guidedJson ? "STOP_TIER2" : "STOP_PORT";
   const failureBody = {
     schemaVersion: 1,
     runId: run.runId,
@@ -164,14 +186,16 @@ try {
     startedAtUtc,
     finishedAtUtc: new Date().toISOString(),
     maxTokens,
+    transportMode,
+    responseFormat,
     errorDetail,
     telemetryJournalPath: created.path,
     ingestion,
-    disposition: "STOP_PORT",
+    disposition: failureDisposition,
   };
   const failure = { ...failureBody, receiptSha256: hashJson(failureBody) };
   await atomicWrite(`${rawDirectory}/failure-receipt.json`, `${JSON.stringify(failure, null, 2)}\n`, 0o600).catch(() => undefined);
-  await persistEvidence("STOP_PORT", failure).catch(() => undefined);
+  await persistEvidence(failureDisposition, failure).catch(() => undefined);
   console.error(JSON.stringify(failure, null, 2));
   process.exitCode = 1;
 }
@@ -183,6 +207,8 @@ async function callCanary(packet: Record<string, unknown>, decode: Record<string
     model: profile.modelId,
     messages,
     decode,
+    responseSchema: guidedResponseSchema,
+    responseFormat,
     toolRegistry: [],
     journal: created.journal,
     runDirectory,
@@ -192,7 +218,9 @@ async function callCanary(packet: Record<string, unknown>, decode: Record<string
     maxRetries: 0,
   });
   const request = JSON.parse(result.attempts[0]!.requestBody.toString("utf8")) as Record<string, unknown>;
-  if ("tools" in request || "response_format" in request) throw new Error("Primary port gate sent a constrained/native-tool transport field");
+  if ("tools" in request) throw new Error("Port gate sent a native-tool transport field");
+  if (guidedJson && !("response_format" in request)) throw new Error("Guided JSON port gate omitted response_format");
+  if (!guidedJson && "response_format" in request) throw new Error("Primary port gate sent a constrained transport field");
   const sent = request.messages as Array<{ role?: string }>;
   if (!Array.isArray(sent) || sent.length !== 1 || sent[0]?.role !== "user") throw new Error("Primary port gate did not use exactly one initial user turn");
   return result;
@@ -312,18 +340,20 @@ async function ingestJournal() {
   finally { await pool.close(); }
 }
 
-async function persistEvidence(disposition: "PASS" | "STOP_PORT", detail: unknown): Promise<void> {
+async function persistEvidence(disposition: "PASS" | "STOP_PORT" | "STOP_TIER2", detail: unknown): Promise<void> {
   const pool = await connect(config.databases.lab, config.databases.controlName);
   const detailJson = canonicalJson(detail);
   try {
     await pool.request()
-      .input("key", sql.VarChar(120), `chat-port-${profileKey}-${gateId}`)
+      .input("key", sql.VarChar(120), `${guidedJson ? "chat-port-guided-json" : "chat-port"}-${profileKey}-${gateId}`)
       .input("run", sql.VarChar(120), run.runId)
       .input("disposition", sql.VarChar(40), disposition)
       .input("detail", sql.NVarChar(sql.MAX), detailJson)
       .input("hash", sql.Char(64), sha256(detailJson))
+      .input("stage", sql.VarChar(80), guidedJson ? "chat_port_gate_guided_json" : "chat_port_gate")
+      .input("tier", sql.VarChar(24), guidedJson ? "tier2" : "tier1")
       .query(`INSERT control.evidence_events(event_key,run_id,stage,scientific_tier,disposition,detail_json,detail_sha256)
-        VALUES(@key,@run,'chat_port_gate','tier1',@disposition,@detail,@hash);`);
+        VALUES(@key,@run,@stage,@tier,@disposition,@detail,@hash);`);
   } finally { await pool.close(); }
 }
 
@@ -387,6 +417,14 @@ function endpointReceipt(value: { status: number; contentType: string | null; bo
 function assertCommand(command: string[], flag: string, expected: string): void {
   const index = command.indexOf(flag);
   if (index < 0 || command[index + 1] !== expected) throw new Error(`Chat service ${flag} does not equal ${expected}`);
+}
+
+function portableJsonSchema(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(portableJsonSchema);
+  if (value === null || typeof value !== "object") return value;
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => key !== "$schema" && key !== "propertyNames")
+    .map(([key, nested]) => [key, portableJsonSchema(nested)]));
 }
 
 async function command(executable: string, args: string[]): Promise<string> {

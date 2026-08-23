@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 17:50 UTC
+Last manually updated: 2026-08-23 18:08 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -45,14 +45,20 @@ and its effect on the evidence ceiling must be recorded append-only in
   evaluation, search freeze, database restore test, run archive, and Drive
   mirror all passed. The global pre-freeze reconciliation receipt is
   `2a5f0a4e39bb2831eec506067de3186ab2eb1aeb2965e322161b69f5fb0287c8`.
-- `gemma-4-31b` is scientifically closed and remains temporarily resident only
-  for an orderly profile transition. Exact container
-  `0255633c0a827de59d0935b371ce8bbaf2e94ee037d61736e95bd39fc43b4533`
-  is on port 8010; no replay or profile sampler is active. The Qwen embedding
-  service remains on port 8011 and SQL Server remains healthy on port 1434.
-  Next: stop the exact Gemma service, evict only its reproducible weight cache,
-  remove the ignored Gemma-only 0.79 resource override, then start and gate
-  `olmo-3.1-32b-instruct`. Do not rerun any completed Muse or Gemma row.
+- `gemma-4-31b` is scientifically closed, stopped, and evicted after its pinned
+  boundary. `olmo-3.1-32b-instruct` is resident on port 8010 under the exact
+  frozen revision/image; Qwen embedding remains on port 8011 and SQL Server is
+  healthy on port 1434. OLMo's cold and warm unconstrained gates both produced
+  governed `STOP_PORT`: all 18/18 requests stopped normally, but every valid
+  JSON decision omitted `citedChunkIds`, `confidence`, and `abstain`. Receipts:
+  `bf46e7717b67ea7485ac2dae4e7c79c145d54a310f9d07fd802f19be71368be0`
+  and `ed330394f62e61dce90a87c65a56ef4b9c55e8a3bda8982ae0f29cd7dbb597d4`.
+  The separate preregistered Tier-2 guided-JSON gate passed 9/9 with zero
+  length/error/preemption outcomes and exact repeated outputs; receipt
+  `c1ee96f0edeb5984351be40ceabc81cfe870945a036efc70cd4118289045ae37`,
+  classification `GUIDED_DECODING_RECOVERS`. Do not run or synthesize OLMo
+  Tier-1 replay rows. Next: close/pin the OLMo STOP_PORT boundary, stop and
+  evict its exact reproducible cache, then start and gate `qwen-3.8-27b`.
 - Muse whole-residency sampling is closed. Epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
   global reconciliation then passed across 193 journals, 119,595 records,
@@ -458,15 +464,15 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay or profile sampler is active;
-  Gemma is complete through protected scoring, all controls, reconciliation,
-  and its pinned database boundary. OLMo is next.
+- Long-running scientific process: OLMo has no replay; its governed residency
+  sampler is active while the STOP_PORT/Tier-2-guided evidence boundary closes.
+  Qwen 3.8 27B is next after OLMo is pinned, stopped, and evicted.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Telemetry: `gemma-4-31b-residency` epoch
-  `bde528a1-bb5c-4b66-91b5-ac19591487dd` is stopped and fully ingested
-  (2,361 records; receipt
-  `4e9f74e6de17d3ca51e9412051fe44d33bf9b5db404b7421198c259064474bd7`)
+- Telemetry: `olmo-3.1-32b-instruct-residency` epoch
+  `56559cbd-e997-4cbb-bb09-713ae851d83b` is active. It began before OLMo
+  download/startup and has covered both failed primary gates and the passing
+  guided gate. Stop and ingest it before the OLMo database checkpoint.
 - Watchdog: recurring bounded 20-minute backup/Git-bundle/push/run-mirror
   supervisor is retained in exec session `11505` (bash PID 589796); its first
   complete bounded cycle passed and temporary SQL staging cleanup was verified
@@ -501,13 +507,14 @@ nvidia-smi
 ```
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
-SQL job/work-item state, current Gemma closure receipts, and Drive checkpoint
-before launching anything. The campaign is frozen/running and Muse is
-complete through Muse and Gemma calibration, protected primary, deterministic
-router, protected scoring, all three controls, telemetry reconciliation, and
-their pinned database checkpoints. Resume by stopping/evicting Gemma and
-starting OLMo as shown in the authoritative state section. Do not start another
-chat model while the Gemma container is resident.
+SQL job/work-item state, OLMo port receipts, and Drive checkpoint before
+launching anything. The campaign is frozen/running; Muse and Gemma are complete
+through their calibration, protected primary, deterministic router, protected
+scoring, controls, reconciliation, and pinned checkpoints. OLMo is a governed
+Tier-1 `STOP_PORT` with a passing Tier-2 guided diagnostic. Resume by closing
+and evicting OLMo, then start Qwen 3.8 as shown in the authoritative state
+section. Do not run OLMo primary replay or start another chat model while its
+container is resident.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
