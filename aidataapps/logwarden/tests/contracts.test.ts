@@ -25,6 +25,12 @@ describe("structured JSON transport", () => {
     expect(() => parseAgentResponse(`${JSON.stringify(decision)} trailing`)).toThrow(/valid JSON/);
   });
 
+  it("makes decision field placement explicit in the operating contract", () => {
+    const contract = operatingContract([]);
+    expect(contract).toContain("required top-level fields beside actionArguments");
+    expect(contract).toContain("never put them inside actionArguments");
+  });
+
   it("rejects schema drift and unknown fields", () => {
     expect(() => parseAgentResponse(JSON.stringify({ ...decision, secret: true }))).toThrow();
     expect(() => parseAgentResponse('{"kind":"tool_request","tool":"x","arguments":{},"extra":1}')).toThrow();

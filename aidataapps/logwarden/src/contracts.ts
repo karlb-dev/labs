@@ -94,6 +94,8 @@ export function operatingContract(toolSchemas: unknown): string {
     "Return exactly one JSON object and no other text.",
     'Request a tool as {"kind":"tool_request","tool":"...","arguments":{...}}.',
     'Finish as {"kind":"decision","incidentClass":"...","severity":"...","action":"...","actionArguments":{},"citedChunkIds":[],"confidence":0.0,"abstain":false,"correlationKey":"...","summary":"25 words maximum","rationale":"60 words maximum"}.',
+    "For a decision, correlationKey, summary, and rationale are required top-level fields beside actionArguments; never put them inside actionArguments.",
+    "Use actionArguments only for action-specific parameters, or {} when no parameters are needed.",
     `Incident classes: ${incidentClasses.join(", ")}.`,
     `Severities: ${severities.join(", ")}.`,
     `Actions: ${actions.join(", ")}.`,

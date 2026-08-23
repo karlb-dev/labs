@@ -839,5 +839,25 @@ place and receive a later disposition.
   The same invariant now joins a pre-aggregated set of agent-visible retrieval
   runs and sums a scalar flag. Impact: query-shape compatibility only; the
   corpus remained unfrozen and all evidence rows were unchanged.
+- 2026-08-23T10:12:00Z — The first real Qwen chat port gate reached the pinned
+  CUDA/vLLM service but stopped on one synthetic authentication canary. Its raw
+  response contained the right decision semantics yet nested `correlationKey`,
+  `summary`, and `rationale` inside `actionArguments`, so the strict contract
+  rejected exactly three missing top-level fields. No agent campaign or target
+  inference had run and the A-direct/A-rag/A-tools identities were not yet
+  registered. The operating prompt now states explicitly that those three
+  fields are required top-level siblings and that `actionArguments` is reserved
+  for action-specific parameters. The schema and deliberately narrow legal
+  repair set remain unchanged. Impact: pre-freeze prompt clarification exposed
+  by a synthetic canary; the failed raw output remains retained and cannot enter
+  scores.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
+
+- 2026-08-23T10:09:59.161Z — Search corpus primary-v1 frozen at 2026-08-23T10:09:59.154Z; 60 runbooks, 480 chunks, 480 embeddings, 3000 held-out retrieval cells; freeze ccf8fedf47aa5f83cbd8fda7116934a47481c304f193c5cb946b3a9a51024837.
+
+- 2026-08-23T10:10:21.497Z — B1 B1-rules-v1 produced 120 dev,calibration predictions at {"dev":{"episodes":60,"resolved":60,"coverage":1},"calibration":{"episodes":60,"resolved":60,"coverage":1}}; receipt ed5a28d2a8e70c55fdf1164a979a01a1e716cd22adfa72a9780c645cbde3fdf3.
+
+- 2026-08-23T10:10:30.952Z — B1 B1-rules-v1 produced 60 dev predictions at {"dev":{"episodes":60,"resolved":60,"coverage":1}}; receipt 85571222d2ee54f65e34f5ea44030065120eeadb5becfae33857022d325ca8bf.
+
+- 2026-08-23T10:10:50.780Z — Derived 600 predictions for B0-majority-no-action-v1,B2-lexical-v1,B2-vector-v1,B2-hybrid-v1,B3-oracle-packet-v1 over dev,calibration; receipt 4569707de9cfceda7a628b00d55e2684054466ebc9aa7668256b773a222903d1.
