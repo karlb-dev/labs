@@ -82,14 +82,14 @@ async function embeddings() {
         WHERE NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=s.id AND p.embedding_profile_id='${selected.key}');`);
       totalDone += rows.length;
     }
-    const artifacts = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: number; view: string; text: string }>(`
-      SELECT DISTINCT t.text_artifact_id AS id,t.text_view_id AS view,t.artifact_text AS text FROM dbo.text_artifacts t JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id
+    const artifacts = await pool.request().input("profile", sql.VarChar(80), selected.key).query<{ id: number; textView: string; text: string }>(`
+      SELECT DISTINCT t.text_artifact_id AS id,t.text_view_id AS textView,t.artifact_text AS text FROM dbo.text_artifacts t JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id
       JOIN dbo.generations g ON g.generation_id=m.generation_id WHERE g.campaign_id IN (${campaignSql}) AND NOT EXISTS
       (SELECT 1 FROM dbo.semantic_vectors v WHERE v.text_artifact_id=t.text_artifact_id AND v.embedding_profile_id=@profile AND v.representation_id=CONCAT('whole-',t.text_view_id));`);
     let embedded = 0;
     for (const rows of batch(artifacts.recordset, 64)) {
       const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
-      await insertJson(rows.map((row, index) => ({ id: row.id, representation: `whole-${row.view}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
+      await insertJson(rows.map((row, index) => ({ id: row.id, representation: `whole-${row.textView}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
         INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
         SELECT s.id,NULL,'${selected.key}',s.representation,CAST(s.vector AS vector(1024)),s.sha,'${runId}' FROM OPENJSON(@rows) WITH
           (id bigint '$.id',representation varchar(80) '$.representation',vector nvarchar(max) '$.vector',sha char(64) '$.sha') s
