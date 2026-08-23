@@ -1,6 +1,6 @@
 # GhostType COMPLETION_QUALITY_REPORT (Tier 1, mac campaign)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-23T22:16:32.030Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-23T23:12:50.202Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
@@ -15,7 +15,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B2-catalog | 588 | 4 | 9 | 11 | 0 | 101 | 463 |
 | baseline-deterministic | B3-history | 588 | 0 | 14 | 14 | 0 | 101 | 459 |
 | baseline-deterministic | B4-template | 588 | 0 | 47 | 37 | 0 | 92 | 412 |
-| gemma-4-e4b-mlx | M1-packaged | 98 ⏳ | 16 | 34 | 31 | 0 | 12 | 5 |
+| gemma-4-e4b-mlx | M1-packaged | 588 | 35 | 259 | 198 | 0 | 63 | 33 |
 
 ## Aggregate metrics (suite agg-all)
 
@@ -26,11 +26,11 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B2-catalog | 17.9% | 17.9% | 78.7% | 0.0% | 83.3% | — | — |
 | baseline-deterministic | B3-history | 17.2% | 17.2% | 78.1% | 0.0% | 100.0% | — | — |
 | baseline-deterministic | B4-template | 15.6% | 15.6% | 70.1% | 0.0% | 98.7% | — | — |
-| gemma-4-e4b-mlx | M1-packaged | 48.7% | 48.7% | 0.0% | 0.0% | 91.4% | 3837 | 9528 |
+| gemma-4-e4b-mlx | M1-packaged | 17.5% | 16.7% | 5.6% | 0.0% | 93.8% | 5592 | 13355 |
 
 ## Paired comparisons (exact McNemar on normalized_exact)
 
 | profile | arm | vs | model-only | baseline-only | p (exact) | power label |
 |---|---|---|---|---|---|---|
-| gemma-4-e4b-mlx | M1-packaged | B0-empty | 16 | 1 | 2.75e-4 | exploratory (incomplete ⏳) |
-| gemma-4-e4b-mlx | M1-packaged | B2-catalog | 16 | 1 | 2.75e-4 | exploratory (incomplete ⏳) |
+| gemma-4-e4b-mlx | M1-packaged | B0-empty | 40 | 38 | 9.10e-1 | provisional-adequate |
+| gemma-4-e4b-mlx | M1-packaged | B2-catalog | 40 | 42 | 9.12e-1 | provisional-adequate |

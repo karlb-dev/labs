@@ -119,3 +119,20 @@
   success, 4 genuine misses (two being the known gt-cur-case-03/04 gold
   defects; E4B's case-03 output repeats the same simple-CASE trap the
   parse oracle catches — validator working as intended).
+
+- 2026-08-24 — E4B campaign complete (gemma-4-e4b-mlx, M1-packaged, cpu-dev,
+  588/588 terminal, 0 request failures, resumed across none — single pass).
+  Headline: normalized_exact 17.5% overall — statistically indistinguishable
+  from the B2 floor (exact McNemar p=0.91, provisional-adequate) — so H1 is
+  NOT supported for the 4B batch vehicle. The per-class decomposition is the
+  real finding: cursor_fragment 35/135 exact (25.9%) with 119/126 offered
+  candidates parse-clean; intent_query only 5/352 exact (1.4%) yet 201
+  partial, 261/352 grounded, 306/327 parse-clean — the model writes
+  plausible well-formed SQL that does not string-match gold on full-query
+  intent rows. Abstention discipline is the weakness: 63/101 correct
+  abstains; 38 expect_empty rows answered (hallucination-resistance miss),
+  33 answerable rows wrongly abstained. Early-sample lesson logged: the
+  first 73 rows (alphabetically cursor-heavy) showed 48.7% exact — never
+  extrapolate from a prefix of an ordered case list. Claims row written
+  (H1 NOT_SUPPORTED, e4b). The four 27–32B target profiles are the actual
+  H1 test; E4B remains the dev/batch vehicle.
