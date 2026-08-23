@@ -7,7 +7,12 @@
     "vlmServer": "mlx_vlm.server >= 0.6.15 (Muse DFlash drafter)",
     "note": "One resident large model at a time; servers swap the resident on request."
   },
-  "targetProfiles": ["qwen-3.8-27b-mlx", "muse-glimmer-30b-mlx", "gemma-4-26b-a4b-mlx", "olmo-3.1-32b-mlx"],
+  "targetProfiles": [
+    "qwen-3.8-27b-mlx",
+    "muse-glimmer-30b-mlx",
+    "gemma-4-26b-a4b-mlx",
+    "olmo-3.1-32b-mlx"
+  ],
   "batchVehicleProfile": "gemma-4-e4b-mlx",
   "profiles": {
     "qwen-3.8-27b-mlx": {
@@ -16,8 +21,11 @@
       "servedModelId": "mlx-community/Qwen3.8-27B-4bit",
       "baseUrl": "http://127.0.0.1:8020/v1",
       "quantization": "mlx-4bit",
-      "reasoningPolicy": { "promptPrefixEveryUserTurn": "/no_think" },
-      "notes": "MTP drafter variant exists (mlx-community/Qwen3.8-27B-MTP-4bit) for Tier-3 speculation."
+      "reasoningPolicy": {
+        "promptPrefixEveryUserTurn": "/no_think"
+      },
+      "notes": "MTP drafter variant exists (mlx-community/Qwen3.8-27B-MTP-4bit) for Tier-3 speculation.",
+      "reasoningAllowanceTokens": 0
     },
     "muse-glimmer-30b-mlx": {
       "family": "muse",
@@ -26,8 +34,15 @@
       "baseUrl": "http://127.0.0.1:8021/v1",
       "quantization": "mlx-4bit",
       "draftModel": "meta-models/Muse-Glimmer-30B-assistant",
-      "serverArgs": ["--draft-model", "meta-models/Muse-Glimmer-30B-assistant"],
-      "reasoningPolicy": { "serverField": "reasoning_content", "note": "mlx-vlm 0.6.15 splits the channel; reasoning never enters insertText." }
+      "serverArgs": [
+        "--draft-model",
+        "meta-models/Muse-Glimmer-30B-assistant"
+      ],
+      "reasoningPolicy": {
+        "serverField": "reasoning_content",
+        "note": "mlx-vlm 0.6.15 splits the channel; reasoning never enters insertText."
+      },
+      "reasoningAllowanceTokens": 1024
     },
     "gemma-4-26b-a4b-mlx": {
       "family": "gemma",
@@ -35,7 +50,11 @@
       "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
       "baseUrl": "http://127.0.0.1:8020/v1",
       "quantization": "optiq-4bit",
-      "reasoningPolicy": { "serverField": "reasoning", "note": "mlx_lm.server splits the MoE reasoning channel." }
+      "reasoningPolicy": {
+        "serverField": "reasoning",
+        "note": "mlx_lm.server splits the MoE reasoning channel."
+      },
+      "reasoningAllowanceTokens": 1280
     },
     "olmo-3.1-32b-mlx": {
       "family": "olmo",
@@ -43,7 +62,11 @@
       "servedModelId": "lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit",
       "baseUrl": "http://127.0.0.1:8020/v1",
       "quantization": "mlx-4bit",
-      "reasoningPolicy": { "none": true, "note": "Direct answerer; no reasoning channel observed on the Lab 03 bench." }
+      "reasoningPolicy": {
+        "none": true,
+        "note": "Direct answerer; no reasoning channel observed on the Lab 03 bench."
+      },
+      "reasoningAllowanceTokens": 0
     },
     "gemma-4-e4b-mlx": {
       "family": "gemma",
@@ -52,7 +75,11 @@
       "servedModelId": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
       "baseUrl": "http://127.0.0.1:8020/v1",
       "quantization": "optiq-4bit",
-      "reasoningPolicy": { "inlineChannel": "<|channel>thought ... <channel|>" }
+      "reasoningPolicy": {
+        "serverField": "reasoning",
+        "note": "GT-7 dev evidence: mlx_lm.server 0.32.1 splits the channel (registry previously guessed inline); reasoning never enters insertText."
+      },
+      "reasoningAllowanceTokens": 1280
     }
   },
   "embeddingProfiles": {

@@ -96,3 +96,26 @@
   same-catalog exemplar reuse (same-catalog identifiers are valid by
   construction); B1 is a frozen keyword-bigram table. H1 floor established:
   no deterministic arm exceeds 4/487 exact on non-empty rows.
+
+- 2026-08-23 — GT-7 replay runner live. scripts/run-quality.ts: raw-text
+  transport replaying the package's frozen chat messages exactly (read from
+  the hash-verified vendored JSONL); deterministic reference decode
+  (temperature 0, top_p 1, no stop strings — stop strings would strip the
+  gold's trailing ';' and destroy normalized_exact; class caps
+  cursor_fragment 192 / intent_query 384 output tokens); candidate-extract-v1
+  (src/extract.ts: one whitespace strip, suffix-overlap trim recorded,
+  fence/prose/mode-leak flagged never repaired, empty = abstain); inline
+  scoring through the shared scorer + pinned ScriptDom parse delta; raw
+  bodies, candidates, decisions, telemetry, and row_scores persisted per
+  request in one transaction; completion.requests status is the resume
+  cursor (re-run = skip done, failed re-queued). --max-minutes gives the
+  20-minute pause contract. Dev findings on gemma-4-e4b (8-row cpu-dev):
+  (1) registry corrected — E4B reasoning arrives in the server-split
+  `reasoning` field, not inline; (2) reasoning-channel profiles need token
+  headroom beyond the content cap or they die in-thought with empty content
+  (finish_reason=length) — added per-profile reasoningAllowanceTokens
+  (e4b/26b 1280, muse 1024, qwen//no_think 0, olmo 0) and truncation is now
+  scored fail/truncation, never abstention; (3) after fixes: 4/8 exact
+  success, 4 genuine misses (two being the known gt-cur-case-03/04 gold
+  defects; E4B's case-03 output repeats the same simple-CASE trap the
+  parse oracle catches — validator working as intended).
