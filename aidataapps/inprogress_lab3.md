@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 16:12 UTC
+Last manually updated: 2026-08-23 16:17 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -142,9 +142,16 @@ and its effect on the evidence ceiling must be recorded append-only in
   A runtime-only 0.79 GPU-memory override is implemented and tested without
   changing the frozen model/profile hash, context, prompts, decode, or weights;
   its +1-point resource difference must be disclosed in performance results.
-  Next: commit/push the override, restart Gemma from settled cache, run two
-  formal gates, then begin calibration replay. Do not relaunch completed Muse
-  jobs or the retained failed Gemma cold gate.
+  The settled-cache service then passed two formal nine-call gates: 18/18
+  successful requests and stop finishes, zero length/error/preemption outcomes,
+  and 82,766 MiB observed total GPU memory. PASS receipts:
+  `0a9e9adb19f74d70d616c981061ef4acbda51e2820009b5a4e925f5c41f64f01`
+  and
+  `ed37c268649a713231c585b6a6710fb2a35031cf876fdcdfc557d8d5afbf5b4a`.
+  Repeated exact-output rates were 1/6 and 2/6 and remain a measured Gemma
+  property for the formal batching control. Next: checkpoint this gate boundary
+  and launch Gemma calibration primary replay (180 cells, 16 workers). Do not
+  relaunch completed Muse jobs or the retained failed Gemma cold gate.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
@@ -421,8 +428,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay is active; Gemma is between its
-  retained failed cold gate and the 0.79 settled-cache retry.
+- Long-running scientific process: no replay is active; Gemma is resident,
+  twice port-gated, and authorized for calibration replay.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `gemma-4-31b-residency` whole-system sampler is retained
@@ -438,9 +445,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `ff10a86` (formal batching identity
-  diagnostic; request-level invariance supported, full-agent comparison
-  confounded by execution-local IDs)
+- Last durable implementation checkpoint: `614546e` (labeled runtime-only GPU
+  memory override with model profile/hash unchanged; all 140 tests pass)
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
