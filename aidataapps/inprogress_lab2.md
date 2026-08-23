@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 01:40 UTC
+Last manually updated: 2026-08-23 04:14 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed HEAD before coordination checkpoint: `ecb00f5`
+- latest pushed HEAD: `d9ac4db`
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -69,14 +69,24 @@ Muse is active:
 - tokenizer revision is explicit
 - vLLM batch-invariant kernels are enabled for this model
 - chat container: `aidataapps-modelprint-chat-muse-r1`
-- primary generation command:
+- primary generation completed 10,000/10,000 with zero failed at
+  `2026-08-23T03:59:58Z`
+- robustness generation completed 501/501 with zero failed; raw SHA-256
+  `ed7faf0cd842f1516f77c7ea706b30be4d8740b1dcd3e357afdbf07075c77de4`
+- active command is the first Muse likelihood pass:
 
 ```bash
-npm run generate -- --profile muse-glimmer-30b --resume --concurrency 32 --checkpoint-size 100
+npm run likelihood:score -- --scorer muse-glimmer-30b --include-robustness --concurrency 32 --checkpoint-size 200
 ```
 
-- last manual observation: 1,600/10,000 complete, zero failed at
-  `2026-08-23T01:38:37Z`
+- last manual likelihood observation: 4,200/16,002 selected jobs consumed,
+  4,172 fully scored and 28 with a missing prompted channel; the process is
+  still running and later counters supersede these numbers
+- the missing prompted channels are diagnosed as vLLM per-token Unicode
+  byte-fallback display artifacts. Commit `d9ac4db` adds a constrained,
+  tested alignment fallback. Do not interrupt the already-loaded old-code
+  pass; after it exits, rerun the exact command idempotently so the new code
+  selects and fills only SQL-missing cells
 - some Muse rows can exhaust the answer budget in reasoning and have an empty
   final-answer field; retain them as truncated per addendum C-15 and report the
   rate rather than silently regenerating or filling them
@@ -147,10 +157,12 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Do not start a second Muse generator if the command is alive. If it is absent,
-the primary resume command above is idempotent and SQL-backed. Confirm current
-counts with the generation manifest and SQL/doctor output rather than trusting
-this timestamped prose.
+Do not start a second Muse scorer if the command is alive. If it is absent,
+rerun the exact likelihood command above; it is idempotent and SQL-backed.
+After the current old-code invocation exits (expected exit 2 when it reports
+retained partial channels), rerun once with commit `d9ac4db`, then verify SQL
+prompted/unprompted completeness before rotating. Confirm current counts with
+the manifests and SQL/doctor output rather than trusting this timestamped prose.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -212,10 +224,10 @@ tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 
 ## Remaining residency workflow
 
-After Muse primary completes, while Muse is still resident:
+The Muse primary and robustness commands below are complete. Do not rerun them.
+Complete likelihood recovery while Muse is still resident:
 
 ```bash
-npm run robustness:generate -- --profile muse-glimmer-30b --concurrency 32 --checkpoint-size 100
 npm run likelihood:score -- --scorer muse-glimmer-30b --include-robustness --concurrency 32 --checkpoint-size 200
 npm run checkpoint:once
 ```
@@ -287,5 +299,5 @@ git status --short --branch
 
 Create a completion tag only after `repro` succeeds and the final archive is
 mirrored. Milestone history through this update is recorded in
-`/content/handoff.md` and `git log`; pushed HEAD `ecb00f5` includes the Muse gate
-diagnosis/recovery milestone.
+`/content/handoff.md` and `git log`; pushed HEAD `d9ac4db` includes the Muse
+Unicode likelihood-alignment recovery.
