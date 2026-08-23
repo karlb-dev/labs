@@ -981,3 +981,17 @@ place and receive a later disposition.
   and `running` jobs as active and uses the queue schema's exact terminal work
   states. Impact: the false-positive stop changed no identity, prediction,
   score, evidence, or freeze row.
+
+- 2026-08-23T11:09:28.066Z — Audited pre-freeze metadata synchronization updated 6 non-model arm identities after prompt-contract v2; retained 720 unchanged dev/calibration predictions, archive 5a8a6bc4b50fe3e9c1029687a5f85d0a66eb5a096e9f690461042ae0d6f6944b, receipt d055460f8c2483a082df7761b6445790ddf0e7849844c8a71cd35184658e45d2.
+- 2026-08-23T11:09:51Z — The preceding campaign-freeze attempt had failed
+  closed at the first stale non-model arm hash, before thresholds, manifests,
+  freeze rows, status promotion, or target authorization were written. The
+  completed synchronization proved that all six affected arms differed only in
+  agent-contract metadata (and prompt-facing `runbook_search` schema metadata
+  for B2), while prompt markers, executable policies, packet/retrieval modes,
+  decode identity, and code paths were unchanged. It also proved zero protected
+  predictions, governed-target predictions/samples, active jobs, or active work
+  and retained the exact 720-row dev/calibration grid. All ten current campaign
+  arm hashes now match the registry. Impact: no prediction or score was changed;
+  the database checkpoint must be regenerated because the audited identity and
+  evidence rows were added after the prior restore test.
