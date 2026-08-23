@@ -57,6 +57,7 @@
     "campaign:replay": "node --import tsx scripts/replay-campaign.ts",
     "campaign:score": "node --import tsx scripts/score-predictions.ts",
     "campaign:control-compare": "node --import tsx scripts/compare-controls.ts",
+    "campaign:analyze": "node --import tsx scripts/analyze-campaign.ts",
     "gate:qwen-e2e": "node --import tsx scripts/qwen-smoke-e2e.ts",
     "campaign:freeze": "node --import tsx scripts/campaign-freeze.ts",
     "secrets:rotate": "node --import tsx scripts/rotate-local-secrets.ts",
