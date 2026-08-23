@@ -356,9 +356,14 @@ async function executeAttempt(input: {
           promptTokens = finiteInteger(envelope.usage?.prompt_tokens);
           completionTokens = finiteInteger(envelope.usage?.completion_tokens);
           totalTokens = finiteInteger(envelope.usage?.total_tokens);
-          const parsed = parseAgentResponse(content);
-          repairKind = parsed.repairKind;
-          parsedValue = parsed.value;
+          if (finishReason === "length") {
+            errorClass = "output_limit";
+            errorDetail = "Model service exhausted the governed completion-token budget";
+          } else {
+            const parsed = parseAgentResponse(content);
+            repairKind = parsed.repairKind;
+            parsedValue = parsed.value;
+          }
         }
       } catch (error) {
         if (error instanceof AgentResponseParseError) {

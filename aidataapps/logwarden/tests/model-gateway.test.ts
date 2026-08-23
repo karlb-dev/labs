@@ -44,6 +44,7 @@ describe("instrumented OpenAI-compatible gateway", () => {
     { route: "http-error", status: "failed", terminal: "retryable_failure", error: "http_error" },
     { route: "timeout", status: "failed", terminal: "model_timeout", error: "timeout" },
     { route: "truncated", status: "failed", terminal: "contract_rejected", error: "output_limit" },
+    { route: "finish-length", status: "failed", terminal: "contract_rejected", error: "output_limit" },
   ] as const) {
     it(`durably closes the ${testCase.route} route`, async () => {
       const fixture = await fixtureJournal(testCase.route);
@@ -115,16 +116,17 @@ function route(request: IncomingMessage, response: ServerResponse, counts: Map<s
     response.end(JSON.stringify({ choices: [{ message: { content: "x".repeat(2048) } }] }));
     return;
   }
+  if (name === "finish-length") return openAi(response, decision, undefined, "length");
   if (name === "reasoning") return openAi(response, decision, "retained private reasoning channel");
   openAi(response, decision);
 }
 
-function openAi(response: ServerResponse, value: unknown, reasoning?: string): void {
+function openAi(response: ServerResponse, value: unknown, reasoning?: string, finishReason = "stop"): void {
   const content = typeof value === "string" ? value : JSON.stringify(value);
   response.writeHead(200, { "content-type": "application/json", "x-request-id": "fake-service-request" });
   response.end(JSON.stringify({
     id: "fake-completion",
-    choices: [{ finish_reason: "stop", message: { role: "assistant", content, ...(reasoning === undefined ? {} : { reasoning }) } }],
+    choices: [{ finish_reason: finishReason, message: { role: "assistant", content, ...(reasoning === undefined ? {} : { reasoning }) } }],
     usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
   }));
 }

@@ -25,7 +25,6 @@ import {
   isToolName,
   loadToolRegistry,
   promptToolSchemas,
-  toolRegistrySha256,
   type ToolName,
   type ToolRegistry,
 } from "./tools.js";
@@ -75,10 +74,11 @@ export interface AgentLoopOptions {
   decode: Record<string, unknown>;
   embeddingEndpoint: string;
   embeddingProfile: EmbeddingProfile;
-  retrievalMode: RetrievalMode;
+  retrievalMode: RetrievalMode | "none";
   runDirectory: string;
   journal: FileTelemetryJournal;
   toolRegistry?: ToolRegistry;
+  policyVersion?: string;
   budget?: AgentLoopBudget;
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
@@ -211,6 +211,8 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentLoop
   validateBudget(budget);
   const registry = options.toolRegistry ?? loadToolRegistry();
   const allowedTools = new Set(allowedToolsForArm(options.arm, options.packet, registry));
+  const allowedToolSchemas = promptToolSchemas(registry, [...allowedTools]);
+  const allowedToolSchemasSha256 = hashJson(allowedToolSchemas);
   const messages = buildInitialAgentMessages({ arm: options.arm, packet: options.packet, registry, budget });
   const promptContractSha256 = sha256(messages[0]!.content.split("\n\nAgent arm:")[0]!);
   const startedAtUtc = new Date().toISOString();
@@ -227,13 +229,13 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentLoop
     retrievalMode: options.retrievalMode,
     budget,
     packetSha256: hashJson(options.packet),
-    toolRegistrySha256: toolRegistrySha256(registry),
+    toolRegistrySha256: allowedToolSchemasSha256,
   });
   const agentRunId = await createAgentRunEvidence(options.controlPool, {
     ...options.identity,
     traceId: root.traceId,
     promptContractSha256,
-    toolRegistrySha256: toolRegistrySha256(registry),
+    toolRegistrySha256: allowedToolSchemasSha256,
     startedAtUtc,
     loopBudget: {
       maxModelTurns: budget.maxModelTurns,
@@ -350,7 +352,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentLoop
           ...options.decode,
           chat_template_kwargs: options.modelProfile.chatTemplateKwargs,
         },
-        toolRegistry: promptToolSchemas(registry, [...allowedTools]),
+        toolRegistry: allowedToolSchemas,
         journal: options.journal,
         runDirectory: options.runDirectory,
         context: { ...context, traceId: root.traceId, parentSpanId: root.spanId },
@@ -494,7 +496,7 @@ export async function runAgentLoop(options: AgentLoopOptions): Promise<AgentLoop
         episodeId: options.identity.episodeId,
         decision: gateway.value,
         returnedChunks,
-        policyVersion: "policy-v1-building",
+        policyVersion: options.policyVersion ?? "policy-v1",
       });
       const persistFinished = await options.journal.endSpan(persistSpan, "success", decision);
       await persistAgentStepEvidence(options.controlPool, {
@@ -768,6 +770,7 @@ async function executeTool(
   parent: StartedSpan,
 ): Promise<ToolExecution> {
   if (tool === "runbook_search") {
+    if (options.retrievalMode === "none") throw new Error("runbook_search cannot execute with retrieval mode none");
     const result = await executeRunbookRetrieval({
       pool: options.toolPool,
       runId: options.identity.runId,

@@ -46,7 +46,7 @@ const evidence = {
   databaseBackup: await validatedReceipt(evidencePaths.databaseBackup),
 };
 assertEvidenceContracts(evidence);
-await assertBackupAfterPacketAudit();
+await assertBackupAfterEvidence();
 assertNoTargetChatContainer();
 
 const pool = await connect(config.databases.lab, config.databases.controlName, 600_000);
@@ -311,11 +311,19 @@ function assertEvidenceContracts(evidenceValue: typeof evidence): void {
   if (evidenceValue.qwenE2e.disposition !== "PASS") throw new Error("qwen-smoke end-to-end gate did not pass");
 }
 
-async function assertBackupAfterPacketAudit(): Promise<void> {
-  const [backup, audit, search, power] = await Promise.all([
-    stat(evidencePaths.databaseBackup), stat(evidencePaths.packetAudit), stat(evidencePaths.searchFreeze), stat(evidencePaths.power),
+async function assertBackupAfterEvidence(): Promise<void> {
+  const [backup, audit, search, power, qwenPort, qwenE2e, telemetry] = await Promise.all([
+    stat(evidencePaths.databaseBackup),
+    stat(evidencePaths.packetAudit),
+    stat(evidencePaths.searchFreeze),
+    stat(evidencePaths.power),
+    stat(evidencePaths.qwenPort),
+    stat(evidencePaths.qwenE2e),
+    stat(evidencePaths.telemetryReconciliation),
   ]);
-  if (backup.mtimeMs < Math.max(audit.mtimeMs, search.mtimeMs, power.mtimeMs)) throw new Error("Database checkpoint predates packet/search/power freeze evidence");
+  if (backup.mtimeMs < Math.max(audit.mtimeMs, search.mtimeMs, power.mtimeMs, qwenPort.mtimeMs, qwenE2e.mtimeMs, telemetry.mtimeMs)) {
+    throw new Error("Database checkpoint predates packet/search/power/Qwen/telemetry freeze evidence");
+  }
 }
 
 async function validatedReceipt(path: string, disposition?: string): Promise<Record<string, unknown>> {
