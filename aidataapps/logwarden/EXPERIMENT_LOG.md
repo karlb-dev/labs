@@ -1397,3 +1397,27 @@ place and receive a later disposition.
   `9024161ba18e9cde3ae50ea6052cd91be7279b495bd00f7e379599cf15eab5df`.
   Impact: durability only; both the negative Tier-1 and positive guided Tier-2
   OLMo evidence are preserved at the exact profile boundary.
+
+- 2026-08-23T18:20:53Z — Began Qwen 3.8 residency epoch
+  `de4674e9-3cc3-4104-84e9-036075be5f43` before service startup and loaded the
+  exact pinned `Qwen/Qwen3.8-27B` revision
+  `1d4bf0f2ff6012fd82039f2fa52739d0dd7c60c0` under image digest
+  `0a51ea5b4ae2dc5d81890e5173f54203d2a3ae0cfffe51b8fd2afd4391bfd967`
+  (vLLM 0.27.1). The 51.75 GiB checkpoint downloaded in 156.91 s and weights
+  loaded in 5.13 s; engine initialization took 124.14 s including 32.46 s of
+  compilation and a 40.10 s hybrid-GDN profiling pass. Frozen 0.78 residency
+  exposed 20.10 GiB / 286,720 tokens of KV cache (17.50x nominal 16K
+  concurrency). Transformers emitted two processor-docstring warnings labeled
+  `[ERROR]`; vLLM explicitly disabled all multimodal inputs, entered text-only
+  mode, and the fatal-signature audit passed. Impact: none; these retained lines
+  are non-fatal cold-start diagnostics for the exact frozen runtime.
+
+- 2026-08-23T18:23:46Z — Qwen 3.8 passed both cold and warm unconstrained
+  Tier-1 port gates, receipts
+  `520779ca4ec48f5b0b1d6c245d0bdf2722eb1d47d2f95526f69dffa366cd6efd`
+  and `b17b6f4cb8a28594fea036054bbe283538a79c929144d819737eb41313765881`.
+  Each gate recorded 9/9 successful `stop` requests, zero length/error/
+  preemption outcomes, 7,157 prompt and 1,845 generation tokens, 6/6 exact
+  repeated outputs, exact model/revision/image/profile/decode identities, and
+  approximately 80,104 MiB total GPU residency. Impact: Qwen 3.8 is authorized
+  for governed calibration replay; no resource or decode override is present.
