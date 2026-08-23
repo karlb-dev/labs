@@ -6,6 +6,7 @@ import { VllmGateway } from "../src/inference.js";
 import { maskNames, stripTemplateResidue } from "../src/prompt-bank.js";
 import { resolveRunDirectory } from "../src/run.js";
 import { styleVector } from "../src/style.js";
+import { embedWithCompatibility } from "./embedding-compat.js";
 
 interface EvaluationItem {
   sourceId: string;
@@ -95,16 +96,21 @@ try {
     SELECT evaluation_item_id,item_text FROM dbo.evaluation_items WHERE run_id=@run ORDER BY evaluation_item_id;`);
   const registry = JSON.parse(await readFile("data/manifests/model-registry-snapshot.json", "utf8")) as { embeddings: Record<string, { modelId: string; dimensions: number }> };
   const profiles = [
-    { id: "semantic1024-qwen-v1", registry: "qwen3-embedding-0.6b", baseUrl: config.inference.qwenEmbeddingBaseUrl },
-    { id: "semantic1024-bge-v1", registry: "bge-large-en-v1.5", baseUrl: config.inference.bgeEmbeddingBaseUrl },
+    { id: "semantic1024-qwen-v1", registry: "qwen3-embedding-0.6b", baseUrl: config.inference.qwenEmbeddingBaseUrl, truncatePromptTokens: undefined },
+    { id: "semantic1024-bge-v1", registry: "bge-large-en-v1.5", baseUrl: config.inference.bgeEmbeddingBaseUrl, truncatePromptTokens: 512 },
   ];
+  const inputRepairs: Array<{ representation: string; evaluationItemId: number; replacedCodeUnits: number }> = [];
   for (const profile of profiles) {
     const missing = await pool.request().input("run", sql.VarChar(120), runId).input("representation", sql.VarChar(80), profile.id).query<{ evaluation_item_id: number; item_text: string }>(`
       SELECT e.evaluation_item_id,e.item_text FROM dbo.evaluation_items e WHERE e.run_id=@run AND NOT EXISTS
       (SELECT 1 FROM dbo.evaluation_vectors v WHERE v.evaluation_item_id=e.evaluation_item_id AND v.representation_id=@representation) ORDER BY e.evaluation_item_id;`);
     const embedding = registry.embeddings[profile.registry]!; await gateway.ready(profile.baseUrl); let done = 0;
     for (const rows of batch(missing.recordset, 64)) {
-      const vectors = await gateway.embed(profile.baseUrl, embedding.modelId, embedding.dimensions, rows.map((row) => row.item_text));
+      const result = await embedWithCompatibility(gateway, { baseUrl: profile.baseUrl, modelId: embedding.modelId,
+        dimensions: embedding.dimensions, truncatePromptTokens: profile.truncatePromptTokens }, rows.map((row) => row.item_text));
+      const vectors = result.vectors;
+      for (const repair of result.repairedInputs) inputRepairs.push({ representation: profile.id,
+        evaluationItemId: rows[repair.index]!.evaluation_item_id, replacedCodeUnits: repair.replacedCodeUnits });
       const payload = rows.map((row, index) => { const vector = JSON.stringify(vectors[index]); return { id: row.evaluation_item_id, vector, hash: sha256(vector) }; });
       await pool.request().input("run", sql.VarChar(120), runId).input("representation", sql.VarChar(80), profile.id).input("dimensions", sql.Int, embedding.dimensions)
         .input("rows", sql.NVarChar(sql.MAX), JSON.stringify(payload)).query(`
@@ -127,7 +133,10 @@ try {
   const counts = await pool.request().input("run", sql.VarChar(120), runId).query<{ source_id: string; split_role: string; rows: number }>(
     "SELECT source_id,split_role,COUNT(*) rows FROM dbo.evaluation_items WHERE run_id=@run GROUP BY source_id,split_role ORDER BY source_id;");
   const manifest = { schemaVersion: 1, runId, campaignId: freeze.campaignId, campaignHash: freeze.campaignHash, counts: counts.recordset,
-    representations: ["semantic1024-qwen-v1", "semantic1024-bge-v1", "style512-v1"], itemCount: retained.recordset.length };
+    representations: ["semantic1024-qwen-v1", "semantic1024-bge-v1", "style512-v1"], itemCount: retained.recordset.length,
+    embeddingInputPolicies: { unicodeRepair: { unpairedSurrogateCodeUnits: "replace-with-U+FFFD" },
+      "semantic1024-qwen-v1": { truncation: null }, "semantic1024-bge-v1": { truncatePromptTokens: 512, truncationSide: "right" } },
+    inputRepairs };
   await writeFile(`${runDirectory}/manifests/evaluation-controls.json`, `${JSON.stringify({ ...manifest, manifestHash: hashJson(manifest) }, null, 2)}\n`);
   await writeFile(`${runDirectory}/raw/evaluation-controls.jsonl`, `${items.map((row) => JSON.stringify(row)).join("\n")}\n`);
   console.log(JSON.stringify(manifest, null, 2));

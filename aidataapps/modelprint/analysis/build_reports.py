@@ -70,7 +70,9 @@ save("F06","confusion_grid",conf,draw_conf,"Confusion counts for completed test-
 
 predictions=pd.read_parquet(run/"tables/predictions.parquet") if (run/"tables/predictions.parquet").exists() else pd.DataFrame();by_length=pd.DataFrame();coverage=pd.DataFrame();reliability=pd.DataFrame()
 if len(predictions):
- merged=predictions.merge(quality[["generation_id","length_band"]],on="generation_id",how="left");merged["correct"]=merged.model_profile_id==merged.predicted_model_profile_id;by_length=merged.groupby(["representation","suite","length_band"]).agg(rows=("correct","size"),accuracy=("correct","mean")).reset_index();curves=[]
+ # predictions.parquet already carries length_band from the probe evaluator;
+ # merging it from quality duplicated the column (suffixes) and broke the groupby.
+ merged=predictions.copy();merged["correct"]=merged.model_profile_id==merged.predicted_model_profile_id;by_length=merged.groupby(["representation","suite","length_band"]).agg(rows=("correct","size"),accuracy=("correct","mean")).reset_index();curves=[]
  for (representation,suite),frame in merged.groupby(["representation","suite"]):
   frame=frame.sort_values("confidence",ascending=False)
   for fraction in np.linspace(.05,1,20):curves.append({"representation":representation,"suite":suite,"coverage":fraction,"selective_accuracy":float(frame.head(max(1,int(len(frame)*fraction))).correct.mean())})

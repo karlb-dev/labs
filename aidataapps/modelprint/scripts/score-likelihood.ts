@@ -55,7 +55,8 @@ async function score(job: ScoreJob, prompted: boolean) {
     const values = span.values;
     const ll = values.reduce((a, b) => a + b, 0); return { prompted, ll, tokens: values.length, chars: job.final_text.length,
       bitsPerChar: -ll / Math.LN2 / Math.max(job.final_text.length, 1), detail: { prefixTokens: span.firstTokenIndex, fullTokens: tokens.length,
-        assistantCharStart: span.assistantCharStart, assistantCharEnd: span.assistantCharEnd, slicing: "decoded-character-overlap-v1" } };
+        assistantCharStart: span.assistantCharStart, assistantCharEnd: span.assistantCharEnd,
+        slicing: span.alignment === "exact" ? "decoded-character-overlap-v1" : "decoded-character-overlap-v2-byte-fallback" } };
   }
   const response = await post<CompletionScoreResponse>("/v1/completions", { model: scorerKey, prompt: job.final_text, temperature: 0, top_p: 1, top_k: 0,
     min_p: 0, repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, seed: 0, max_tokens: 0, echo: true, logprobs: 1, stop: [] });
@@ -74,11 +75,15 @@ async function mapConcurrent<T, R>(items: T[], count: number, fn: (item: T) => P
 try {
   const models = await fetch(`${rootUrl}/v1/models`).then((response) => response.json()) as { data?: Array<{ id?: string }> };
   if (!models.data?.some((row) => row.id === scorerKey)) throw new Error(`STOP_PORT: ${scorerKey} is not resident`);
+  const emptyFinal = await pool.request().input("includeHv", sql.Bit, includeHv).query<{ rows: number }>(`
+    SELECT COUNT(*) rows FROM dbo.generations g JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id
+    WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND LEN(g.final_text)=0;`);
+  const unavailableEmptyFinal = Number(emptyFinal.recordset[0]?.rows ?? 0);
   const query = await pool.request().input("scorer", sql.VarChar(80), scorerKey)
     .input("includeHv", sql.Bit, includeHv).input("limit", sql.Int, limit).query<ScoreJob>(`
       SELECT TOP (@limit) g.generation_id,v.rendered_text AS prompt,g.final_text,g.model_profile_id AS source_model,JSON_VALUE(d.config_json,'$.key') AS decode_key
       FROM dbo.generations g JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id
-      WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND
+      WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND LEN(g.final_text)>0 AND
         ((NOT EXISTS(SELECT 1 FROM dbo.likelihood_scores l WHERE l.generation_id=g.generation_id AND l.scoring_model_profile_id=@scorer AND l.prompted=1)) OR
          (NOT EXISTS(SELECT 1 FROM dbo.likelihood_scores l WHERE l.generation_id=g.generation_id AND l.scoring_model_profile_id=@scorer AND l.prompted=0)))
       ORDER BY g.generation_id;`);
@@ -100,12 +105,30 @@ try {
         (generationId bigint '$.generationId',scorer varchar(80) '$.scorer',prompted bit '$.prompted',ll float '$.ll',tokens int '$.tokens',chars int '$.chars',bitsPerChar float '$.bitsPerChar',runId varchar(120) '$.runId') s
       WHERE NOT EXISTS(SELECT 1 FROM dbo.likelihood_scores l WHERE l.generation_id=s.generationId AND l.scoring_model_profile_id=s.scorer AND l.prompted=s.prompted);`);
     done += outcomes.filter((row) => !row.error).length; failures += outcomes.filter((row) => row.error).length;
-    const checkpoint = { scorer: scorerKey, selected: query.recordset.length, done, failures, offset: offset + jobs.length, updatedAt: new Date().toISOString() };
+    const checkpoint = { scorer: scorerKey, selected: query.recordset.length, unavailableEmptyFinal, done, failures, offset: offset + jobs.length, updatedAt: new Date().toISOString() };
     await writeFile(`${runDirectory}/checkpoints/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...checkpoint, hash: hashJson(checkpoint) }, null, 2)}\n`);
     console.log(JSON.stringify(checkpoint));
   }
-  const manifest = { schemaVersion: 1, scorer: scorerKey, campaignIds, selected: query.recordset.length, done, failures,
-    includeHv, includeRobustness, rawPath, rawSha256: query.recordset.length ? await hashFile(rawPath) : null, finishedAt: new Date().toISOString() };
+  const persisted = await pool.request().input("scorer", sql.VarChar(80), scorerKey).input("includeHv", sql.Bit, includeHv)
+    .query<{ eligible_nonempty: number; prompted_persisted: number; unprompted_persisted: number }>(`
+      WITH eligible AS (
+        SELECT g.generation_id FROM dbo.generations g JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id
+        WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND LEN(g.final_text)>0
+      )
+      SELECT COUNT(*) eligible_nonempty,
+        SUM(CASE WHEN prompted.generation_id IS NOT NULL THEN 1 ELSE 0 END) prompted_persisted,
+        SUM(CASE WHEN unprompted.generation_id IS NOT NULL THEN 1 ELSE 0 END) unprompted_persisted
+      FROM eligible e
+      LEFT JOIN dbo.likelihood_scores prompted ON prompted.generation_id=e.generation_id AND prompted.scoring_model_profile_id=@scorer AND prompted.prompted=1
+      LEFT JOIN dbo.likelihood_scores unprompted ON unprompted.generation_id=e.generation_id AND unprompted.scoring_model_profile_id=@scorer AND unprompted.prompted=0;`);
+  const persistedRow = persisted.recordset[0];
+  const eligibleNonEmpty = Number(persistedRow?.eligible_nonempty ?? 0);
+  const promptedPersisted = Number(persistedRow?.prompted_persisted ?? 0);
+  const unpromptedPersisted = Number(persistedRow?.unprompted_persisted ?? 0);
+  const completeness = { eligibleNonEmpty, unavailableEmptyFinal, promptedPersisted, unpromptedPersisted,
+    missingPrompted: eligibleNonEmpty - promptedPersisted, missingUnprompted: eligibleNonEmpty - unpromptedPersisted };
+  const manifest = { schemaVersion: 1, scorer: scorerKey, campaignIds, selected: query.recordset.length, unavailableEmptyFinal, done, failures,
+    includeHv, includeRobustness, completeness, rawPath, rawSha256: await hashFile(rawPath).catch(() => null), finishedAt: new Date().toISOString() };
   await writeFile(`${runDirectory}/manifests/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...manifest, manifestHash: hashJson(manifest) }, null, 2)}\n`);
   console.log(JSON.stringify(manifest, null, 2)); if (failures) process.exitCode = 2;
 } finally { await pool.close(); }

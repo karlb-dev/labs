@@ -17,6 +17,29 @@ describe("likelihood span slicing", () => {
     expect(result?.tokenCount).toBe(2);
     expect(result?.values).toEqual([-0.2, -0.3]);
     expect(result?.firstTokenIndex).toBe(1);
+    expect(result?.alignment).toBe("exact");
+  });
+
+  it("aligns Unicode byte-fallback replacement tokens without relaxing ASCII", () => {
+    const result = sliceAssistantLogprobs([1, 2, 3, 4, 5], [
+      { "1": { logprob: -0.1, decoded_token: "<assistant>" } },
+      { "2": { logprob: -0.2, decoded_token: "###" } },
+      { "3": { logprob: -0.3, decoded_token: "�" } },
+      { "4": { logprob: -0.4, decoded_token: "️ warning" } },
+      { "5": { logprob: -0.5, decoded_token: "<|im_end|>" } },
+    ], "### ⚠️ warning");
+    expect(result?.tokenCount).toBe(3);
+    expect(result?.values).toEqual([-0.2, -0.3, -0.4]);
+    expect(result?.alignment).toBe("unicode-byte-fallback");
+  });
+
+  it("does not let a replacement token hide an ASCII mismatch", () => {
+    const result = sliceAssistantLogprobs([1, 2, 3], [
+      { "1": { logprob: -0.1, decoded_token: "<assistant>" } },
+      { "2": { logprob: -0.2, decoded_token: "bad�text" } },
+      { "3": { logprob: -0.3, decoded_token: "<|im_end|>" } },
+    ], "badXtext");
+    expect(result).toBeNull();
   });
 });
 

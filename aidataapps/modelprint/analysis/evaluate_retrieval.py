@@ -85,16 +85,18 @@ def thread_conn():
     return thread_state.conn
 
 def exact_one(item, definition):
-    generation_id, prompt_group_id, vector_json = item; started = time.perf_counter(); cursor = thread_conn().cursor(as_dict=True)
-    cursor.execute(f"""WITH candidates AS (SELECT TOP ({args.candidate_k}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,
-      VECTOR_DISTANCE('cosine',embedding,CAST(%s AS vector({definition['dim']}))) distance FROM dbo.{definition['table']}
-      WHERE {definition['where']} AND prompt_group_id<>%s ORDER BY distance,vector_id), ranked AS
-      (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,
-       ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
-      SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id""",
-      (vector_json, prompt_group_id)); rows = list(cursor); latency = (time.perf_counter()-started)*1000
-    if len(rows) < args.k: raise RuntimeError(f"generation {generation_id}: exact search returned {len(rows)}/{args.k}")
-    return generation_id, latency, rows
+    generation_id, prompt_group_id, vector_json = item; started = time.perf_counter(); cursor = thread_conn().cursor(as_dict=True); candidate_k=args.candidate_k
+    while True:
+      cursor.execute(f"""WITH candidates AS (SELECT TOP ({candidate_k}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,
+        VECTOR_DISTANCE('cosine',embedding,CAST(%s AS vector({definition['dim']}))) distance FROM dbo.{definition['table']}
+        WHERE {definition['where']} AND prompt_group_id<>%s ORDER BY distance,vector_id), ranked AS
+        (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,
+         ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
+        SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id OPTION (MAXDOP 1)""",
+        (vector_json, prompt_group_id)); rows = list(cursor)
+      if len(rows)>=args.k:return generation_id,(time.perf_counter()-started)*1000,rows,candidate_k
+      if candidate_k>=2000:raise RuntimeError(f"generation {generation_id}: exact search returned {len(rows)}/{args.k} after {candidate_k} candidates")
+      candidate_k=min(2000,candidate_k*2)
 
 def interval(frame, prediction, replicates, rng):
     groups = frame.prompt_group_id.unique(); indices = {group:np.flatnonzero(frame.prompt_group_id.to_numpy()==group) for group in groups}; values=[]
@@ -103,7 +105,7 @@ def interval(frame, prediction, replicates, rng):
         values.append(f1_score(frame.true_label.to_numpy()[take],prediction[take],average="macro",labels=np.arange(len(models)),zero_division=0))
     return [float(np.quantile(values,.025)),float(np.quantile(values,.975))]
 
-all_metrics={"schemaVersion":1,"runId":run_id,"campaignId":primary,"k":args.k,"candidateK":args.candidate_k,"tau":args.tau,"representations":{}}
+all_metrics={"schemaVersion":1,"runId":run_id,"campaignId":primary,"k":args.k,"candidateK":args.candidate_k,"candidateKPolicy":"double-on-dedup-shortfall-to-2000","tau":args.tau,"representations":{}}
 all_neighbors=[]; all_predictions=[]; equivalence_result=None
 for rep_index,(name,definition) in enumerate(representations.items()):
     vector_rows=pd.read_sql(definition["query"],conn); vector_map=dict(zip(vector_rows.generation_id,vector_rows.vector))
@@ -111,15 +113,18 @@ for rep_index,(name,definition) in enumerate(representations.items()):
     if selected.empty: continue
     selected["vector"] = selected.generation_id.map(vector_map)
     selected_by_id = selected.set_index("generation_id")
-    started_at=pd.Timestamp.utcnow(); cursor=conn.cursor(); query_hash=hashlib.sha256((name+definition["table"]+definition["where"]).encode()).hexdigest()
+    started_at=pd.Timestamp.utcnow(); cursor=conn.cursor(); query_hash=hashlib.sha256((name+definition["table"]+definition["where"]+"adaptive-candidate-to-2000").encode()).hexdigest()
     cursor.execute("""INSERT dbo.search_runs(run_id,representation_id,requested_search_mode,actual_search_mode,index_name,index_version,metric,candidate_k,returned_k,fallback_reason,query_plan_hash,started_at)
       VALUES(%s,%s,'exact','exact',NULL,NULL,'cosine',%s,%s,NULL,%s,%s); SELECT SCOPE_IDENTITY()""",
       (run_id,name,args.candidate_k,args.k,query_hash,started_at.to_pydatetime())); search_run=int(cursor.fetchone()[0]); conn.commit()
     items=[(int(row.generation_id),row.prompt_group_id,row.vector) for row in selected.itertuples()]
     with ThreadPoolExecutor(max_workers=args.workers) as executor: results=list(executor.map(lambda item:exact_one(item,definition),items))
     neighbor_records=[]; latency_records=[]
-    for generation_id,latency,neighbors in results:
-        query_meta=selected_by_id.loc[generation_id]; latency_records.append({"representation":name,"query_id":generation_id,"suite":query_meta.suite,"latency_ms":latency})
+    maximum_candidate_used=max(row[3] for row in results)
+    if maximum_candidate_used>args.candidate_k:
+        cursor.execute("UPDATE dbo.search_runs SET candidate_k=%s,fallback_reason=%s WHERE search_run_id=%s",(maximum_candidate_used,"exact candidate expansion after prompt/text dedup shortfall",search_run));conn.commit()
+    for generation_id,latency,neighbors,candidate_used in results:
+        query_meta=selected_by_id.loc[generation_id]; latency_records.append({"representation":name,"query_id":generation_id,"suite":query_meta.suite,"latency_ms":latency,"candidate_k":candidate_used})
         for rank,row in enumerate(neighbors,1):
             neighbor_records.append({"search_run_id":search_run,"query_id":generation_id,"rank":rank,"neighbor_id":int(row["vector_id"]),"distance":float(row["distance"]),
               "neighbor_model_profile_id":row["model_profile_id"],"neighbor_prompt_group_id":row["prompt_group_id"],"representation":name,"suite":query_meta.suite})
@@ -136,7 +141,7 @@ for rep_index,(name,definition) in enumerate(representations.items()):
     corpus=pd.read_sql(f"SELECT vector_id,prompt_group_id,model_profile_id FROM dbo.{definition['table']} WHERE {definition['where']}",conn)
     corpus_labels=corpus.model_profile_id.map({model:i for i,model in enumerate(models)}).to_numpy(); corpus_pos={int(value):i for i,value in enumerate(corpus.vector_id)}
     corpus_groups=[np.asarray(indices,dtype=int) for indices in corpus.groupby("prompt_group_id").indices.values()]
-    rep_metrics={"searchRunId":search_run,"corpusRows":len(corpus),"queryRows":len(selected),"suites":{},"latencyMs":{"median":float(latencies.latency_ms.median()),"p95":float(latencies.latency_ms.quantile(.95))}}
+    rep_metrics={"searchRunId":search_run,"corpusRows":len(corpus),"queryRows":len(selected),"candidateKMaximumUsed":maximum_candidate_used,"suites":{},"latencyMs":{"median":float(latencies.latency_ms.median()),"p95":float(latencies.latency_ms.quantile(.95))}}
     for suite,frame in selected.groupby("suite"):
         frame=frame.reset_index(drop=True); query_position={int(value):i for i,value in enumerate(frame.generation_id)}; probability=np.zeros((len(frame),len(models)))
         suite_votes=votes[votes.query_id.isin(query_position)]
@@ -182,7 +187,7 @@ for rep_index,(name,definition) in enumerate(representations.items()):
         ids=corpus_vectors.vector_id.to_numpy(); groups=corpus_vectors.prompt_group_id.to_numpy(); sql_map={int(q):part.sort_values('rank') for q,part in neighbors.groupby('query_id')}; matched=0; max_error=0.0; checked=0
         for row in sample.itertuples():
             q=np.asarray(json.loads(row.vector),dtype=np.float32);q/=max(np.linalg.norm(q),1e-12);distance=1-matrix@q; allowed=np.flatnonzero(groups!=row.prompt_group_id)
-            order=allowed[np.lexsort((ids[allowed],distance[allowed]))[:args.candidate_k]]; seen=set(); chosen=[]
+            order=allowed[np.lexsort((ids[allowed],distance[allowed]))[:maximum_candidate_used]]; seen=set(); chosen=[]
             for pos in order:
                 if groups[pos] in seen: continue
                 seen.add(groups[pos]);chosen.append(pos)

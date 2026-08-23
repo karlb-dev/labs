@@ -40,29 +40,41 @@ thread_state=threading.local()
 def thread_conn():
  if not hasattr(thread_state,"conn"):thread_state.conn=pymssql.connect(**db,autocommit=True)
  return thread_state.conn
+def chunk_query_id(generation_id,segment_id):
+ value=(int(generation_id)<<32)|int(segment_id)
+ if value>9223372036854775807:raise ValueError("generation/segment composite exceeds BIGINT")
+ return value
 def exact_one(row):
- started=time.perf_counter();cursor=thread_conn().cursor(as_dict=True);cursor.execute(f"""WITH candidates AS (SELECT TOP ({args.candidate_k}) c.vector_id,c.model_profile_id,c.prompt_group_id,c.text_artifact_id,
-  VECTOR_DISTANCE('cosine',c.embedding,CAST(%s AS vector(1024))) distance FROM dbo.search_segment_train c JOIN dbo.output_segments o ON o.segment_id=c.segment_id
-  WHERE o.segmenter_id=%s AND c.prompt_group_id<>%s ORDER BY distance,c.vector_id), ranked AS
-  (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
-  SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id""",
-  (row.vector,row.segmenter_id,row.prompt_group_id));neighbors=list(cursor);return int(row.segment_id),int(row.generation_id),(time.perf_counter()-started)*1000,neighbors
+ started=time.perf_counter();cursor=thread_conn().cursor(as_dict=True);candidate_k=args.candidate_k
+ while True:
+  cursor.execute(f"""WITH candidates AS (SELECT TOP ({candidate_k}) c.vector_id,c.model_profile_id,c.prompt_group_id,c.text_artifact_id,
+   VECTOR_DISTANCE('cosine',c.embedding,CAST(%s AS vector(1024))) distance FROM dbo.search_segment_train c JOIN dbo.output_segments o ON o.segment_id=c.segment_id
+   WHERE o.segmenter_id=%s AND c.prompt_group_id<>%s ORDER BY distance,c.vector_id), ranked AS
+   (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rn_prompt,ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rn_text FROM candidates)
+      SELECT TOP ({args.k}) vector_id,model_profile_id,prompt_group_id,distance FROM ranked WHERE rn_prompt=1 AND rn_text=1 ORDER BY distance,vector_id OPTION (MAXDOP 1)""",
+   (row.vector,row.segmenter_id,row.prompt_group_id));neighbors=list(cursor)
+  if len(neighbors)>=args.k:return chunk_query_id(row.generation_id,row.segment_id),int(row.segment_id),int(row.generation_id),(time.perf_counter()-started)*1000,neighbors,candidate_k
+  if candidate_k>=2000:raise RuntimeError(f"generation {row.generation_id} segment {row.segment_id}: exact chunk search returned {len(neighbors)}/{args.k} after {candidate_k} candidates")
+  candidate_k=min(2000,candidate_k*2)
 cursor=conn.cursor();all_metrics={"schemaVersion":1,"runId":run_id,"campaignIds":campaign_ids,"k":args.k,"candidateK":args.candidate_k,"maxPerSuite":args.max_per_suite,"segmenters":{}};predictions=[];neighbor_export=[]
 for segmenter,query_rows in segments.groupby("segmenter_id"):
  query_rows=query_rows.sort_values(["generation_id","segment_id"]);cursor.execute("""INSERT dbo.search_runs(run_id,representation_id,requested_search_mode,actual_search_mode,index_version,metric,candidate_k,returned_k,started_at)
-  VALUES(%s,%s,'exact','exact','none','cosine',%s,%s,SYSUTCDATETIME()); SELECT SCOPE_IDENTITY()""",(run_id,f"chunk:{segmenter}",args.candidate_k,args.k));search_run=int(cursor.fetchone()[0]);conn.commit()
+ VALUES(%s,%s,'exact','exact','none','cosine',%s,%s,SYSUTCDATETIME()); SELECT SCOPE_IDENTITY()""",(run_id,f"chunk:{segmenter}",args.candidate_k,args.k));search_run=int(cursor.fetchone()[0]);conn.commit()
  with ThreadPoolExecutor(max_workers=args.workers) as executor:results=list(executor.map(exact_one,[row for row in query_rows.itertuples()]))
+ maximum_candidate_used=max(row[5] for row in results)
+ if maximum_candidate_used>args.candidate_k:
+  cursor.execute("UPDATE dbo.search_runs SET candidate_k=%s,fallback_reason=%s WHERE search_run_id=%s",(maximum_candidate_used,"exact candidate expansion after prompt/text dedup shortfall",search_run));conn.commit()
  scores={};latencies=[];neighbor_labels={};neighbor_groups={};neighbor_artifacts={}
- for segment_id,generation_id,latency,neighbors in results:
-  latencies.append(latency);neighbor_labels[segment_id]=[]
+ for query_id,segment_id,generation_id,latency,neighbors,candidate_used in results:
+  latencies.append(latency);neighbor_labels[query_id]=[]
   for rank,row in enumerate(neighbors):
    weight=float(np.exp(-float(row["distance"])/.10));scores.setdefault(generation_id,np.zeros(len(models)))[models.index(row["model_profile_id"])]+=weight
-   neighbor_labels[segment_id].append((int(row["vector_id"]),row["model_profile_id"],weight));neighbor_export.append({"search_run_id":search_run,"segmenter_id":segmenter,"segment_id":segment_id,"generation_id":generation_id,"rank":rank+1,**row})
+   neighbor_labels[query_id].append((int(row["vector_id"]),row["model_profile_id"],weight));neighbor_export.append({"search_run_id":search_run,"query_id":query_id,"segmenter_id":segmenter,"segment_id":segment_id,"generation_id":generation_id,"candidate_k":candidate_used,"rank":rank+1,**row})
    cursor.execute("INSERT dbo.neighbor_results(search_run_id,query_id,rank,neighbor_id,distance,neighbor_model_profile_id,neighbor_prompt_group_id) VALUES(%s,%s,%s,%s,%s,%s,%s)",
-    (search_run,segment_id,rank+1,row["vector_id"],row["distance"],row["model_profile_id"],row["prompt_group_id"]))
+    (search_run,query_id,rank+1,row["vector_id"],row["distance"],row["model_profile_id"],row["prompt_group_id"]))
  cursor.execute("UPDATE dbo.search_runs SET finished_at=SYSUTCDATETIME() WHERE search_run_id=%s",(search_run,));conn.commit()
  frame=meta[meta.generation_id.isin(scores)].copy().sort_values("generation_id").reset_index(drop=True);prob=np.stack([scores[int(value)]/max(scores[int(value)].sum(),1e-12) for value in frame.generation_id]);truth=frame.model_profile_id.map({model:index for index,model in enumerate(models)}).to_numpy();pred=prob.argmax(1)
- rep={"searchRunId":search_run,"queryGenerations":len(frame),"querySegments":len(query_rows),"latencyMs":{"p50":float(np.median(latencies)),"p95":float(np.quantile(latencies,.95))},"suites":{}}
+ rep={"searchRunId":search_run,"queryGenerations":len(frame),"querySegments":len(query_rows),"queryIdentity":"(generation_id << 32) | segment_id","candidateKMaximumUsed":maximum_candidate_used,"latencyMs":{"p50":float(np.median(latencies)),"p95":float(np.quantile(latencies,.95))},"suites":{}}
  # Corpus labels are permuted at the text-artifact level within prompt group so every segment of an output retains one shuffled label.
  corpus=pd.read_sql("""SELECT c.vector_id,c.text_artifact_id,c.prompt_group_id,c.model_profile_id FROM dbo.search_segment_train c JOIN dbo.output_segments o ON o.segment_id=c.segment_id WHERE o.segmenter_id=%s""",conn,params=(segmenter,))
  artifact=corpus.drop_duplicates(["text_artifact_id"]);artifact_groups=[np.asarray(values,dtype=int) for values in artifact.groupby("prompt_group_id").indices.values()];artifact_labels=artifact.model_profile_id.map({m:i for i,m in enumerate(models)}).to_numpy();vector_artifact=dict(zip(corpus.vector_id,corpus.text_artifact_id));artifact_position={int(value):index for index,value in enumerate(artifact.text_artifact_id)}
@@ -81,7 +93,7 @@ for segmenter,query_rows in segments.groupby("segmenter_id"):
     part=shuffled_truth[values].copy();rng.shuffle(part);shuffled_truth[values]=part
    null_score=np.zeros((len(suite_frame),len(models)));generation_position={int(value):position for position,value in enumerate(suite_frame.generation_id)}
    for row in query_rows[query_rows.generation_id.isin(suite_frame.generation_id)].itertuples():
-    for vector_id,_,weight in neighbor_labels[int(row.segment_id)]:null_score[generation_position[int(row.generation_id)],shuffled[artifact_position[vector_artifact[vector_id]]]]+=weight
+    for vector_id,_,weight in neighbor_labels[chunk_query_id(row.generation_id,row.segment_id)]:null_score[generation_position[int(row.generation_id)],shuffled[artifact_position[vector_artifact[vector_id]]]]+=weight
    null.append(f1_score(shuffled_truth,null_score.argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0))
   metric={"rows":len(suite_frame),"groups":int(suite_frame.prompt_group_id.nunique()),"accuracy":float(accuracy_score(local_truth,local_pred)),
    "macroF1":float(f1_score(local_truth,local_pred,average="macro",labels=np.arange(len(models)),zero_division=0)),"macroF1Ci95":[float(np.quantile(boot,.025)),float(np.quantile(boot,.975))],

@@ -20,6 +20,7 @@ from threadpoolctl import threadpool_limits
 SEED=20260822
 parser=argparse.ArgumentParser();parser.add_argument("--run");parser.add_argument("--tier",default="full",choices=["smoke","dev","standard","full"])
 parser.add_argument("--permutations",type=int,default=200);parser.add_argument("--bootstrap",type=int,default=1000);parser.add_argument("--jobs",type=int,default=12)
+parser.add_argument("--resume-completed",action="store_true",help="Reuse a representation only when its fitted model and complete null tables exist")
 parser.add_argument("--representations",help="Comma-separated IDs; default all available");args=parser.parse_args()
 lab=Path(__file__).resolve().parents[1];run=Path(args.run or lab/(lab/".current-run").read_text().strip()).resolve()
 freeze=json.loads((run/"manifests/campaign-freeze.json").read_text());primary=int(freeze["campaignId"]);models=freeze["campaign"]["profiles"];run_id=run.name
@@ -97,6 +98,7 @@ if "semantic1024-qwen-raw-final-v1" in representations and "style512-raw-final-v
       INSERT dbo.fingerprint_vectors(generation_id,representation_id,projection_manifest_hash,embedding,created_by_run) VALUES(%s,%s,%s,CAST(%s AS vector(64)),%s)""",
       [(r[0],r[1],*r) for r in records[start:start+500]]);conn.commit()
 else:projection_hash=None
+representation_indices={name:index for index,name in enumerate(representations)}
 if args.representations:
   requested=args.representations.split(",");missing=set(requested)-set(representations)
   if missing:raise SystemExit(f"Unavailable representations: {sorted(missing)}")
@@ -122,13 +124,16 @@ def reliability_bins(truth,prob,bins=15):
   return output
 def conformal_q(prob,truth,alpha=.1):
   score=1-prob[np.arange(len(truth)),truth];level=min(1,math.ceil((len(score)+1)*(1-alpha))/len(score));return float(np.quantile(score,level,method="higher"))
-def pipeline(alpha,seed):return make_pipeline(StandardScaler(),SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True))
+def classifier(alpha,seed):return SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True)
+def pipeline(alpha,seed):return make_pipeline(StandardScaler(),classifier(alpha,seed))
 def choose_alpha(X,y,mask,groups):
-  indices=np.flatnonzero(mask);splitter=GroupKFold(n_splits=3);best=None
-  for alpha in [1e-5,1e-4,1e-3]:
-    scores=[]
-    for left,right in splitter.split(X[indices],y[indices],groups[indices]):
-      model=pipeline(alpha,SEED);model.fit(X[indices[left]],y[indices[left]]);scores.append(f1_score(y[indices[right]],model.predict(X[indices[right]]),average="macro",labels=np.arange(len(models)),zero_division=0))
+  indices=np.flatnonzero(mask);folds=list(GroupKFold(n_splits=3).split(X[indices],y[indices],groups[indices]));alphas=[1e-5,1e-4,1e-3];best=None
+  def one_cv(alpha,left,right):
+    with threadpool_limits(limits=1):
+      model=pipeline(alpha,SEED);model.fit(X[indices[left]],y[indices[left]]);return f1_score(y[indices[right]],model.predict(X[indices[right]]),average="macro",labels=np.arange(len(models)),zero_division=0)
+  values=Parallel(n_jobs=min(args.jobs,len(alphas)*len(folds)),prefer="threads")(delayed(one_cv)(alpha,left,right) for alpha in alphas for left,right in folds)
+  for alpha_index,alpha in enumerate(alphas):
+    scores=values[alpha_index*len(folds):(alpha_index+1)*len(folds)]
     candidate=(float(np.mean(scores)),-alpha)
     if best is None or candidate>best[0]:best=(candidate,alpha,scores)
   return best[1],best[2]
@@ -160,18 +165,47 @@ def permute_labels(y,groups,rng):
 
 y=base.label.to_numpy();groups=base.prompt_group_id.to_numpy();results={"schemaVersion":2,"runId":run_id,"campaignIds":campaign_ids,"campaignHash":freeze["campaignHash"],
  "tier":args.tier,"models":models,"rows":len(base),"dataRoles":{"train":int(train.sum()),"calibration":int(cal.sum()),**{key:int(mask.sum()) for key,mask in suite_masks.items()}},
- "classifier":"standardized-sgd-multinomial-logistic","permutations":args.permutations,"bootstrap":args.bootstrap,"representations":{}}
+ "classifier":"standardized-sgd-multinomial-logistic","permutations":args.permutations,"bootstrap":args.bootstrap,
+ "execution":{"jobs":args.jobs,"resumeCompleted":args.resume_completed,"resumedRepresentations":[],"resumedResultCheckpoints":[],"resumedSuiteNulls":[],"resumedLofoNulls":[],"resumedFamilyNulls":[],"skippedIneligibleFamilyNullFits":0},"representations":{}}
 prediction_frames=[];cursor=conn.cursor();artifact_paths=[]
-for rep_index,(name,(X,available)) in enumerate(representations.items()):
+for name,(X,available) in representations.items():
+  rep_index=representation_indices[name];prediction_checkpoint_start=len(prediction_frames)
   fit_mask=train&available;cal_mask=cal&available
   if len(set(y[fit_mask]))<len(models) or len(set(y[cal_mask]))<len(models):continue
-  alpha,cv_scores=choose_alpha(X,y,fit_mask,groups);model=pipeline(alpha,SEED);model.fit(X[fit_mask],y[fit_mask]);temperature=fit_temp(model.decision_function(X[cal_mask]),y[cal_mask])
-  cal_prob=softmax(model.decision_function(X[cal_mask]),temperature);q=conformal_q(cal_prob,y[cal_mask]);active_suites={key:(mask&available) for key,mask in suite_masks.items() if (mask&available).sum()}
-  def one_null(index):
-    with threadpool_limits(limits=1):
-      rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[fit_mask],shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(X[cal_mask]),shuffled[cal_mask])
-      return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(X[mask]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
-  null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
+  active_suites={key:(mask&available) for key,mask in suite_masks.items() if (mask&available).sum()};model_path=run/f"manifests/probe-{name}.pkl"
+  suite_null_paths={suite:run/f"tables/permutation-probe-{name}-{suite}.csv" for suite in active_suites};lofo_null_path=run/f"tables/permutation-probe-{name}-lofo.csv";result_checkpoint_path=run/f"manifests/probe-result-{name}.pkl"
+  resume_ready=bool(args.resume_completed and model_path.exists() and lofo_null_path.exists() and all(path.exists() for path in suite_null_paths.values()))
+  if resume_ready and result_checkpoint_path.exists():
+    saved=pickle.loads(result_checkpoint_path.read_bytes());artifact_hashes={"model":hashlib.sha256(model_path.read_bytes()).hexdigest(),"lofo":hashlib.sha256(lofo_null_path.read_bytes()).hexdigest(),**{f"suite:{suite}":hashlib.sha256(path.read_bytes()).hexdigest() for suite,path in suite_null_paths.items()}}
+    if saved.get("schemaVersion")!=1 or saved.get("representation")!=name or saved.get("campaignHash")!=freeze["campaignHash"] or saved.get("models")!=models or saved.get("tier")!=args.tier or saved.get("permutations")!=args.permutations or saved.get("bootstrap")!=args.bootstrap or saved.get("rows")!=len(base) or saved.get("artifactHashes")!=artifact_hashes or not isinstance(saved.get("predictions"),pd.DataFrame):raise SystemExit(f"Representation result checkpoint drift for {name}")
+    results["representations"][name]=saved["result"];prediction_frames.append(saved["predictions"]);artifact_paths.append(str(model_path));results["execution"]["resumedRepresentations"].append(name);results["execution"]["resumedResultCheckpoints"].append(name);continue
+  if resume_ready:
+    results["execution"]["resumedRepresentations"].append(name)
+    model_info=pickle.loads(model_path.read_bytes())
+    if model_info.get("models")!=models:raise SystemExit(f"Resume model labels drift for {name}")
+    model=model_info["pipeline"];alpha=float(model_info["alpha"]);temperature=float(model_info["temperature"]);q=float(model_info["conformalQ"])
+    selected_alpha,cv_scores=choose_alpha(X,y,fit_mask,groups)
+    if selected_alpha!=alpha:raise SystemExit(f"Resume alpha drift for {name}: {selected_alpha} != {alpha}")
+    null_columns={suite:pd.read_csv(path)["value"].tolist() for suite,path in suite_null_paths.items()}
+    if any(len(values)!=args.permutations for values in null_columns.values()):raise SystemExit(f"Incomplete suite null checkpoint for {name}")
+    null_rows=[{suite:null_columns[suite][index] for suite in active_suites} for index in range(args.permutations)]
+  else:
+    alpha,cv_scores=choose_alpha(X,y,fit_mask,groups);model=pipeline(alpha,SEED);model.fit(X[fit_mask],y[fit_mask]);temperature=fit_temp(model.decision_function(X[cal_mask]),y[cal_mask])
+    cal_prob=softmax(model.decision_function(X[cal_mask]),temperature);q=conformal_q(cal_prob,y[cal_mask])
+    suite_checkpoint_ready=bool(args.resume_completed and all(path.exists() for path in suite_null_paths.values()))
+    if suite_checkpoint_ready:
+      null_columns={suite:pd.read_csv(path)["value"].tolist() for suite,path in suite_null_paths.items()}
+      if any(len(values)!=args.permutations for values in null_columns.values()):raise SystemExit(f"Incomplete suite null checkpoint for {name}")
+      null_rows=[{suite:null_columns[suite][index] for suite in active_suites} for index in range(args.permutations)]
+      results["execution"]["resumedSuiteNulls"].append(name)
+    else:
+      null_scaler=StandardScaler();null_train=null_scaler.fit_transform(X[fit_mask]);null_cal=null_scaler.transform(X[cal_mask])
+      null_suites={suite:null_scaler.transform(X[mask]) for suite,mask in active_suites.items()}
+      def one_null(index):
+        with threadpool_limits(limits=1):
+          rng=np.random.default_rng(SEED+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);candidate=classifier(alpha,SEED+index+1);candidate.fit(null_train,shuffled[fit_mask]);temp=fit_temp(candidate.decision_function(null_cal),shuffled[cal_mask])
+          return {suite:f1_score(shuffled[mask],softmax(candidate.decision_function(null_suites[suite]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0) for suite,mask in active_suites.items()}
+      null_rows=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_null)(index) for index in range(args.permutations)) if args.permutations else []
   rep={"alpha":alpha,"groupedCvMacroF1":cv_scores,"temperature":temperature,"conformalQ90":q,"suites":{},"lofo":{}}
   for suite,mask in active_suites.items():
     frame=base.loc[mask].reset_index(drop=True);logits=model.decision_function(X[mask]);raw_prob=softmax(logits);prob=softmax(logits,temperature);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+rep_index),q)
@@ -190,33 +224,63 @@ for rep_index,(name,(X,available)) in enumerate(representations.items()):
     family_test=test_id&base.family_bucket.eq(family).to_numpy();family_train=fit_mask&base.family_bucket.ne(family).to_numpy();family_cal=cal_mask&base.family_bucket.ne(family).to_numpy()
     if family_test.sum()==0 or len(set(y[family_train]))<len(models) or len(set(y[family_cal]))<len(models):continue
     lofo_specs.append((family,family_train,family_cal,family_test,int(family_test.sum())))
-    candidate=pipeline(alpha,SEED);candidate.fit(X[family_train],y[family_train]);family_temp=fit_temp(candidate.decision_function(X[family_cal]),y[family_cal]);family_q=conformal_q(softmax(candidate.decision_function(X[family_cal]),family_temp),y[family_cal])
-    frame=base.loc[family_test].reset_index(drop=True);logits=candidate.decision_function(X[family_test]);raw_prob=softmax(logits);prob=softmax(logits,family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+len(lofo_metrics)),family_q)
-    metric["permutationNull"]={"mean":None,"p95":None,"disposition":"computed-at-aggregate-rotation"};pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets");lofo_metrics[family]=metric
+  def one_lofo(spec_index,spec):
+    family,family_train,family_cal,family_test,_=spec
+    with threadpool_limits(limits=1):
+      candidate=pipeline(alpha,SEED);candidate.fit(X[family_train],y[family_train]);family_logits=candidate.decision_function(X[family_cal]);family_temp=fit_temp(family_logits,y[family_cal]);family_q=conformal_q(softmax(family_logits,family_temp),y[family_cal])
+      frame=base.loc[family_test].reset_index(drop=True);logits=candidate.decision_function(X[family_test]);raw_prob=softmax(logits);prob=softmax(logits,family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+spec_index),family_q)
+    metric["permutationNull"]={"mean":None,"p95":None,"disposition":"computed-at-aggregate-rotation"};pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets")
     out=frame[["generation_id","model_profile_id","prompt_group_id","source_id","family","family_bucket","carrier_id","decode_key","length_band","split"]].copy();out["representation"]=name;out["method"]="linear-probe";out["suite"]=f"lofo:{family}"
     out["predicted_model_profile_id"]=[models[i] for i in pred];out["confidence"]=confidence;out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob]
-    out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];lofo_predictions.append(out)
+    out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];return family,metric,out
+  evaluated_lofo=Parallel(n_jobs=min(args.jobs,len(lofo_specs)),prefer="threads")(delayed(one_lofo)(index,spec) for index,spec in enumerate(lofo_specs)) if lofo_specs else []
+  for family,metric,out in evaluated_lofo:
+    lofo_metrics[family]=metric;lofo_predictions.append(out)
   if lofo_metrics:
     eligible=[value for value in lofo_metrics.values() if value["rows"]>=100] or list(lofo_metrics.values());macro=[value["macroF1"] for value in eligible]
-    def one_lofo_null(index):
-      with threadpool_limits(limits=1):
-        rng=np.random.default_rng(SEED+7000000+rep_index*100003+index);shuffled=permute_labels(y,groups,rng);scores=[];eligible_scores=[]
-        for family,family_train,family_cal,family_test,row_count in lofo_specs:
-          candidate=pipeline(alpha,SEED+index+1);candidate.fit(X[family_train],shuffled[family_train]);temp=fit_temp(candidate.decision_function(X[family_cal]),shuffled[family_cal])
-          value=f1_score(shuffled[family_test],softmax(candidate.decision_function(X[family_test]),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0)
-          scores.append(value)
-          if row_count>=100:eligible_scores.append(value)
-        selected_scores=eligible_scores or scores;return {"mean":float(np.mean(selected_scores)),"minimum":float(np.min(selected_scores))}
-    lofo_null=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_lofo_null)(index) for index in range(args.permutations)) if args.permutations else []
-    mean_null=[row["mean"] for row in lofo_null];minimum_null=[row["minimum"] for row in lofo_null]
+    lofo_checkpoint_ready=bool(args.resume_completed and lofo_null_path.exists())
+    if lofo_checkpoint_ready:
+      resumed_lofo=pd.read_csv(lofo_null_path)
+      if len(resumed_lofo)!=args.permutations or not {"mean","minimum"}.issubset(resumed_lofo.columns):raise SystemExit(f"Incomplete LOFO null checkpoint for {name}")
+      mean_null=resumed_lofo["mean"].tolist();minimum_null=resumed_lofo["minimum"].tolist()
+      results["execution"]["resumedLofoNulls"].append(name)
+    else:
+      shuffled_nulls=[]
+      for index in range(args.permutations):
+        rng=np.random.default_rng(SEED+7000000+rep_index*100003+index);shuffled_nulls.append(permute_labels(y,groups,rng))
+      family_nulls=[]
+      null_specs=[spec for spec in lofo_specs if spec[4]>=100] or lofo_specs
+      results["execution"]["skippedIneligibleFamilyNullFits"]+=args.permutations*(len(lofo_specs)-len(null_specs))
+      for family,family_train,family_cal,family_test,row_count in null_specs:
+        family_hash=hashlib.sha256(family.encode()).hexdigest()[:16];family_path=run/f"tables/permutation-probe-{name}-lofo-family-{family_hash}.csv";values=None
+        if args.resume_completed and family_path.exists():
+          saved=pd.read_csv(family_path)
+          if len(saved)!=args.permutations or not {"family","rows","value"}.issubset(saved.columns) or not saved.family.eq(family).all() or not saved.rows.eq(row_count).all():raise SystemExit(f"Incomplete LOFO family null checkpoint for {name}/{family}")
+          values=saved.value.tolist();results["execution"]["resumedFamilyNulls"].append(f"{name}:{family}")
+        if values is None:
+          family_scaler=StandardScaler();family_train_x=family_scaler.fit_transform(X[family_train]);family_cal_x=family_scaler.transform(X[family_cal]);family_test_x=family_scaler.transform(X[family_test])
+          def one_family_null(index):
+            with threadpool_limits(limits=1):
+              shuffled=shuffled_nulls[index];candidate=classifier(alpha,SEED+index+1);candidate.fit(family_train_x,shuffled[family_train]);temp=fit_temp(candidate.decision_function(family_cal_x),shuffled[family_cal])
+              return f1_score(shuffled[family_test],softmax(candidate.decision_function(family_test_x),temp).argmax(1),average="macro",labels=np.arange(len(models)),zero_division=0)
+          values=Parallel(n_jobs=min(args.jobs,args.permutations),prefer="threads")(delayed(one_family_null)(index) for index in range(args.permutations)) if args.permutations else []
+          family_tmp=family_path.with_suffix(".csv.tmp");pd.DataFrame({"family":[family]*len(values),"rows":[row_count]*len(values),"value":values}).to_csv(family_tmp,index=False);os.replace(family_tmp,family_path)
+        family_nulls.append((row_count,values))
+      mean_null=[];minimum_null=[]
+      for index in range(args.permutations):
+        scores=[values[index] for _,values in family_nulls]
+        mean_null.append(float(np.mean(scores)));minimum_null.append(float(np.min(scores)))
     lowest=min(eligible,key=lambda value:value["macroF1"])
-    rep["lofo"]={"families":lofo_metrics,
+    rep["lofo"]={"families":lofo_metrics,"nullEligibleFamilies":[family for family,_,_,_,_ in ([spec for spec in lofo_specs if spec[4]>=100] or lofo_specs)],
       "mean":{"macroF1":float(np.mean(macro)),"macroF1Ci95":[float(np.mean([v["macroF1Ci95"][0] for v in eligible])),float(np.mean([v["macroF1Ci95"][1] for v in eligible]))],"families":len(eligible),"permutationNull":{"mean":float(np.mean(mean_null)),"p95":float(np.quantile(mean_null,.95))}},
       "minimum":{"macroF1":float(np.min(macro)),"macroF1Ci95":lowest["macroF1Ci95"],"families":len(eligible),"permutationNull":{"mean":float(np.mean(minimum_null)),"p95":float(np.quantile(minimum_null,.95))}}}
-    pd.DataFrame({"mean":mean_null,"minimum":minimum_null}).to_csv(run/f"tables/permutation-probe-{name}-lofo.csv",index=False)
+    pd.DataFrame({"mean":mean_null,"minimum":minimum_null}).to_csv(lofo_null_path,index=False)
     prediction_frames.extend(lofo_predictions)
   results["representations"][name]=rep
-  model_path=run/f"manifests/probe-{name}.pkl";model_path.write_bytes(pickle.dumps({"pipeline":model,"temperature":temperature,"conformalQ":q,"models":models,"alpha":alpha}));artifact_paths.append(str(model_path))
+  model_path.write_bytes(pickle.dumps({"pipeline":model,"temperature":temperature,"conformalQ":q,"models":models,"alpha":alpha}));artifact_paths.append(str(model_path))
+  artifact_hashes={"model":hashlib.sha256(model_path.read_bytes()).hexdigest(),"lofo":hashlib.sha256(lofo_null_path.read_bytes()).hexdigest(),**{f"suite:{suite}":hashlib.sha256(path.read_bytes()).hexdigest() for suite,path in suite_null_paths.items()}}
+  checkpoint_frames=prediction_frames[prediction_checkpoint_start:];checkpoint_predictions=pd.concat(checkpoint_frames,ignore_index=True) if checkpoint_frames else pd.DataFrame()
+  result_checkpoint_tmp=result_checkpoint_path.with_suffix(".pkl.tmp");result_checkpoint_tmp.write_bytes(pickle.dumps({"schemaVersion":1,"representation":name,"campaignHash":freeze["campaignHash"],"models":models,"tier":args.tier,"permutations":args.permutations,"bootstrap":args.bootstrap,"rows":len(base),"artifactHashes":artifact_hashes,"result":rep,"predictions":checkpoint_predictions}));os.replace(result_checkpoint_tmp,result_checkpoint_path)
 
 predictions=pd.concat(prediction_frames,ignore_index=True) if prediction_frames else pd.DataFrame();predictions.to_parquet(run/"tables/predictions.parquet",index=False);predictions.to_csv(run/"tables/predictions.csv",index=False)
 cursor.execute("INSERT dbo.attribution_models(run_id,model_kind,training_manifest_hash,artifact_json) VALUES(%s,'sgd-multinomial-probes',%s,%s); SELECT SCOPE_IDENTITY()",

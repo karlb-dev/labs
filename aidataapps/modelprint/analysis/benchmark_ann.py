@@ -31,6 +31,11 @@ db = dict(server=os.getenv("SQLSERVER_HOST", "127.0.0.1"), port=int(os.getenv("S
           password=os.environ["MSSQL_SA_PASSWORD"], database=os.getenv("MSSQL_DATABASE", "ModelPrint"), login_timeout=60, timeout=7200)
 conn = pymssql.connect(**db, autocommit=False); cursor = conn.cursor()
 
+def vector_ddl(statement):
+  conn.commit();conn.autocommit(True)
+  try:cursor.execute(statement)
+  finally:conn.autocommit(False)
+
 spaces = {
   "semantic1024-segment-union-v1": {
     "dimension": 1024, "scratch": "__mp_ann_bench_1024", "index": "vix_mp_ann_bench_1024",
@@ -76,7 +81,7 @@ def exact_one(space, query):
   dimension=space["dimension"];table=space["scratch"];candidate=max(200,maximum_k*10);started=time.perf_counter()
   local=conn.cursor();local.execute(f"""SELECT TOP ({candidate}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,
     VECTOR_DISTANCE('cosine',embedding,CAST(%s AS vector({dimension}))) distance FROM dbo.{table}
-    WHERE prompt_group_id<>%s ORDER BY distance,vector_id""",(query.vector,query.prompt_group_id));raw=local.fetchall()
+    WHERE prompt_group_id<>%s ORDER BY distance,vector_id OPTION (MAXDOP 1)""",(query.vector,query.prompt_group_id));raw=local.fetchall()
   return (time.perf_counter()-started)*1000,dedupe(raw,maximum_k)
 
 def ann_one(space, query, multiplier):
@@ -120,7 +125,7 @@ def persist_neighbors(search_run, query_id, rows):
 summary={"schemaVersion":1,"runId":run_id,"campaignId":campaign,"queryTarget":args.queries,"k":ks,"oversamplingMultipliers":[1,2,5,10],"spaces":{}}
 table_rows=[]
 try:
-  cursor.execute("ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES=ON");conn.commit()
+  conn.autocommit(True);cursor.execute("ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES=ON");conn.autocommit(False)
   for representation,space in spaces.items():
     source_count=int(pd.read_sql(f"SELECT COUNT(*) count FROM {space['source']}",conn).iloc[0]["count"])
     if source_count<100: summary["spaces"][representation]={"disposition":"NOT_RUN_INSUFFICIENT_CORPUS","achievedMaximum":source_count};continue
@@ -129,13 +134,13 @@ try:
     space_rows=[]
     for prefix in prefixes:
       table=space["scratch"];index=space["index"];dimension=space["dimension"]
-      cursor.execute(f"IF OBJECT_ID(N'dbo.{table}',N'U') IS NOT NULL DROP TABLE dbo.{table};");conn.commit()
-      cursor.execute(f"""CREATE TABLE dbo.{table}(vector_id bigint NOT NULL PRIMARY KEY CLUSTERED,model_profile_id varchar(80) NOT NULL,
+      vector_ddl(f"IF OBJECT_ID(N'dbo.{table}',N'U') IS NOT NULL DROP TABLE dbo.{table};")
+      cursor.execute(f"""CREATE TABLE dbo.{table}(row_id int IDENTITY(1,1) NOT NULL PRIMARY KEY CLUSTERED,vector_id bigint NOT NULL,model_profile_id varchar(80) NOT NULL,
         prompt_group_id varchar(120) NOT NULL,text_artifact_id bigint NOT NULL,embedding vector({dimension}) NOT NULL);
         INSERT dbo.{table}(vector_id,model_profile_id,prompt_group_id,text_artifact_id,embedding)
         SELECT TOP ({prefix}) vector_id,model_profile_id,prompt_group_id,text_artifact_id,embedding FROM {space['source']}
         ORDER BY HASHBYTES('SHA2_256',CONVERT(varbinary(8),vector_id)),vector_id;""");conn.commit()
-      build_started=time.perf_counter();cursor.execute(f"CREATE VECTOR INDEX {index} ON dbo.{table}(embedding) WITH(TYPE='DISKANN',METRIC='COSINE');");conn.commit();build_seconds=time.perf_counter()-build_started
+      build_started=time.perf_counter();vector_ddl(f"CREATE VECTOR INDEX {index} ON dbo.{table}(embedding) WITH(TYPE='DISKANN',METRIC='COSINE');");build_seconds=time.perf_counter()-build_started
       metadata=pd.read_sql(f"""SELECT i.name index_name,v.build_parameters,v.vector_index_type,v.distance_metric,
         (SELECT SUM(reserved_page_count)*8192 FROM sys.dm_db_partition_stats p WHERE p.object_id=v.object_id AND p.index_id=v.index_id) reserved_bytes
         FROM sys.vector_indexes v JOIN sys.indexes i ON i.object_id=v.object_id AND i.index_id=v.index_id WHERE i.name='{index}'""",conn).iloc[0].to_dict()
@@ -175,7 +180,7 @@ try:
           "recall":result["recall"][str(k)],"vote_agreement":result["voteAgreement"][str(k)],"minimum_class_decision_agreement":result["minimumClassDecisionAgreement"][str(k)],
           "mean_candidate_loss":result["meanCandidateLoss"],"plan_evidence":proven,"index_build_seconds":build_seconds,"index_reserved_bytes":prefix_result["indexReservedBytes"]})
       space_rows.append(prefix_result)
-      cursor.execute(f"DROP INDEX {index} ON dbo.{table}; DROP TABLE dbo.{table};");conn.commit()
+      vector_ddl(f"DROP INDEX {index} ON dbo.{table};");cursor.execute(f"DROP TABLE dbo.{table};");conn.commit()
     maximum=space_rows[-1];best=max(maximum["oversampling"].values(),key=lambda value:value["recall"].get("10",0))
     if maximum["exact"]["latencyP95Ms"]<250:disposition="ANN_UNNEEDED_AT_SCALE"
     elif best["planEvidence"] and best["recall"].get("10",0)>=.95 and best["voteAgreement"].get("10",0)>=.98 and best["minimumClassDecisionAgreement"].get("10",0)>=.95 and best["latencyP95Ms"]<maximum["exact"]["latencyP95Ms"]:disposition="ANN_PRESERVES"
@@ -192,6 +197,9 @@ try:
   print(json.dumps({"runId":run_id,"spaces":{key:{"maximum":value.get("achievedMaximum"),"disposition":value.get("disposition")} for key,value in summary["spaces"].items()},"rows":len(table)},indent=2))
 finally:
   for space in spaces.values():
-    try: cursor.execute(f"IF OBJECT_ID(N'dbo.{space['scratch']}',N'U') IS NOT NULL DROP TABLE dbo.{space['scratch']};");conn.commit()
-    except Exception: conn.rollback()
+    try:
+      conn.rollback();conn.autocommit(True);cursor.execute(f"IF OBJECT_ID(N'dbo.{space['scratch']}',N'U') IS NOT NULL DROP TABLE dbo.{space['scratch']};");conn.autocommit(False)
+    except Exception:
+      try:conn.autocommit(False);conn.rollback()
+      except Exception:pass
   conn.close()

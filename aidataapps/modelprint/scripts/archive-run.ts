@@ -42,5 +42,18 @@ try {
     `export MODELPRINT_RUN_DIR=${runDirectory}`,"npm run doctor","# Resume the next incomplete residency using config/models.json, then:","npm run features:build","npm run derived:build","npm run evaluate:probes","npm run reports","npm run db:bacpac","```","",
     "Generation, scoring, feature, and export commands are idempotent and use the retained manifests. Never create a replacement freeze when resuming this run.",""];
   await writeFile(`${runDirectory}/RESUME.md`,lines.join("\n"));
+  // RESUME.md is rewritten after the artifact hashes were computed, so its
+  // inventory row (file and SQL) must be refreshed or repro's digest check
+  // can never pass.
+  const resumeRow=artifacts.find((artifact)=>artifact.path==="RESUME.md");
+  if (resumeRow) {
+    const resumeInfo=await stat(`${runDirectory}/RESUME.md`);
+    resumeRow.bytes=resumeInfo.size; resumeRow.sha256=await digest(`${runDirectory}/RESUME.md`);
+    await writeFile(`${runDirectory}/ARTIFACT_INVENTORY.json`,`${JSON.stringify({...inventory,artifacts},null,2)}\n`);
+    await pool.request().input("run",sql.VarChar(120),runId).input("rows",sql.NVarChar(sql.MAX),JSON.stringify([resumeRow])).query(`
+      MERGE dbo.run_artifacts AS target USING OPENJSON(@rows) WITH(relative_path nvarchar(500) '$.path',artifact_kind varchar(80) '$.kind',byte_count bigint '$.bytes',sha256 char(64) '$.sha256') source
+      ON target.run_id=@run AND target.relative_path=source.relative_path WHEN MATCHED THEN UPDATE SET artifact_kind=source.artifact_kind,byte_count=source.byte_count,sha256=source.sha256,created_at=SYSUTCDATETIME()
+      WHEN NOT MATCHED THEN INSERT(run_id,relative_path,artifact_kind,byte_count,sha256) VALUES(@run,source.relative_path,source.artifact_kind,source.byte_count,source.sha256);`);
+  }
 } finally { await pool.close(); }
 console.log(JSON.stringify({runId,inventory:`${runDirectory}/ARTIFACT_INVENTORY.json`,artifacts:artifacts.length},null,2));

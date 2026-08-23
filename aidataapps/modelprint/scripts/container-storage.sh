@@ -35,7 +35,10 @@ copy_to_container_file() {
     mount="$(container_mount_source "$container" /var/opt/mssql)";relative="${container_path#/var/opt/mssql/}"
     [[ "$relative" != *".."* ]] || { echo "Unsafe container path" >&2; return 2; }
     target="$mount/$relative";cp --reflink=auto "$source" "$target";chmod a+r "$target"
-  else docker cp "$source" "$container:$container_path"; fi
+  else
+    # docker cp leaves the file root-owned; the mssql user must be able to read it.
+    docker cp "$source" "$container:$container_path" && docker exec -u root "$container" chmod a+r "$container_path"
+  fi
 }
 
 remove_container_file() {

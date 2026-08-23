@@ -250,17 +250,18 @@ TSWLatexianTemp*
 canvas
 .vscode
 *scratch*
-*checkpoint*
-!aidataapps/modelprint/scripts/checkpoint-watchdog.sh
-*.orig*
-*BACKUP*
-*BASE*
-*LOCAL*
-*REMOTE*
+.ipynb_checkpoints/
+# git mergetool artifacts (tightened from greedy *LOCAL*/*BACKUP* substring
+# patterns, which also hid legitimate files like foundry-local.ts)
+*.orig
+*_BACKUP_*
+*_BASE_*
+*_LOCAL_*
+*_REMOTE_*
 out/
-.vs
-x64
-*.vcxproj.user
+.vs/
+x64/
+*.user
 Debug/
 Release/
 *.filters
@@ -282,3 +283,44 @@ hf_local/
 # preference campaign local run unpacks (Drive-mirrored; never in git)
 interpretability/preference_runs/
 *.egg-info/
+
+## Node / TypeScript
+node_modules/
+dist/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+.npm/
+coverage/
+.nyc_output/
+
+## Secrets and local environment (never push; examples stay tracked)
+.env
+.env.*
+!.env.example
+
+## Python
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-wheel-metadata/
+venv/
+
+## C#
+bin/
+obj/
+
+## C / C++
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+CMakeCache.txt
+CMakeFiles/
+cmake-build-*/

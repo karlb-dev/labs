@@ -1,3 +1,3 @@
-# Label-hidden clustering
+# Label-hidden Cluster Report
 
-Disposition: `NOT_YET_RUN`. No result is claimed until retained row artifacts and metrics exist.
+Every fit hid model and nuisance labels. PCA coordinates are visualization-only. See `tables/cluster-alignment.csv` and `metrics/clusters.json` for retained metrics, nulls, and stability.

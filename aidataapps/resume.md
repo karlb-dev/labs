@@ -110,11 +110,11 @@ cherry-pick or merge that commit into its branch.
 
 ## Shared VM resource coordination
 
-The VM has one NVIDIA RTX PRO 6000 Blackwell GPU. Lab 2 currently reserves the
-chat-model residency on port 8000 and its two embedding services on ports 8001
-and 8002. A second agent may write code, inspect data, or run CPU-only tests,
-but it must not launch another large GPU model until the Lab 2 owner explicitly
-releases the GPU.
+The VM has one NVIDIA RTX PRO 6000 Blackwell GPU. Lab 2's GPU phase is complete;
+its chat and embedding services were stopped at the CPU-handoff boundary, so
+ports 8000–8002 and its VRAM allocation are released. Another lab must still
+check `inprogress_lab2.md`, current allocations, and full process commands
+before loading a model because this shared status can outlive the VM state.
 
 Every lab must use unique values for all mutable infrastructure:
 
