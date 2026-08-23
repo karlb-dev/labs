@@ -858,6 +858,13 @@ place and receive a later disposition.
   and a unit test asserts 120 dev+calibration and 480 protected test episodes.
   Impact: orchestration initialization only; zero jobs, agent runs, predictions,
   or model requests were created by the failed invocation.
+- 2026-08-23T10:16:06Z — The next qwen-smoke replay invocation stopped in its
+  interrupted-work recovery preflight because a joined SQL Server UPDATE did
+  not qualify `completed_at_utc`. Both target aliases are now explicit and a
+  source contract prevents their regression. Impact: the invocation had
+  materialized its deterministic 180 replay jobs but stopped before workers or
+  model transport; those pending identities are reused by the corrected replay,
+  with no inference observations discarded or repeated.
 
 - 2026-08-23T10:09:07.304Z — Retrieval evaluation 5cf9857b-d6c6-4c90-975f-47aa41ed1353 retained 3000 evaluator-only cells over 600 packets (dev,calibration,test_id,test_variant_holdout,test_unknown); disposition PASS; receipt 894e0de96982643ec2a18eb9e5c75d5a128590869955db95ef78cf3b0e6529bd.
 

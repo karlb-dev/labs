@@ -504,13 +504,13 @@ async function recoverInterruptedSelectedJobs(jobs: JobIdentity[]): Promise<void
     FROM control.job_attempts attempt INNER JOIN selected ON selected.job_id=attempt.job_id
     WHERE attempt.status='running';
     WITH selected AS (SELECT CONVERT(bigint,value) job_id FROM OPENJSON(@ids))
-    UPDATE job SET status='failed',completed_at_utc=COALESCE(completed_at_utc,SYSUTCDATETIME()),
+    UPDATE job SET status='failed',completed_at_utc=COALESCE(job.completed_at_utc,SYSUTCDATETIME()),
       error_class='worker_interrupted',error_detail='Recovered before replay resume'
     FROM control.jobs job INNER JOIN selected ON selected.job_id=job.job_id WHERE job.status='running';
     DECLARE @stopped TABLE(work_item_id bigint,from_state varchar(40));
     WITH selected AS (SELECT CONVERT(bigint,value) job_id FROM OPENJSON(@ids))
     UPDATE item SET status='stopped',lease_owner=NULL,lease_token=NULL,leased_until_utc=NULL,
-      completed_at_utc=COALESCE(completed_at_utc,SYSUTCDATETIME())
+      completed_at_utc=COALESCE(item.completed_at_utc,SYSUTCDATETIME())
     OUTPUT INSERTED.work_item_id,DELETED.status INTO @stopped
     FROM ops.work_items item INNER JOIN selected ON selected.job_id=item.job_id
     INNER JOIN control.jobs job ON job.job_id=item.job_id

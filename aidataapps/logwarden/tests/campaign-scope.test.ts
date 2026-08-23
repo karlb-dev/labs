@@ -15,4 +15,10 @@ describe("standard campaign schedule isolation", () => {
     const source = await readFile(path, "utf8");
     expect(source).toContain("schedule.schedule_name='standard-v1'");
   });
+
+  it("qualifies joined replay recovery timestamps", async () => {
+    const source = await readFile("scripts/replay-campaign.ts", "utf8");
+    expect(source).toContain("COALESCE(job.completed_at_utc,SYSUTCDATETIME())");
+    expect(source).toContain("COALESCE(item.completed_at_utc,SYSUTCDATETIME())");
+  });
 });
