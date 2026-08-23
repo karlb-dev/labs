@@ -1133,3 +1133,15 @@ place and receive a later disposition.
   changed. B1/router/score receipts: `8e6f8db71379ebd848d96eb108f83c54d59fa4fd608b0890c0d0b767c3b927b3`,
   `a90d2c7f59557cdac22037b75c829b6659d8bbb86a716f896629e5199c777830`,
   and `538311178007a1b5b32e7c2a0ef9c357dd760ea4120d66a1c0923d4cc0eb6c02`.
+
+- 2026-08-23T14:37:58.791Z — muse-glimmer-30b control error-number-mask-v1 retained 96 cells across test_id,test_unknown and A-tools with 71 decisions, 25 failures, and 277 model requests; receipt 76b628a090b824be401443511ba19c15a4f5caea9fdd6e8522f3f28b2da8cdf1.
+
+- 2026-08-23T14:38:11.845Z — Scored 96 control error-number-mask-v1 test_id,test_unknown predictions for muse-glimmer-30b across A-tools; receipt b3ea6d26400b3922467a00455f2df7a44611f4f6b705a9d77582022dd6e9916c.
+
+- 2026-08-23T14:38:21.186Z — Compared 96 muse-glimmer-30b/error-number-mask-v1 predictions with their frozen primary sources: raw=0/96, decision=0.19697/66, tools=0.229167/96, invariance=NOT_APPLICABLE; receipt a566c9b7046a69446a1c71f3c4b01d65386845f2360781137d2e20d2bd27fe42.
+
+- 2026-08-23T14:47:40.457Z — muse-glimmer-30b control shuffled-runbooks-v1 retained 96 cells across test_id,test_unknown and A-tools with 80 decisions, 16 failures, and 291 model requests; receipt 5d17e80fdec7e829078381bbf0f78ab9e0d3f8329a3df4643d521c46e1e89f6a.
+
+- 2026-08-23T14:47:52.778Z — Scored 96 control shuffled-runbooks-v1 test_id,test_unknown predictions for muse-glimmer-30b across A-tools; receipt 9512b4cc223e2dd764689c38e9b789dcfb0eb75be38e76fce370660bfcab59a3.
+
+- 2026-08-23T14:47:57.732Z — Compared 96 muse-glimmer-30b/shuffled-runbooks-v1 predictions with their frozen primary sources: raw=0/96, decision=0.263889/72, tools=0.479167/96, invariance=NOT_APPLICABLE; receipt 750f09ae8244eb9aceee4f9245c9b090cdbe9a01e5aa3a6c850844d0c529f7bb.

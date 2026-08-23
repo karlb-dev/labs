@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 14:26 UTC
+Last manually updated: 2026-08-23 14:48 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -105,13 +105,20 @@ and its effect on the evidence ceiling must be recorded append-only in
   all 1,850 four-arm predictions plus 11,325 tool and 1,850 retrieval scores.
   Score receipt:
   `538311178007a1b5b32e7c2a0ef9c357dd760ea4120d66a1c0923d4cc0eb6c02`.
-  Next: run, score, and compare the three frozen Muse inference controls before
-  ending Muse residency. Do not relaunch the completed protected primary.
+  The 96-cell error-number-mask and shuffled-runbook controls have both passed
+  replay, scoring, and paired comparison with zero model-service errors or
+  preemptions. Masking produced 50.0% semantic decision agreement and a
+  -0.041667 mean action-score delta; shuffled retrieval produced 51.0417%
+  agreement and a -0.1875 delta. Comparison receipts:
+  `a566c9b7046a69446a1c71f3c4b01d65386845f2360781137d2e20d2bd27fe42`
+  and `750f09ae8244eb9aceee4f9245c9b090cdbe9a01e5aa3a6c850844d0c529f7bb`.
+  Next: run, score, and compare the 48-cell single-worker batching control,
+  then end Muse residency. Do not relaunch completed primary/control jobs.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
 source scripts/runtime-env.sh
-npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_unknown --arms A-tools --control error-number-mask-v1 --workers 16
+npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_unknown --arms A-tools --control batching-sequential-v1 --workers 1
 ```
 
 ## Historical setup context (superseded where conflicting)
@@ -376,15 +383,15 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 ## Active processes and checkpoints
 
 <!-- lab3-watchdog-status:start -->
-- Last watchdog checkpoint: 2026-08-23T14:27:48.141Z
-- Last watchdog Git head: `69a80f49edf4833eb11f17d03f13f1713dc407ae` on `aidataapps-logwarden`
-- Last watchdog disposition: clean source checkpoint
-- Last watchdog database receipt: `be33b5f74f4ca19c8efc75aa773fa603e8a9a5eb9e76bdaa41c5074983e2eca6`
+- Last watchdog checkpoint: 2026-08-23T14:41:32.819Z
+- Last watchdog Git head: `98c41717589aebe629ed7b41230df09de6353745` on `aidataapps-logwarden`
+- Last watchdog disposition: captured dirty recovery patch; no automatic source commit
+- Last watchdog database receipt: `7f8926d4296e93fd7aeb2c4637380174c907637ca957e3b411d825ff69891923`
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
 - Long-running scientific process: no replay is active at this checkpoint;
-  the next command is the first Muse frozen inference control shown above.
+  the next command is the third Muse frozen inference control shown above.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `muse-glimmer-30b-residency` whole-system sampler
