@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T08:31:21.235Z",
+  "generatedAt": "2026-08-23T08:41:26.572Z",
   "runId": "logwarden-smoke-20260823T041027Z",
   "episodeSet": "mac-eval-v1",
   "meta": [
@@ -607,12 +607,12 @@
         18
       ],
       "gemma-4-26b-a4b-mlx": [
-        -10,
-        -14
+        12,
+        5
       ],
       "muse-glimmer-30b-mlx": [
-        8,
-        -14
+        -8,
+        22
       ]
     },
     "episodeShorts": {

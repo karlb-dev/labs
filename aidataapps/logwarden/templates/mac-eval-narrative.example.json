@@ -207,12 +207,12 @@
       18
     ],
     "gemma-4-26b-a4b-mlx": [
-      -10,
-      -14
+      12,
+      5
     ],
     "muse-glimmer-30b-mlx": [
-      8,
-      -14
+      -8,
+      22
     ]
   },
   "episodeShorts": {
