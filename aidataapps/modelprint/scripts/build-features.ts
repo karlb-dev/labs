@@ -8,6 +8,7 @@ import { STYLE_SCHEMA_HASH, styleVector } from "../src/style.js";
 
 const stage = valueAfter("--stage") ?? "all";
 if (!new Set(["segments", "style", "embeddings", "all"]).has(stage)) throw new Error(`Unknown stage ${stage}`);
+const embeddingProfile = valueAfter("--embedding-profile");
 const runDirectory = resolveRunDirectory();
 const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`, "utf8")) as { campaignId: number; campaignHash: string };
 const robustness = await readFile(`${runDirectory}/manifests/robustness-freeze.json`, "utf8").then((value) => JSON.parse(value) as { campaignId: number }).catch(() => null);
@@ -65,9 +66,30 @@ async function style() {
 async function embeddings() {
   const registry = JSON.parse(await readFile("data/manifests/model-registry-snapshot.json", "utf8")) as { embeddings: Record<string, { modelId: string; dimensions: number }> };
   const profiles = [
-    { key: "qwen3-embedding-0.6b", baseUrl: config.inference.qwenEmbeddingBaseUrl },
-    { key: "bge-large-en-v1.5", baseUrl: config.inference.bgeEmbeddingBaseUrl },
-  ];
+    { key: "qwen3-embedding-0.6b", baseUrl: config.inference.qwenEmbeddingBaseUrl, truncatePromptTokens: null },
+    { key: "bge-large-en-v1.5", baseUrl: config.inference.bgeEmbeddingBaseUrl, truncatePromptTokens: 512 },
+  ].filter((profile) => !embeddingProfile || profile.key === embeddingProfile);
+  if (!profiles.length) throw new Error(`Unknown embedding profile ${embeddingProfile}`);
+  const embed = async (selected: (typeof profiles)[number], model: string, dimensions: number, input: string[]) => {
+    if (!selected.truncatePromptTokens) return gateway.embed(selected.baseUrl, model, dimensions, input);
+    const response = await fetch(`${selected.baseUrl}/embeddings`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model, input, truncate_prompt_tokens: selected.truncatePromptTokens, truncation_side: "right" }),
+      signal: AbortSignal.timeout(900_000),
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`${selected.baseUrl}/embeddings returned HTTP ${response.status}: ${text.slice(0, 4000)}`);
+    const body = JSON.parse(text) as { data?: Array<{ index?: number; embedding?: number[] }> };
+    const ordered = [...(body.data ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    if (ordered.length !== input.length) throw new Error(`Expected ${input.length} embeddings, received ${ordered.length}`);
+    return ordered.map((row, index) => {
+      if (!row.embedding || row.embedding.length !== dimensions || !row.embedding.every(Number.isFinite)) {
+        throw new Error(`Embedding ${index} is invalid; expected ${dimensions} finite dimensions`);
+      }
+      return row.embedding;
+    });
+  };
   let totalDone = 0;
   for (const selected of profiles) {
     const profile = registry.embeddings[selected.key]!; await gateway.ready(selected.baseUrl);
@@ -75,7 +97,7 @@ async function embeddings() {
       SELECT DISTINCT v.prompt_variant_id AS id,v.rendered_text AS text FROM dbo.generation_jobs j JOIN dbo.prompt_variants v ON v.prompt_variant_id=j.prompt_variant_id
       WHERE j.campaign_id IN (${campaignSql}) AND NOT EXISTS (SELECT 1 FROM dbo.prompt_embeddings p WHERE p.prompt_variant_id=v.prompt_variant_id AND p.embedding_profile_id=@profile);`);
     for (const rows of batch(prompts.recordset, 64)) {
-      const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
+      const vectors = await embed(selected, profile.modelId, profile.dimensions, rows.map((row) => row.text));
       await insertJson(rows.map((row, index) => ({ id: row.id, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
         INSERT dbo.prompt_embeddings(prompt_variant_id,embedding_profile_id,embedding,embedding_sha256)
         SELECT s.id,'${selected.key}',CAST(s.vector AS vector(1024)),s.sha FROM OPENJSON(@rows) WITH (id varchar(80) '$.id',vector nvarchar(max) '$.vector',sha char(64) '$.sha') s
@@ -88,7 +110,7 @@ async function embeddings() {
       (SELECT 1 FROM dbo.semantic_vectors v WHERE v.text_artifact_id=t.text_artifact_id AND v.embedding_profile_id=@profile AND v.representation_id=CONCAT('whole-',t.text_view_id));`);
     let embedded = 0;
     for (const rows of batch(artifacts.recordset, 64)) {
-      const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
+      const vectors = await embed(selected, profile.modelId, profile.dimensions, rows.map((row) => row.text));
       await insertJson(rows.map((row, index) => ({ id: row.id, representation: `whole-${row.textView}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
         INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
         SELECT s.id,NULL,'${selected.key}',s.representation,CAST(s.vector AS vector(1024)),s.sha,'${runId}' FROM OPENJSON(@rows) WITH
@@ -110,7 +132,7 @@ async function embeddings() {
           AND v.representation_id=CONCAT('segment-',s.segmenter_id));`);
       let segmentEmbedded = 0;
       for (const rows of batch(segments.recordset, 64)) {
-        const vectors = await gateway.embed(selected.baseUrl, profile.modelId, profile.dimensions, rows.map((row) => row.text));
+        const vectors = await embed(selected, profile.modelId, profile.dimensions, rows.map((row) => row.text));
         await insertJson(rows.map((row, index) => ({ id: row.id, representation: `segment-${row.segmenter}`, vector: JSON.stringify(vectors[index]), sha: sha256(JSON.stringify(vectors[index])) })), `
           INSERT dbo.semantic_vectors(text_artifact_id,segment_id,embedding_profile_id,representation_id,embedding,embedding_sha256,created_by_run)
           SELECT NULL,s.id,'${selected.key}',s.representation,CAST(s.vector AS vector(1024)),s.sha,'${runId}' FROM OPENJSON(@rows) WITH
@@ -125,7 +147,10 @@ async function embeddings() {
 }
 
 try {
-  const summary: Record<string, unknown> = { schemaVersion: 1, campaignIds, campaignHash: freeze.campaignHash, runId, startedAt: new Date().toISOString() };
+  const summary: Record<string, unknown> = { schemaVersion: 1, campaignIds, campaignHash: freeze.campaignHash, runId,
+    embeddingProfile: embeddingProfile ?? null,
+    embeddingInputPolicies: { "qwen3-embedding-0.6b": { truncation: null }, "bge-large-en-v1.5": { truncatePromptTokens: 512, truncationSide: "right" } },
+    startedAt: new Date().toISOString() };
   if (stage === "segments" || stage === "all") {
     const { execFileSync } = await import("node:child_process");
     summary.segments = JSON.parse(execFileSync("./scripts/python.sh", ["analysis/prepare_text.py", "--run", runDirectory], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }));
@@ -133,6 +158,7 @@ try {
   if (stage === "style" || stage === "all") summary.styleArtifacts = await style();
   if (stage === "embeddings" || stage === "all") summary.embeddingRows = await embeddings();
   summary.finishedAt = new Date().toISOString();
-  await writeFile(`${runDirectory}/manifests/features-${stage}.json`, `${JSON.stringify({ ...summary, manifestHash: hashJson(summary) }, null, 2)}\n`);
+  const profileSuffix = stage === "embeddings" && embeddingProfile ? `-${embeddingProfile}` : "";
+  await writeFile(`${runDirectory}/manifests/features-${stage}${profileSuffix}.json`, `${JSON.stringify({ ...summary, manifestHash: hashJson(summary) }, null, 2)}\n`);
   console.log(JSON.stringify(summary, null, 2));
 } finally { await pool.close(); }
