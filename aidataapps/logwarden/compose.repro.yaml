@@ -1,0 +1,8 @@
+# Fresh-restore overlay for nested Colab. Backups are verified and copied to a
+# short-lived, read-only staging directory because rootless `docker cp` cannot
+# enter a container whose required host /proc bind is read-only.
+services:
+  sqlserver:
+    restart: "no"
+    volumes:
+      - ${LOGWARDEN_REPRO_BACKUPS_DIR:?set LOGWARDEN_REPRO_BACKUPS_DIR}:/var/opt/mssql/repro-backups:ro

@@ -25,6 +25,6 @@
 13. Derived A-router reproduced B1 because B1 resolved the retained episodes; it adds zero inference cost and no quality lift.
 14–18. Live parity, event-rate capacity, raw-event correlation, SQL feature ablations, and ANN are Tier 2 and are not claimed.
 19. The independent Tier-1 permission/procedure audit passed; this is not production-safety evidence.
-20. Row-only and restored-database reconstruction are the closeout gates recorded in `LOGWARDEN_REPRODUCIBILITY.md`.
+20. Row-only and restored-database reconstruction both passed; their stable receipts are recorded in `LOGWARDEN_REPRODUCIBILITY.md`.
 21. The principal unexplained result is why the declared permutation scheme is degenerate for several binary contrasts; no positive claim depends on it.
 22. The defensible carry-forward architecture is deterministic rules for the known head, explicitly gated retrieval/model assistance for residual cases, and SQL Server as the durable evidence/queue/evaluation plane—not an autonomous remediation agent.

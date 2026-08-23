@@ -1,4 +1,4 @@
-import { readFile, readdir, stat } from "node:fs/promises";
+import { readFile, readdir, rm, stat } from "node:fs/promises";
 import { relative, resolve } from "node:path";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
@@ -26,9 +26,10 @@ const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as { 
 const requestedOutput = valueAfter("--out") ?? `${runDirectory}/repro/rows`;
 const outputDirectory = resolve(requestedOutput);
 const outputRelative = relative(resolve(`${runDirectory}/repro`), outputDirectory);
-if (outputRelative.startsWith("..") || outputRelative.startsWith("/")) {
+if (!outputRelative || outputRelative === "." || outputRelative.startsWith("..") || outputRelative.startsWith("/")) {
   throw new Error(`Report-row output must stay inside ${runDirectory}/repro: ${outputDirectory}`);
 }
+if (process.argv.includes("--clean")) await rm(outputDirectory, { recursive: true, force: true });
 const config = loadConfig();
 const controlDatabase = valueAfter("--control-database") ?? config.databases.controlName;
 const queries = queryDefinitions();
@@ -229,6 +230,7 @@ function queryDefinitions(): QueryDefinition[] {
         SELECT control.model_profile_id,control.control_id,control.episode_id,t.split_role,t.family,t.regime,
           CONVERT(bigint,c.control_prediction_id) control_prediction_id,CONVERT(bigint,c.primary_prediction_id) primary_prediction_id,
           CONVERT(bit,c.raw_response_agreement) raw_response_agreement,CONVERT(bit,c.decision_agreement) decision_agreement,
+          TRY_CONVERT(bit,JSON_VALUE(c.detail_json,'$.semanticDecisionAgreement')) semantic_decision_agreement,
           CONVERT(bit,c.ordered_tool_call_agreement) ordered_tool_call_agreement,
           CONVERT(float,c.action_score_delta) action_score_delta,CONVERT(float,c.confidence_delta) confidence_delta,c.detail_json
         FROM eval.control_comparisons c INNER JOIN eval.predictions control ON control.prediction_id=c.control_prediction_id
@@ -253,6 +255,8 @@ function queryDefinitions(): QueryDefinition[] {
           COALESCE(model.prompt_tokens,0) prompt_tokens,COALESCE(model.completion_tokens,0) completion_tokens,
           COALESCE(model.error_count,0) model_error_count,COALESCE(model.length_finish_count,0) length_finish_count,
           COALESCE(model.repaired_response_count,0) repaired_response_count,COALESCE(model.rejected_response_count,0) rejected_response_count,
+          COALESCE(model.no_repair_count,0) no_repair_count,COALESCE(model.code_fence_repair_count,0) code_fence_repair_count,
+          COALESCE(model.leading_text_repair_count,0) leading_text_repair_count,COALESCE(model.rejected_repair_count,0) rejected_repair_count,
           COALESCE(tools.tool_call_count,0) tool_call_count,CONVERT(float,tools.tool_latency_ms) tool_latency_ms,
           COALESCE(tools.snapshot_miss_count,0) snapshot_miss_count,COALESCE(tools.tool_error_count,0) tool_error_count,
           COALESCE(validation.validation_failure_count,0) validation_failure_count
@@ -267,7 +271,11 @@ function queryDefinitions(): QueryDefinition[] {
             SUM(CASE WHEN req.status<>'success' OR resp.error_class IS NOT NULL THEN 1 ELSE 0 END) error_count,
             SUM(CASE WHEN resp.finish_reason='length' THEN 1 ELSE 0 END) length_finish_count,
             SUM(CASE WHEN resp.repair_kind IN ('strip_code_fence','strip_leading_text') THEN 1 ELSE 0 END) repaired_response_count,
-            SUM(CASE WHEN resp.repair_kind='rejected' OR resp.parse_status<>'success' THEN 1 ELSE 0 END) rejected_response_count
+            SUM(CASE WHEN resp.repair_kind='rejected' OR resp.parse_status<>'success' THEN 1 ELSE 0 END) rejected_response_count,
+            SUM(CASE WHEN resp.repair_kind='none' THEN 1 ELSE 0 END) no_repair_count,
+            SUM(CASE WHEN resp.repair_kind='strip_code_fence' THEN 1 ELSE 0 END) code_fence_repair_count,
+            SUM(CASE WHEN resp.repair_kind='strip_leading_text' THEN 1 ELSE 0 END) leading_text_repair_count,
+            SUM(CASE WHEN resp.repair_kind='rejected' THEN 1 ELSE 0 END) rejected_repair_count
           FROM agent.turns turn_row INNER JOIN agent.model_requests req ON req.turn_id=turn_row.turn_id
           LEFT JOIN agent.model_responses resp ON resp.model_request_id=req.model_request_id
           WHERE turn_row.agent_run_id=ar.agent_run_id
@@ -293,7 +301,16 @@ function queryDefinitions(): QueryDefinition[] {
         SELECT sample.model_profile_id,sample.phase,COUNT_BIG(*) sample_count,MIN(sample.sampled_at_utc) first_sample_at_utc,
           MAX(sample.sampled_at_utc) last_sample_at_utc,AVG(CONVERT(float,sample.running_requests)) mean_running_requests,
           MAX(CONVERT(float,sample.running_requests)) max_running_requests,MAX(CONVERT(float,sample.waiting_requests)) max_waiting_requests,
+          MAX(CONVERT(float,sample.swapped_requests)) max_swapped_requests,
           MAX(CONVERT(float,sample.kv_cache_usage_ratio)) max_kv_cache_usage_ratio,
+          AVG(CONVERT(float,sample.prompt_throughput)) mean_prompt_tokens_per_second,
+          MAX(CONVERT(float,sample.prompt_throughput)) max_prompt_tokens_per_second,
+          AVG(CONVERT(float,sample.generation_throughput)) mean_generation_tokens_per_second,
+          MAX(CONVERT(float,sample.generation_throughput)) max_generation_tokens_per_second,
+          CASE WHEN MAX(CONVERT(float,sample.prefix_cache_queries_total))-MIN(CONVERT(float,sample.prefix_cache_queries_total)) > 0
+            THEN (MAX(CONVERT(float,sample.prefix_cache_hits_total))-MIN(CONVERT(float,sample.prefix_cache_hits_total))) /
+                 NULLIF(MAX(CONVERT(float,sample.prefix_cache_queries_total))-MIN(CONVERT(float,sample.prefix_cache_queries_total)),0)
+            ELSE NULL END prefix_cache_hit_ratio,
           MAX(CONVERT(float,sample.preemptions_total))-MIN(CONVERT(float,sample.preemptions_total)) preemption_delta,
           MAX(CONVERT(float,sample.request_errors_total))-MIN(CONVERT(float,sample.request_errors_total)) request_error_delta,
           MAX(CONVERT(float,sample.cancellations_total))-MIN(CONVERT(float,sample.cancellations_total)) cancellation_delta,
@@ -306,6 +323,71 @@ function queryDefinitions(): QueryDefinition[] {
         LEFT JOIN telemetry.gpu_samples gpu ON gpu.run_id=sample.run_id AND gpu.sampled_at_utc=sample.sampled_at_utc
         WHERE sample.run_id=@run AND sample.source_instance='chat-primary' AND sample.model_profile_id IS NOT NULL
         GROUP BY sample.model_profile_id,sample.phase ORDER BY MIN(sample.sampled_at_utc);`,
+    },
+    {
+      name: "pipeline_phase_performance",
+      sql: `
+        WITH span_rows AS
+        (
+          SELECT j.model_profile_id,j.agent_arm_id,j.run_kind,s.span_name,s.status,CONVERT(float,s.duration_ms) duration_ms
+          FROM telemetry.traces trace_row INNER JOIN telemetry.spans s ON s.trace_id=trace_row.trace_id
+          INNER JOIN control.jobs j ON j.job_id=COALESCE(s.job_id,trace_row.job_id)
+          WHERE trace_row.run_id=@run AND s.finished_at_utc IS NOT NULL AND s.duration_ms IS NOT NULL
+        ), distributions AS
+        (
+          SELECT model_profile_id,agent_arm_id,run_kind,span_name,
+            COUNT_BIG(*) OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) sample_count,
+            SUM(CASE WHEN status NOT IN ('ok','success','complete') THEN 1 ELSE 0 END)
+              OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) non_success_count,
+            PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY duration_ms)
+              OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) p50_ms,
+            PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY duration_ms)
+              OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) p90_ms,
+            PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms)
+              OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) p95_ms,
+            PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY duration_ms)
+              OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) p99_ms,
+            AVG(duration_ms) OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) mean_ms,
+            MAX(duration_ms) OVER (PARTITION BY model_profile_id,agent_arm_id,run_kind,span_name) max_ms
+          FROM span_rows
+        )
+        SELECT DISTINCT model_profile_id,agent_arm_id,run_kind,span_name,sample_count,non_success_count,
+          CONVERT(float,p50_ms) p50_ms,CONVERT(float,p90_ms) p90_ms,CONVERT(float,p95_ms) p95_ms,
+          CONVERT(float,p99_ms) p99_ms,CONVERT(float,mean_ms) mean_ms,CONVERT(float,max_ms) max_ms
+        FROM distributions
+        ORDER BY model_profile_id,agent_arm_id,run_kind,span_name;`,
+    },
+    {
+      name: "queue_performance",
+      sql: `
+        SELECT COUNT_BIG(*) sample_count,MIN(sampled_at_utc) first_sample_at_utc,MAX(sampled_at_utc) last_sample_at_utc,
+          AVG(CONVERT(float,pending_count)) mean_pending_count,MAX(pending_count) max_pending_count,
+          AVG(CONVERT(float,leased_count)) mean_leased_count,MAX(leased_count) max_leased_count,
+          MAX(retryable_count) max_retryable_count,MAX(oldest_pending_age_ms) max_oldest_pending_age_ms,
+          MAX(lease_expired_count) max_lease_expired_count,SUM(COALESCE(arrivals_since_prior,0)) observed_arrivals,
+          SUM(COALESCE(completions_since_prior,0)) observed_completions,MAX(worker_count) max_worker_count
+        FROM telemetry.queue_samples WHERE run_id=@run;`,
+    },
+    {
+      name: "sql_resource_performance",
+      sql: `
+        SELECT COUNT_BIG(*) sample_count,MIN(sampled_at_utc) first_sample_at_utc,MAX(sampled_at_utc) last_sample_at_utc,
+          AVG(CONVERT(float,process_cpu_pct)) mean_process_cpu_pct,MAX(CONVERT(float,process_cpu_pct)) max_process_cpu_pct,
+          MAX(process_memory_kb) max_process_memory_kb,MAX(target_memory_kb) max_target_memory_kb,
+          MAX(request_count) max_request_count,MAX(blocked_request_count) max_blocked_request_count,
+          MAX(runnable_task_count) max_runnable_task_count,MAX(pending_io_count) max_pending_io_count,
+          MAX(data_file_bytes) max_data_file_bytes,MAX(log_file_bytes) max_log_file_bytes,MAX(log_used_pct) max_log_used_pct,
+          SUM(CASE WHEN unavailable_reason IS NOT NULL THEN 1 ELSE 0 END) unavailable_sample_count
+        FROM telemetry.sql_resource_samples WHERE run_id=@run;`,
+    },
+    {
+      name: "query_store_performance",
+      sql: `
+        SELECT database_name,COUNT_BIG(*) interval_count,SUM(execution_count) execution_count,
+          SUM(CONVERT(float,duration_ms)) duration_ms,SUM(CONVERT(float,cpu_ms)) cpu_ms,
+          SUM(CONVERT(float,logical_reads)) logical_reads,SUM(CONVERT(float,physical_reads)) physical_reads,
+          SUM(CONVERT(float,log_bytes)) log_bytes,MIN(interval_start_utc) first_interval_at_utc,MAX(interval_end_utc) last_interval_at_utc
+        FROM telemetry.query_store_intervals WHERE run_id=@run GROUP BY database_name ORDER BY database_name;`,
     },
     {
       name: "retrieval_benchmarks",

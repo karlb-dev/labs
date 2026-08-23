@@ -22,11 +22,14 @@ from sklearn.metrics import f1_score
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--run", required=True)
+parser.add_argument("--rows-dir", help="verified row bundle (defaults to <run>/repro/rows)")
 parser.add_argument("--freeze", action="store_true", help="freeze expected deterministic output hashes")
 args = parser.parse_args()
 run = Path(args.run).resolve()
 lab = Path(__file__).resolve().parents[1]
-rows_root = run / "repro" / "rows"
+rows_root = Path(args.rows_dir).resolve() if args.rows_dir else run / "repro" / "rows"
+if not rows_root.is_relative_to(run / "repro"):
+    raise RuntimeError(f"Row bundle must stay under {run / 'repro'}: {rows_root}")
 reports = run / "reports"
 tables = run / "tables"
 figures = run / "figures"
@@ -77,6 +80,25 @@ manifest = verify_inputs()
 run_id = manifest["runId"]
 
 
+def repro_gate(mode: str) -> dict[str, Any]:
+    path = run / "repro" / f"{mode}-pass.json"
+    if not path.is_file():
+        return {"mode": mode, "disposition": "PENDING", "receiptSha256": None}
+    record = json.loads(path.read_text())
+    received = record.pop("receiptSha256")
+    if digest_bytes(canonical(record).encode()) != received:
+        raise RuntimeError(f"{mode} reproduction receipt hash drift")
+    record["receiptSha256"] = received
+    if record.get("runId") != run_id or record.get("mode") != mode or record.get("disposition") != "PASS" or \
+       record.get("rowManifestReceiptSha256") != manifest["receiptSha256"] or record.get("queryBundleSha256") != manifest["queryBundleSha256"]:
+        raise RuntimeError(f"{mode} reproduction receipt identity drift")
+    return record
+
+
+rows_gate = repro_gate("rows")
+restore_gate = repro_gate("restore")
+
+
 def jsonl(name: str) -> pd.DataFrame:
     path = rows_root / f"{name}.jsonl"
     if not path.exists() or path.stat().st_size == 0:
@@ -101,6 +123,10 @@ control_pairs = jsonl("control_comparisons")
 calibration_models = jsonl("calibration_models")
 performance = jsonl("agent_performance")
 service = jsonl("service_performance")
+pipeline_phases = jsonl("pipeline_phase_performance")
+queue_performance = jsonl("queue_performance")
+sql_performance = jsonl("sql_resource_performance")
+query_store_performance = jsonl("query_store_performance")
 retrieval_benchmarks = jsonl("retrieval_benchmarks")
 safety_rows = jsonl("safety_audit")
 completeness = jsonl("run_completeness")
@@ -125,14 +151,29 @@ numeric(performance, [
     "agent_elapsed_ms", "model_request_count", "model_response_count", "model_client_elapsed_ms",
     "headers_wait_ms", "body_read_ms", "parse_ms", "prompt_tokens", "completion_tokens", "model_error_count",
     "length_finish_count", "repaired_response_count", "rejected_response_count", "tool_call_count",
+    "no_repair_count", "code_fence_repair_count", "leading_text_repair_count", "rejected_repair_count",
     "tool_latency_ms", "snapshot_miss_count", "tool_error_count", "validation_failure_count",
 ])
 numeric(tool_rows, ["called_count", "valid_call_count", "snapshot_miss_count", "tool_error_count", "tool_score"])
 numeric(service, [
-    "sample_count", "mean_running_requests", "max_running_requests", "max_waiting_requests", "max_kv_cache_usage_ratio",
+    "sample_count", "mean_running_requests", "max_running_requests", "max_waiting_requests", "max_swapped_requests",
+    "max_kv_cache_usage_ratio", "mean_prompt_tokens_per_second", "max_prompt_tokens_per_second",
+    "mean_generation_tokens_per_second", "max_generation_tokens_per_second", "prefix_cache_hit_ratio",
     "preemption_delta", "request_error_delta", "cancellation_delta", "prompt_token_delta", "generation_token_delta",
     "mean_gpu_utilization_pct", "max_gpu_utilization_pct", "max_gpu_memory_used_mib", "max_gpu_power_draw_w", "max_gpu_temperature_c",
 ])
+numeric(pipeline_phases, ["sample_count", "non_success_count", "p50_ms", "p90_ms", "p95_ms", "p99_ms", "mean_ms", "max_ms"])
+numeric(queue_performance, [
+    "sample_count", "mean_pending_count", "max_pending_count", "mean_leased_count", "max_leased_count",
+    "max_retryable_count", "max_oldest_pending_age_ms", "max_lease_expired_count", "observed_arrivals",
+    "observed_completions", "max_worker_count",
+])
+numeric(sql_performance, [
+    "sample_count", "mean_process_cpu_pct", "max_process_cpu_pct", "max_process_memory_kb", "max_target_memory_kb",
+    "max_request_count", "max_blocked_request_count", "max_runnable_task_count", "max_pending_io_count",
+    "max_data_file_bytes", "max_log_file_bytes", "max_log_used_pct", "unavailable_sample_count",
+])
+numeric(query_store_performance, ["interval_count", "execution_count", "duration_ms", "cpu_ms", "logical_reads", "physical_reads", "log_bytes"])
 
 profiles = ["muse-glimmer-30b", "gemma-4-31b", "qwen-3.8-27b"]
 target_profiles = ["muse-glimmer-30b", "gemma-4-31b", "olmo-3.1-32b-instruct", "qwen-3.8-27b"]
@@ -248,13 +289,25 @@ def cell_row(profile: str, arm: str, kind: str) -> dict[str, Any]:
     derived = kind == "DERIVED"
     model_ms = pd.Series(dtype=float) if derived else perf.model_client_elapsed_ms
     tokens = pd.Series(dtype=float) if derived else pd.to_numeric(perf.prompt_tokens, errors="coerce").fillna(0) + pd.to_numeric(perf.completion_tokens, errors="coerce").fillna(0)
+    responses = 0 if derived else float(perf.model_response_count.fillna(0).sum())
+    repair_distribution = {
+        "none": 0 if derived else int(perf.no_repair_count.fillna(0).sum()),
+        "strip_code_fence": 0 if derived else int(perf.code_fence_repair_count.fillna(0).sum()),
+        "strip_leading_text": 0 if derived else int(perf.leading_text_repair_count.fillna(0).sum()),
+        "rejected": 0 if derived else int(perf.rejected_repair_count.fillna(0).sum()),
+    }
     return {
         "profile": profile, "arm": arm, "kind": kind, "disposition": "COMPLETE",
         "eligible": len(values), "completed": int((values.outcome != "failure").sum()),
         "end_to_end_success": rate(values.end_to_end_success), "macro_f1": float(macro),
         "action_accuracy": rate(values.action_correct), "cost_weighted_loss": rate(values.cost_weighted_loss),
         "contract_success": rate(values.contract_success), "unknown_abstain_accuracy": rate(values.loc[values.regime == "U", "abstention_correct"]),
+        "b1_coverage": (1 - rate(values.abstained)) if profile == "baseline" and arm == "B1-rules-v1" else None,
         **tools, "retrieval_recall_at_5": rate(retrieval.recall_at_k), "grounding_rate": rate(retrieval.grounded),
+        "first_pass_valid_rate": safe_div(float(repair_distribution["none"]), responses),
+        "repaired_response_rate": safe_div(float(repair_distribution["strip_code_fence"] + repair_distribution["strip_leading_text"]), responses),
+        "rejected_response_rate": safe_div(float(repair_distribution["rejected"]), responses),
+        "repair_kind_distribution": canonical(repair_distribution),
         "action_delta_vs_b1": None if action is None else action["observed_difference"],
         "action_delta_ci_low": None if action is None else action["ci_low"], "action_delta_ci_high": None if action is None else action["ci_high"],
         "action_delta_holm_p": None if action is None else action["holm_adjusted_p_value"],
@@ -340,6 +393,27 @@ if not formal_positive:
 
 taxonomy.sort(key=lambda row: (row["taxonomyCode"], row["stage"], canonical(row["evidence"])))
 
+cell_taxonomy: dict[tuple[str, str], set[str]] = {}
+for row in taxonomy:
+    if row["stage"] not in {"paired_primary", "runtime", "tool_use", "port_gate", "primary_hypothesis_family"}:
+        continue
+    profile_key = row["evidence"].get("profileKey")
+    arm_id = row["evidence"].get("armId")
+    if profile_key is None:
+        for profile_key in profiles:
+            for arm_id in model_arms:
+                cell_taxonomy.setdefault((profile_key, arm_id), set()).add(row["taxonomyCode"])
+    elif arm_id is None:
+        for arm_id in model_arms:
+            cell_taxonomy.setdefault((profile_key, arm_id), set()).add(row["taxonomyCode"])
+    else:
+        cell_taxonomy.setdefault((profile_key, arm_id), set()).add(row["taxonomyCode"])
+
+scorecard["taxonomy_labels"] = [
+    ";".join(sorted(cell_taxonomy.get((row.profile, row.arm), {"BASELINE" if row.kind == "BASELINE" else row.disposition})))
+    for row in scorecard.itertuples(index=False)
+]
+
 claims: list[dict[str, Any]] = []
 
 
@@ -420,10 +494,11 @@ def md(frame: pd.DataFrame, columns: list[str] | None = None) -> str:
     ])
 
 
-score_columns = ["profile", "arm", "kind", "disposition", "eligible", "completed", "end_to_end_success", "macro_f1",
+score_columns = ["profile", "arm", "kind", "disposition", "taxonomy_labels", "eligible", "completed", "end_to_end_success", "macro_f1",
                  "action_accuracy", "cost_weighted_loss", "action_delta_vs_b1", "action_delta_ci_low", "action_delta_ci_high",
-                 "action_delta_holm_p", "required_tool_recall", "forbidden_tool_rate", "argument_valid_rate", "snapshot_miss_rate",
-                 "retrieval_recall_at_5", "contract_success", "raw_ece", "calibrated_ece", "agent_latency_p95_ms", "tokens_per_episode"]
+                 "action_delta_holm_p", "b1_coverage", "required_tool_recall", "forbidden_tool_rate", "argument_valid_rate", "snapshot_miss_rate",
+                 "retrieval_recall_at_5", "contract_success", "first_pass_valid_rate", "repaired_response_rate", "rejected_response_rate",
+                 "raw_ece", "calibrated_ece", "agent_latency_p95_ms", "tokens_per_episode"]
 scorecard_md = "# LogWarden Tier 1 scorecard\n\n" \
     "All rows use the three frozen test roles. Failures count as failures; missing cells are not imputed. " \
     "`A-router` is derived and has zero incremental inference cost. OLMo is retained as `STOP_PORT`.\n\n" + md(scorecard, score_columns) + \
@@ -444,23 +519,54 @@ retrieval_cell = retrieval_rows.groupby(["profile_key", "agent_arm_id"], dropna=
     ndcg_at_5=("ndcg_at_k", "mean"), grounding_rate=("grounded", "mean"), citation_precision=("citation_precision", "mean"),
     citation_recall=("citation_recall", "mean"),
 ).reset_index()
-write_csv(tables / "F07_retrieval_scorecard.csv", retrieval_cell)
+retrieval_cell["source"] = "prediction_score"
+benchmark_cells = retrieval_benchmarks.groupby("retrieval_mode", dropna=False).agg(
+    rows=("episode_id", "size"), recall_at_5=("recall_at_k", "mean"), mrr=("reciprocal_rank", "mean"),
+    ndcg_at_5=("ndcg_at_k", "mean"), no_answer_accuracy=("no_answer_correct", "mean"),
+).reset_index().rename(columns={"retrieval_mode": "agent_arm_id"})
+benchmark_cells["profile_key"] = "retrieval-benchmark"
+benchmark_cells["source"] = "frozen_search_benchmark"
+retrieval_scorecard = pd.concat([retrieval_cell, benchmark_cells], ignore_index=True, sort=False)
+write_csv(tables / "F07_retrieval_scorecard.csv", retrieval_scorecard)
 grounding_contrasts = contrasts[contrasts.hypothesis_class.isin(["retrieval_ablation", "tool_context_ablation"])].copy()
-write_csv(tables / "F06_grounding_causal_effect.csv", grounding_contrasts)
-(reports / "GROUNDING_REPORT.md").write_text("# Grounding and retrieval report\n\n## Retrieval scorecard\n\n" + md(retrieval_cell) +
+grounding_contrasts["record_type"] = "paired_contrast"
+shuffled_effect = control_pairs[control_pairs.control_id == "shuffled-runbooks-v1"].groupby("model_profile_id", dropna=False).agg(
+    sample_count=("control_prediction_id", "size"), observed_difference=("action_score_delta", "mean"),
+    semantic_agreement=("semantic_decision_agreement", "mean"), ordered_tool_agreement=("ordered_tool_call_agreement", "mean"),
+).reset_index()
+shuffled_effect["contrast_id"] = shuffled_effect.model_profile_id + "-shuffled-runbooks-v1"
+shuffled_effect["metric_name"] = "action_score_delta"
+shuffled_effect["hypothesis_class"] = "wrong_evidence_control"
+shuffled_effect["record_type"] = "negative_control"
+grounding_figure = pd.concat([grounding_contrasts, shuffled_effect], ignore_index=True, sort=False)
+write_csv(tables / "F06_grounding_causal_effect.csv", grounding_figure)
+(reports / "GROUNDING_REPORT.md").write_text("# Grounding and retrieval report\n\n## Retrieval scorecard\n\n" + md(retrieval_scorecard) +
     "\n\n## Paired causal application contrasts\n\n" + md(grounding_contrasts[["contrast_id", "metric_name", "sample_count", "observed_difference", "ci_low", "ci_high", "holm_adjusted_p_value"]]) +
+    "\n\n## Shuffled-runbook negative control\n\n" + md(shuffled_effect) +
     "\n\nHybrid retrieval led the descriptive retrieval benchmark, but no retrieval causal claim survived the declared multiplicity/null gate.\n")
 
-tool_cell = tool_rows.groupby(["profile_key", "agent_arm_id", "expectation"], dropna=False).agg(
+tool_expectation_table = tool_rows.groupby(["profile_key", "agent_arm_id", "expectation"], dropna=False).agg(
     episode_tool_rows=("prediction_id", "size"), calls=("called_count", "sum"), valid_calls=("valid_call_count", "sum"),
     snapshot_misses=("snapshot_miss_count", "sum"), tool_errors=("tool_error_count", "sum"), correct_use_rate=("correct_use", "mean"),
 ).reset_index()
+tool_cell_rows = []
+for (profile_key, arm_id), values in tool_rows.groupby(["profile_key", "agent_arm_id"], sort=True):
+    summary = tool_summary(profile_key, arm_id)
+    observed = values[values.called_count > 0]
+    tool_cell_rows.append({
+        "profile_key": profile_key, "agent_arm_id": arm_id, **summary,
+        "observed_tool_precision": rate(observed.correct_use), "tool_calls": int(values.called_count.sum()),
+        "tool_errors": int(values.tool_error_count.sum()), "tool_expectation_rows": len(values),
+    })
+tool_cell = pd.DataFrame(tool_cell_rows)
 write_csv(tables / "F05_tool_precision_recall.csv", tool_cell)
-(reports / "TOOL_USE_REPORT.md").write_text("# Tool-use report\n\n" + md(tool_cell) +
+(reports / "TOOL_USE_REPORT.md").write_text("# Tool-use report\n\n## Profile/arm scorecard\n\n" + md(tool_cell) +
+    "\n\n## Expectation-level counts\n\n" + md(tool_expectation_table) +
     "\n\nTool taxonomies are rule-derived from required-call recall, forbidden-call rate, argument validity, and snapshot misses; see `tables/taxonomy.jsonl`.\n")
 
 calibration_summary_rows = []
 reliability_rows = []
+risk_coverage_rows = []
 for profile in profiles:
     for arm in model_arms:
         values = primary[(primary.profile_key == profile) & (primary.agent_arm_id == arm)].dropna(subset=["confidence", "end_to_end_success"])
@@ -468,6 +574,7 @@ for profile in profiles:
         if values.empty or coefficients is None:
             continue
         outcomes = values.end_to_end_success.astype(float).to_numpy()
+        action_outcomes = values.action_correct.astype(float).to_numpy()
         raw = values.confidence.astype(float).to_numpy()
         fitted = np.array([calibrated(coefficients, value) for value in raw])
         summary = calibration_summary(values, profile, arm)
@@ -480,10 +587,24 @@ for profile in profiles:
                     reliability_rows.append({"profile": profile, "arm": arm, "state": state, "bin": index,
                                              "rows": int(selected.sum()), "mean_confidence": float(probabilities[selected].mean()),
                                              "accuracy": float(outcomes[selected].mean())})
+            for threshold_value in np.linspace(0, 1, 21):
+                selected = probabilities >= threshold_value
+                if selected.any():
+                    selective_accuracy = float(action_outcomes[selected].mean())
+                    risk_coverage_rows.append({"profile": profile, "arm": arm, "state": state,
+                                               "threshold": float(threshold_value), "rows": int(selected.sum()),
+                                               "coverage": float(selected.mean()), "selective_action_accuracy": selective_accuracy,
+                                               "selective_risk": 1 - selective_accuracy})
 calibration_table = pd.DataFrame(calibration_summary_rows)
 reliability = pd.DataFrame(reliability_rows)
+risk_coverage = pd.DataFrame(risk_coverage_rows)
+reliability_export = reliability.copy()
+reliability_export["record_type"] = "reliability_bin"
+risk_coverage_export = risk_coverage.copy()
+risk_coverage_export["record_type"] = "risk_coverage"
+calibration_plot_data = pd.concat([reliability_export, risk_coverage_export], ignore_index=True, sort=False)
 write_csv(tables / "calibration-summary.csv", calibration_table)
-write_csv(tables / "F08_reliability_risk_coverage.csv", reliability)
+write_csv(tables / "F08_reliability_risk_coverage.csv", calibration_plot_data)
 (reports / "CALIBRATION_REPORT.md").write_text("# Calibration and abstention report\n\n" + md(calibration_table) +
     "\n\nSeveral frozen Platt fits did not converge; those models remain retained and are explicitly flagged. Calibration was fit on 60 calibration episodes per arm before test access.\n")
 
@@ -526,12 +647,129 @@ latency = performance[performance.model_profile_id.notna() & (performance.predic
     model_p50_ms=("model_client_elapsed_ms", "median"), model_p95_ms=("model_client_elapsed_ms", lambda value: value.quantile(.95)),
     tool_p50_ms=("tool_latency_ms", "median"), parse_p50_ms=("parse_ms", "median"), prompt_tokens=("prompt_tokens", "sum"), completion_tokens=("completion_tokens", "sum"),
 ).reset_index()
-write_csv(tables / "F11_latency_decomposition.csv", latency)
+primary_phase_p95 = pipeline_phases[pipeline_phases.run_kind == "agent_replay"].pivot_table(
+    index=["model_profile_id", "agent_arm_id"], columns="span_name", values="p95_ms", aggfunc="first",
+).reset_index()
+primary_phase_p95.columns = [
+    str(column) if column in {"model_profile_id", "agent_arm_id"} else "phase_p95_" + re.sub(r"[^a-z0-9]+", "_", str(column).lower()).strip("_") + "_ms"
+    for column in primary_phase_p95.columns
+]
+latency_decomposition = latency.merge(primary_phase_p95, on=["model_profile_id", "agent_arm_id"], how="left")
+write_csv(tables / "F11_latency_decomposition.csv", latency_decomposition)
 
-write_csv(tables / "F01_lift_over_rules.csv", contrasts[contrasts.hypothesis_class == "model_arm_minus_rules"])
+agent_performance_rows: list[dict[str, Any]] = []
+agent_only = performance[performance.model_profile_id.notna() & (performance.prediction_source == "agent")]
+for (profile_key, arm_id), values in agent_only.groupby(["model_profile_id", "agent_arm_id"], sort=True):
+    successes = int((values.outcome != "failure").sum())
+    responses = float(values.model_response_count.fillna(0).sum())
+    agent_performance_rows.append({
+        "profile": profile_key, "arm": arm_id, "episodes": len(values), "successful_episodes": successes,
+        "agent_p50_ms": quantile(values.agent_elapsed_ms, .50), "agent_p90_ms": quantile(values.agent_elapsed_ms, .90),
+        "agent_p95_ms": quantile(values.agent_elapsed_ms, .95), "agent_p99_ms": quantile(values.agent_elapsed_ms, .99),
+        "model_client_p50_ms": quantile(values.model_client_elapsed_ms, .50), "model_client_p90_ms": quantile(values.model_client_elapsed_ms, .90),
+        "model_client_p95_ms": quantile(values.model_client_elapsed_ms, .95), "model_client_p99_ms": quantile(values.model_client_elapsed_ms, .99),
+        "model_requests": int(values.model_request_count.fillna(0).sum()), "model_responses": int(responses),
+        "prompt_tokens": int(values.prompt_tokens.fillna(0).sum()), "completion_tokens": int(values.completion_tokens.fillna(0).sum()),
+        "tokens_per_episode": safe_div(float((values.prompt_tokens.fillna(0) + values.completion_tokens.fillna(0)).sum()), len(values)),
+        "model_seconds_per_success": safe_div(float(values.model_client_elapsed_ms.fillna(0).sum()) / 1000, successes),
+        "tool_calls_per_success": safe_div(float(values.tool_call_count.fillna(0).sum()), successes),
+        "first_pass_valid_rate": safe_div(float(values.no_repair_count.fillna(0).sum()), responses),
+        "repaired_response_rate": safe_div(float(values.repaired_response_count.fillna(0).sum()), responses),
+        "rejected_response_rate": safe_div(float(values.rejected_repair_count.fillna(0).sum()), responses),
+        "model_errors": int(values.model_error_count.fillna(0).sum()), "length_finishes": int(values.length_finish_count.fillna(0).sum()),
+        "snapshot_misses": int(values.snapshot_miss_count.fillna(0).sum()), "tool_errors": int(values.tool_error_count.fillna(0).sum()),
+        "validation_failures": int(values.validation_failure_count.fillna(0).sum()),
+    })
+agent_performance_table = pd.DataFrame(agent_performance_rows)
+write_csv(tables / "agent-cell-performance.csv", agent_performance_table)
+
+service_table = service.copy()
+if not service_table.empty:
+    service_table["residency_window_seconds"] = (
+        pd.to_datetime(service_table.last_sample_at_utc, utc=True) - pd.to_datetime(service_table.first_sample_at_utc, utc=True)
+    ).dt.total_seconds()
+write_csv(tables / "model-service-performance.csv", service_table)
+write_csv(tables / "agent-pipeline-performance.csv", pipeline_phases)
+write_csv(tables / "queue-performance.csv", queue_performance)
+write_csv(tables / "sql-resource-performance.csv", sql_performance)
+write_csv(tables / "query-store-performance.csv", query_store_performance)
+
+performance_availability = pd.DataFrame([
+    {"metric_family": "agent wall clock", "status": "available", "provenance": "client monotonic timestamps", "note": "p50/p90/p95/p99 retained per profile/arm"},
+    {"metric_family": "pipeline phases", "status": "available", "provenance": "closed telemetry spans", "note": "prompt, model, retrieval, tool, validation, persistence, and loop spans"},
+    {"metric_family": "model request total", "status": "available", "provenance": "client monotonic timestamps", "note": "headers wait, body read, and parse are separately retained"},
+    {"metric_family": "true model TTFT", "status": "unavailable", "provenance": "endpoint limitation", "note": "non-streaming transport exposes no first-token event; headers wait is not relabeled TTFT"},
+    {"metric_family": "inter-token latency", "status": "unavailable", "provenance": "endpoint limitation", "note": "no streaming token timestamps"},
+    {"metric_family": "vLLM request/token counters", "status": "available", "provenance": "raw /metrics snapshots", "note": "running/waiting requests, token deltas, preemptions, and prefix-cache counters where exposed"},
+    {"metric_family": "vLLM throughput gauges", "status": "unavailable", "provenance": "vLLM 0.27.1 metric surface", "note": "prompt/generation throughput gauges were absent; counter deltas remain retained"},
+    {"metric_family": "KV-cache occupancy", "status": "unavailable", "provenance": "vLLM 0.27.1 metric surface", "note": "metric was absent for these service configurations"},
+    {"metric_family": "GPU", "status": "available", "provenance": "nvidia-smi samples", "note": "utilization, memory, power, temperature, clocks, and process snapshots retained"},
+    {"metric_family": "queue", "status": "available", "provenance": "SQL queue sampler", "note": "depth, age, lease, worker, and terminal-state samples retained"},
+    {"metric_family": "SQL resources", "status": "partial", "provenance": "SQL DMVs", "note": "memory/request/blocking/I/O/file sizes available; process CPU and log-used percent unavailable"},
+    {"metric_family": "Query Store intervals", "status": "unavailable", "provenance": "Tier-2 materialization deferred", "note": "settings/history are retained, but no interval rows were materialized for Tier 1"},
+])
+write_csv(tables / "performance-metric-availability.csv", performance_availability)
+
+performance_report = "# Agent and inference performance report\n\n" \
+    f"The reconciled telemetry set contains {telemetry['observed']['trace_count']:,} closed traces, " \
+    f"{telemetry['observed']['span_count']:,} closed spans, {telemetry['observed']['model_request_count']:,} paired model requests/responses, " \
+    f"{telemetry['observed']['metric_sample_count']:,} metric samples, and {telemetry['observed']['raw_metric_snapshot_count']:,} raw snapshots.\n\n" \
+    "## Primary agent cells\n\n" + md(agent_performance_table) + \
+    "\n\n## Persisted pipeline span distributions\n\n" + md(pipeline_phases) + \
+    "\n\n## vLLM and GPU residency samples\n\n" + md(service_table) + \
+    "\n\n## SQL queue\n\n" + md(queue_performance) + \
+    "\n\n## SQL resource sampling\n\n" + md(sql_performance) + \
+    "\n\n## Query Store materialization\n\n" + md(query_store_performance) + \
+    "\n\n## Metric availability and non-inference policy\n\n" + md(performance_availability) + \
+    "\n\nMissing service metrics remain unavailable; the report never derives TTFT or inter-token latency from total request time. " \
+    "Residency windows include governed warm-up, calibration, primary replay, and controls and therefore are not model-only benchmark times.\n"
+(reports / "PERFORMANCE_REPORT.md").write_text(performance_report)
+
+formal_lift = contrasts[contrasts.hypothesis_class == "model_arm_minus_rules"].copy()
+formal_lift["scope"] = "aggregate_formal"
+formal_lift["regime"] = "ALL"
+descriptive_lift_rows = []
+for profile_key in profiles:
+    for arm_id in model_arms:
+        for regime in sorted(primary.regime.dropna().unique()):
+            left = primary[(primary.profile_key == profile_key) & (primary.agent_arm_id == arm_id) & (primary.regime == regime)]
+            right = primary[(primary.profile_key == "baseline") & (primary.agent_arm_id == "B1-rules-v1") & (primary.regime == regime)]
+            paired = left[["episode_id", "action_correct", "cost_weighted_loss"]].merge(
+                right[["episode_id", "action_correct", "cost_weighted_loss"]], on="episode_id", suffixes=("_left", "_right"),
+            )
+            if paired.empty:
+                continue
+            descriptive_lift_rows.extend([
+                {"contrast_id": f"{profile_key}-{arm_id}-vs-B1", "metric_name": "acceptable_action_accuracy",
+                 "hypothesis_class": "model_arm_minus_rules", "sample_count": len(paired),
+                 "observed_difference": rate(paired.action_correct_left.astype(float) - paired.action_correct_right.astype(float)),
+                 "scope": "regime_descriptive", "regime": regime},
+                {"contrast_id": f"{profile_key}-{arm_id}-vs-B1", "metric_name": "cost_weighted_loss_reduction",
+                 "hypothesis_class": "model_arm_minus_rules", "sample_count": len(paired),
+                 "observed_difference": rate(paired.cost_weighted_loss_right.astype(float) - paired.cost_weighted_loss_left.astype(float)),
+                 "scope": "regime_descriptive", "regime": regime},
+            ])
+lift_table = pd.concat([formal_lift, pd.DataFrame(descriptive_lift_rows)], ignore_index=True, sort=False)
+write_csv(tables / "F01_lift_over_rules.csv", lift_table)
 confusion = primary.groupby(["profile_key", "agent_arm_id", "expected_class", "predicted_class"], dropna=False).size().rename("episodes").reset_index()
 write_csv(tables / "F03_confusion_grid.csv", confusion)
-write_csv(tables / "F04_action_cost.csv", scorecard[["profile", "arm", "action_accuracy", "cost_weighted_loss"]])
+severity_rank = {"info": 0, "low": 1, "medium": 2, "high": 3, "critical": 4}
+action_cost_rows = []
+for (profile_key, arm_id), values in primary.groupby(["profile_key", "agent_arm_id"], sort=True):
+    expected_rank = values.expected_severity.map(severity_rank)
+    predicted_rank = values.predicted_severity.map(severity_rank)
+    actionable = values.expected_action != "no_action"
+    noise = values.expected_action == "no_action"
+    action_cost_rows.append({
+        "profile": profile_key, "arm": arm_id, "episodes": len(values),
+        "cost_weighted_loss": rate(values.cost_weighted_loss), "action_error_rate": rate(~values.action_correct.astype(bool)),
+        "miss_rate_on_actionable": rate((values.predicted_action.isna() | (values.predicted_action == "no_action"))[actionable]),
+        "false_alarm_rate_on_no_action": rate((values.predicted_action.notna() & (values.predicted_action != "no_action"))[noise]),
+        "severity_undercall_rate": rate(predicted_rank.isna() | (predicted_rank < expected_rank)),
+        "classification_error_rate": rate(~values.class_correct.astype(bool)), "terminal_failure_rate": rate(values.outcome == "failure"),
+    })
+action_cost = pd.DataFrame(action_cost_rows)
+write_csv(tables / "F04_action_cost.csv", action_cost)
 nulls = contrasts[["contrast_id", "metric_name", "observed_difference", "null_mean", "null_sd", "permutation_p_value", "holm_adjusted_p_value"]].copy()
 write_csv(tables / "F12_permutation_nulls.csv", nulls)
 b1_regime = primary[(primary.profile_key == "baseline") & (primary.agent_arm_id == "B1-rules-v1")].groupby("regime").agg(
@@ -542,8 +780,7 @@ write_csv(tables / "F13_b1_coverage_by_regime.csv", b1_regime)
 
 def save_figure(code: str, source: pd.DataFrame, draw, caption: str) -> dict[str, Any]:
     source_path = tables / f"{code}_{figure_names[code]}.csv"
-    if not source_path.exists():
-        write_csv(source_path, source)
+    write_csv(source_path, source)
     plt.figure(figsize=(10, 5.8))
     if source.empty:
         plt.axis("off")
@@ -574,9 +811,10 @@ figure_names = {
     "F11": "latency_decomposition", "F12": "permutation_nulls", "F13": "b1_coverage_by_regime",
 }
 figure_manifest = []
-figure_manifest.append(save_figure("F01", contrasts[contrasts.hypothesis_class == "model_arm_minus_rules"],
-    lambda f: bars(f, f.contrast_id + ":" + f.metric_name, f.observed_difference, "Paired lift over deterministic rules", "difference"),
-    "Paired episode-level difference versus B1; positive is better for both materialized metric definitions."))
+figure_manifest.append(save_figure("F01", lift_table,
+    lambda f: bars(f[f.scope == "aggregate_formal"], f[f.scope == "aggregate_formal"].contrast_id + ":" + f[f.scope == "aggregate_formal"].metric_name,
+                   f[f.scope == "aggregate_formal"].observed_difference, "Paired lift over deterministic rules", "difference"),
+    "Paired episode-level difference versus B1; positive is better. Formal aggregate intervals and descriptive regime rows share the source."))
 figure_manifest.append(save_figure("F02", failure,
     lambda f: bars(f, f.profile_key + "/" + f.agent_arm_id + "/" + f.primary_failure, f.episodes, "Failure-stage funnel", "episodes"),
     "Mutually exclusive first-failure classification across all primary test-role predictions."))
@@ -584,21 +822,22 @@ focus = confusion[(confusion.profile_key == "qwen-3.8-27b") & (confusion.agent_a
 figure_manifest.append(save_figure("F03", confusion,
     lambda _f: bars(focus, focus.expected_class.fillna("?") + "→" + focus.predicted_class.fillna("failure"), focus.episodes, "Qwen A-rag confusion counts", "episodes"),
     "Confusion source includes every profile/arm; the rendered panel shows Qwen A-rag for legibility."))
-figure_manifest.append(save_figure("F04", scorecard,
+figure_manifest.append(save_figure("F04", action_cost,
     lambda f: bars(f, f.profile + "/" + f.arm, f.cost_weighted_loss.fillna(0), "Cost-weighted loss (lower is better)", "loss"),
-    "End-to-end cost-weighted loss; failures are retained and stopped cells remain explicit."))
-tool_plot = tool_cell[tool_cell.expectation == "required"]
+    "End-to-end cost-weighted loss with miss, false-alarm, severity-undercall, classification, and terminal-failure decomposition in the source."))
+tool_plot = tool_cell
 figure_manifest.append(save_figure("F05", tool_cell,
-    lambda _f: bars(tool_plot, tool_plot.profile_key + "/" + tool_plot.agent_arm_id, tool_plot.correct_use_rate, "Required-tool correct-use rate", "rate"),
+    lambda _f: bars(tool_plot, tool_plot.profile_key + "/" + tool_plot.agent_arm_id, tool_plot.required_tool_recall.fillna(0), "Required-tool recall", "rate"),
     "Required-tool correct use with forbidden calls, argument validity, and snapshot misses in the source CSV."))
-figure_manifest.append(save_figure("F06", grounding_contrasts,
-    lambda f: bars(f, f.contrast_id + ":" + f.metric_name, f.observed_difference, "Retrieval/tool causal application contrasts", "difference"),
-    "Paired A-rag/A-direct and A-tools/A-rag differences on prospectively eligible episodes."))
-figure_manifest.append(save_figure("F07", retrieval_cell,
+figure_manifest.append(save_figure("F06", grounding_figure,
+    lambda f: bars(f[f.record_type == "paired_contrast"], f[f.record_type == "paired_contrast"].contrast_id + ":" + f[f.record_type == "paired_contrast"].metric_name,
+                   f[f.record_type == "paired_contrast"].observed_difference, "Retrieval/tool causal application contrasts", "difference"),
+    "Paired A-rag/A-direct and A-tools/A-rag differences plus the shuffled-runbook negative control in the source."))
+figure_manifest.append(save_figure("F07", retrieval_scorecard,
     lambda f: bars(f, f.profile_key + "/" + f.agent_arm_id, f.recall_at_5.fillna(0), "Retrieval recall@5", "recall"),
     "Retrieval recall@5; lexical/vector/hybrid evaluator baselines and model arms are retained."))
 reliability_plot = reliability[(reliability.profile == "qwen-3.8-27b") & (reliability.arm == "A-rag")]
-figure_manifest.append(save_figure("F08", reliability,
+figure_manifest.append(save_figure("F08", calibration_plot_data,
     lambda _f: [plt.plot(group.mean_confidence, group.accuracy, marker="o", label=state) for state, group in reliability_plot.groupby("state")] or None,
     "Raw and calibration-only Platt reliability; the rendered panel shows Qwen A-rag and the source covers all cells."))
 if not reliability_plot.empty:
@@ -609,7 +848,7 @@ figure_manifest.append(save_figure("F09", masking,
 figure_manifest.append(save_figure("F10", contract,
     lambda f: bars(f, f.profile + "/" + f.arm, f.contract_success.fillna(0), "Final contract success", "rate"),
     "First-pass and final structured-contract reliability; repairs and rejections are retained."))
-figure_manifest.append(save_figure("F11", latency,
+figure_manifest.append(save_figure("F11", latency_decomposition,
     lambda f: bars(f, f.model_profile_id + "/" + f.agent_arm_id, f.agent_p95_ms, "Replay p95 end-to-end agent latency", "milliseconds"),
     "Agent, model-client, tool, parse, and token decomposition from persisted timestamps."))
 figure_manifest.append(save_figure("F12", nulls,
@@ -668,7 +907,7 @@ state = f"""# LogWarden Tier 1 state of record
 13. Derived A-router reproduced B1 because B1 resolved the retained episodes; it adds zero inference cost and no quality lift.
 14–18. Live parity, event-rate capacity, raw-event correlation, SQL feature ablations, and ANN are Tier 2 and are not claimed.
 19. The independent Tier-1 permission/procedure audit passed; this is not production-safety evidence.
-20. Row-only and restored-database reconstruction are the closeout gates recorded in `LOGWARDEN_REPRODUCIBILITY.md`.
+20. Row-only and restored-database reconstruction both passed; their stable receipts are recorded in `LOGWARDEN_REPRODUCIBILITY.md`.
 21. The principal unexplained result is why the declared permutation scheme is degenerate for several binary contrasts; no positive claim depends on it.
 22. The defensible carry-forward architecture is deterministic rules for the known head, explicitly gated retrieval/model assistance for residual cases, and SQL Server as the durable evidence/queue/evaluation plane—not an autonomous remediation agent.
 """
@@ -684,6 +923,8 @@ The row-only input bundle contains {sum((item.get('rows') or 0) for item in mani
 - Rendering tolerance: PNG bytes may vary across Matplotlib/font builds; source CSV hashes and captions must match.
 - `repro.sh --mode rows` verifies every input hash, rebuilds outputs without SQL/GPU/inference, and checks expected hashes.
 - `repro.sh --mode restore` starts an isolated SQL Server container, restores the final `.bak` pair, regenerates row exports, compares them byte-for-byte, then runs row-only reconstruction.
+- Row-only gate: `{rows_gate['disposition']}` (`{rows_gate['receiptSha256'] or 'not available'}`).
+- Fresh-restore gate: `{restore_gate['disposition']}` (`{restore_gate['receiptSha256'] or 'not available'}`).
 """
 (reports / "LOGWARDEN_REPRODUCIBILITY.md").write_text(repro_text)
 
@@ -701,8 +942,8 @@ validation = f"""# LogWarden validation record
 | Primary scoring/statistics | PASS | `{analysis_receipt['receiptSha256']}` |
 | Telemetry reconciliation | PASS | `{telemetry['receiptSha256']}` |
 | Tier-1 safety audit | {'PASS' if security_clean else 'FAIL'} | `{security['receiptSha256']}` |
-| Row-only reconstruction | PENDING CLOSEOUT | `repro.sh --mode rows` |
-| Database-restore reconstruction | PENDING CLOSEOUT | `repro.sh --mode restore` |
+| Row-only reconstruction | {rows_gate['disposition']} | `{rows_gate['receiptSha256'] or 'not available'}` |
+| Database-restore reconstruction | {restore_gate['disposition']} | `{restore_gate['receiptSha256'] or 'not available'}` |
 
 A passing benchmark is not a positive model result. The primary scientific adjudication is `{('CLEAN_NULL' if not formal_positive else 'SUPPORTED_LIFT')}`.
 """
@@ -712,6 +953,7 @@ A passing benchmark is not a positive model result. The primary scientific adjud
 root_mapping = {
     "LOGWARDEN_STATE_OF_RECORD.md": state,
     "LOGWARDEN_CLAIMS_TABLE.md": claims_md,
+    "LOGWARDEN_PERFORMANCE_REPORT.md": performance_report,
     "LOGWARDEN_LIMITATIONS.md": limitations,
     "LOGWARDEN_REPRODUCIBILITY.md": repro_text,
     "VALIDATION.md": validation,
@@ -726,7 +968,7 @@ result_block = f"""<!-- logwarden-results:start -->
 
 The frozen Tier-1 campaign is complete for Muse, Gemma, and Qwen; OLMo is `STOP_PORT`. Deterministic B1 reached `{scorecard[(scorecard.profile=='baseline') & (scorecard.arm=='B1-rules-v1')].iloc[0].action_accuracy:.3f}` acceptable-action accuracy. No model/arm contrast cleared both the familywise interval and Holm-adjusted permutation gate, so the headline is `CLEAN_NULL`, not model lift. The Tier-1 safety audit passed. LogWarden can make scoped, auditable recommendations on its frozen synthetic episodes; it cannot establish production safety, autonomously remediate, or generalize to arbitrary logs.
 
-See [the state of record](LOGWARDEN_STATE_OF_RECORD.md), [claims](LOGWARDEN_CLAIMS_TABLE.md), and [limitations](LOGWARDEN_LIMITATIONS.md).
+See [the state of record](LOGWARDEN_STATE_OF_RECORD.md), [claims](LOGWARDEN_CLAIMS_TABLE.md), [performance evidence](LOGWARDEN_PERFORMANCE_REPORT.md), and [limitations](LOGWARDEN_LIMITATIONS.md).
 <!-- logwarden-results:end -->"""
 if "<!-- logwarden-results:start -->" in readme:
     readme = re.sub(r"<!-- logwarden-results:start -->.*?<!-- logwarden-results:end -->", result_block, readme, flags=re.S)
@@ -736,11 +978,13 @@ else:
 
 deterministic_paths = [
     *(reports / name for name in ["SCORECARD.md", "FAILURE_ATLAS.md", "GROUNDING_REPORT.md", "TOOL_USE_REPORT.md", "CALIBRATION_REPORT.md",
-                                    "NEGATIVE_CONTROLS.md", "SAFETY_AUDIT.md", "LOGWARDEN_STATE_OF_RECORD.md", "LOGWARDEN_CLAIMS_TABLE.md",
+                                    "NEGATIVE_CONTROLS.md", "SAFETY_AUDIT.md", "PERFORMANCE_REPORT.md", "LOGWARDEN_STATE_OF_RECORD.md", "LOGWARDEN_CLAIMS_TABLE.md",
                                     "LOGWARDEN_LIMITATIONS.md", "LOGWARDEN_REPRODUCIBILITY.md", "FIGURE_CAPTIONS.md", "VALIDATION.md"]),
     *(tables / name for name in ["scorecard.csv", "taxonomy.jsonl", "claims.jsonl", "claims.csv", "negative-controls.jsonl", "calibration-summary.csv",
+                                  "agent-cell-performance.csv", "agent-pipeline-performance.csv", "model-service-performance.csv",
+                                  "queue-performance.csv", "sql-resource-performance.csv", "query-store-performance.csv", "performance-metric-availability.csv",
                                   *[f"{code}_{name}.csv" for code, name in figure_names.items()]]),
-    *(lab / name for name in ["LOGWARDEN_STATE_OF_RECORD.md", "LOGWARDEN_CLAIMS_TABLE.md", "LOGWARDEN_LIMITATIONS.md",
+    *(lab / name for name in ["LOGWARDEN_STATE_OF_RECORD.md", "LOGWARDEN_CLAIMS_TABLE.md", "LOGWARDEN_PERFORMANCE_REPORT.md", "LOGWARDEN_LIMITATIONS.md",
                               "LOGWARDEN_REPRODUCIBILITY.md", "LOGWARDEN_FREEZE_RECORD.md", "VALIDATION.md", "README.md"]),
 ]
 expected_path = run / "repro" / "expected-report-outputs.json"
