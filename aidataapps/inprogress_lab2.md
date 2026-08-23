@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 09:50 UTC
+Last manually updated: 2026-08-23 11:38 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,7 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed baseline before this update: `634abf9` (run `git rev-parse HEAD`
+- latest pushed baseline before this update: `e397b36` (run `git rev-parse HEAD`
   because later watchdog-safe milestone commits supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
@@ -147,9 +147,23 @@ OLMo first residency is complete and durably backed up:
 - pre-eviction native backup and Drive copy match at SHA-256
   `55e9555b33dfa1b9e25b23ddf6952b7648eedfba4df467f887c2d2b622dff935`
 
-The prior-scorer cross-likelihood fill rotation, features, analyses, reports,
-BACPAC, archive, mirror, and reproducibility run remain. Stop OLMo and evict
-only its exact re-downloadable cache after this checkpoint is committed.
+The prior-scorer cross-likelihood fill rotation is also complete:
+
+- all 127,760 prompted scorer/output cells are persisted
+- 127,590 unprompted cells are persisted
+- all 170 missing unprompted cells are audited one-token outputs with no
+  first-token distribution: Qwen 50, Muse 0, Gemma 58, OLMo 62
+- 64 empty-final Muse rows are separately unavailable; no value was imputed
+- status: `COMPLETE_WITH_DOCUMENTED_UNAVAILABLE`
+- matrix evidence:
+  `runs/.../metrics/cross-likelihood-completeness.json`
+- final pre-analysis SQL backup and Drive copy SHA-256:
+  `2c6b87c27685b83d7ee8a123b8f5f67d96f83fe58949c323a43dea5216e1f46d`
+- all rotating chat engines are stopped and their exact re-downloadable caches
+  are evicted; only embedding ports 8001 and 8002 remain on the GPU
+
+Features, analyses, reports, BACPAC, archive, mirror, and reproducibility run
+remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -276,26 +290,12 @@ Do not edit these while campaigns 3/4 remain authoritative:
 Any necessary runtime correction must be minimal, outside the frozen set,
 tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 
-## Remaining residency workflow
+## Residency workflow — complete
 
-All four first residencies are complete. OLMo still owns port 8000 only until
-its verified completion checkpoint is committed and mirrored. Then stop it,
-evict its exact pinned cache, and rotate Qwen, Muse, and Gemma once more so
-each scorer fills cells for targets generated after its first residency.
-
-```bash
-# Run after each exact pinned scorer is loaded and passes the unchanged gate.
-npm run likelihood:score -- --scorer <profile> --include-robustness --concurrency 64 --checkpoint-size 200
-npm run db:backup
-npm run run:mirror
-```
-
-Fill order is Qwen (missing Muse/Gemma/OLMo targets), Muse (missing Gemma/OLMo),
-then Gemma (missing OLMo). Existing scorer-specific one-token gaps may be
-selected again and legitimately remain prompted-only. Audit completeness in
-SQL after every residency. If resource/time limits prevent a rectangular
-matrix, label it `PARTIAL_LIKELIHOOD`; never imply completion from diagonal
-cells.
+All first residencies and the Qwen→Muse→Gemma fill rotation are complete,
+verified, backed up, mirrored, and released. Do not reload a chat model for the
+remaining pipeline. Port 8000 is free; embedding services on ports 8001/8002
+remain required for feature construction.
 
 ## Final analysis and archive
 
