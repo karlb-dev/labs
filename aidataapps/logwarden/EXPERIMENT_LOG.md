@@ -754,3 +754,18 @@ place and receive a later disposition.
   muse-glimmer-30b-mlx-nospec-ablation; the headline muse-glimmer-30b-mlx
   row now carries the drafter, disclosed in the registry (draftModel field)
   and report. This is Muse's practical speed ceiling on this stack.
+
+- 2026-08-23T10:40:00.000Z — Added OLMo 3.1 32B Instruct
+  (lmstudio-community MLX 4-bit via mlx_lm.server; the frozen campaign
+  target's base family, served as a different artifact and therefore
+  mac-plane evidence only). It joins the 87.5% exact-triple leaders as the
+  first direct answerer: 100% class, 100% action, perfect tools, correct
+  unknown-abstention, 80% first-pass contract, ~161 completion tokens and
+  8.1 s per episode at 19.8 tok/s — the best episode economics at leader
+  quality, making it the recommended primary mac arm. This revises the
+  reasoning-channel pattern: rubric fidelity and abstention come from
+  reasoning or sufficient scale. Ground-truth flag: ep12's authored severity
+  (high) is undercalled to medium by all four leaders independently; review
+  before the episode set seeds a larger catalog. Display note: the retired
+  Foundry Muse serving now renders in neutral gray — the validated palette
+  has eight categorical slots, and retirement keeps the ninth series honest.

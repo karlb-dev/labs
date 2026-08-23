@@ -18,7 +18,8 @@ import { LAB_ROOT, atomicWrite, resolveRunDirectory, valueAfter } from "../src/r
 const displaySchema = z.object({
   profileKey: z.string(),
   name: z.string(),
-  slot: z.number().int().min(1).max(8),
+  // 1–8 = validated categorical slots; 0 = neutral "retired serving" treatment.
+  slot: z.number().int().min(0).max(8),
   runtime: z.string(),
 });
 

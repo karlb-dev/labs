@@ -182,7 +182,10 @@ const DATA = __DATA_JSON__;
 const N = DATA.narrative;
 const fmtPct = v => v === null || v === undefined ? "—" : (v * 100).toFixed(v === 0 || v === 1 ? 0 : 1).replace(/\.0$/, "") + "%";
 const fmt = (v, s = "") => v === null || v === undefined ? "—" : v + s;
-const slotVar = m => `--s${m.slot}`;
+// slot 0 = deliberately recessive: a retired/superseded serving kept for the
+// record. The validated categorical palette has eight slots; retirement is
+// how a ninth series stays honest instead of inventing a hue.
+const slotVar = m => m.slot === 0 ? "--baseline" : `--s${m.slot}`;
 const chip = m => `<span class="chip" style="background:var(${slotVar(m)})"></span>`;
 const byKey = Object.fromEntries(DATA.models.map(m => [m.key, m]));
 const tip = document.getElementById("tip");
