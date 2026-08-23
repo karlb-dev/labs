@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "registryVersion": "tools-v1",
+  "frozen": false,
+  "tools": {
+    "runbook_search": {
+      "procedure": "kb.usp_search_runbooks",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["query", "topK", "corpusId"]
+    },
+    "get_recent_incident_counts": {
+      "procedure": "ops.usp_get_recent_incident_counts",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["incidentClass", "windowMinutes"]
+    },
+    "get_blocking_snapshot": {
+      "procedure": "agent.usp_tool_get_blocking_snapshot",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["databaseName", "maxRows"]
+    },
+    "get_log_space": {
+      "procedure": "agent.usp_tool_get_log_space",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["databaseName"]
+    },
+    "get_active_transactions": {
+      "procedure": "agent.usp_tool_get_active_transactions",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["databaseName", "maxRows"]
+    },
+    "get_backup_history": {
+      "procedure": "agent.usp_tool_get_backup_history",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["databaseName", "maxRows"]
+    },
+    "get_deadlock_graph": {
+      "procedure": "agent.usp_tool_get_deadlock_graph",
+      "modes": ["replay", "live"],
+      "mutates": false,
+      "tier": 1,
+      "arguments": ["maxRows"]
+    }
+  }
+}

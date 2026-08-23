@@ -8,17 +8,19 @@ promoting the live systems experiment itself.
 ## Persistence rule
 
 Every long inference worker writes a local append-only JSONL journal first and
-persists the corresponding normalized row to SQL during the run. A SQL outage
-may delay ingestion but may not erase the journal. The journal has a monotonic
-sequence, event ID, run/job/episode/attempt identity, trace/span identity,
-wall-clock UTC, client monotonic time, payload hash, and schema version.
+persists the corresponding normalized row to SQL during the run. Each process
+owns a uniquely named journal; concurrent processes never append to the same
+hash chain. A SQL outage may delay ingestion but may not erase a journal. Each
+journal has a monotonic sequence, event ID, process epoch, run/job/episode/
+attempt identity, trace/span identity, wall-clock UTC, client monotonic time,
+payload hash, and schema version.
 
 Recovery replays only journal records after the committed SQL ingestion cursor.
 Unique event/span/sample keys make replay idempotent. Finalization reconciles
 journal counts and hashes against SQL; a mismatch blocks campaign completion.
 
-For operator ergonomics, the unified journal can be projected into semantic
-streams (`transcript`, `model`, `tool`, `validation`, `decision`, `metrics`,
+For operator ergonomics, the journal set can be projected into a unified view
+and semantic streams (`transcript`, `model`, `tool`, `validation`, `decision`, `metrics`,
 and `state-transition`) without creating new sources of truth. Each projection
 retains the source event ID and sequence. Post-run diagnostics and aggregate
 tables must be reconstructable from the journal plus frozen manifests; derived

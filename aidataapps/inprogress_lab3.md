@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 03:58 UTC
+Last manually updated: 2026-08-23 05:31 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -32,7 +32,9 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery, and base systems telemetry gates passed.
+- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
+  agent-observability, and least-privilege tool gates passed except the real
+  vLLM metrics canary.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -45,10 +47,11 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Sixteen hash-locked control migrations and two versioned server/XE assets now
-  apply idempotently. `npm run doctor` passes all required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 9
-  test files and 17 unit tests. The capture-specific XE predicate excludes
+- Twenty-three hash-locked control migrations and six versioned
+  server/XE/security assets now apply idempotently. `npm run doctor` passes all
+  required probes;
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 13
+  test files and 35 unit tests. The capture-specific XE predicate excludes
   agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -56,11 +59,6 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Raw ERRORLOG replay is idempotent (0 inserted / 461 duplicates on immediate
   replay). XE uses file + block offset + within-block ordinal after runtime
   discovery that offsets are block-scoped.
-- Current doctor snapshot:
-  `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e`
-  (`PASS`); SQL integration receipt:
-  `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156`
-  (8/8).
 - Ten development packets have separately protected evaluator truth and passed
   the leakage audit with zero findings. Packet build/audit receipts are
   `06670cc91548962090843e921f0b72d0f58e38544f79b2fd0ffb9768fb749e11`
@@ -72,11 +70,66 @@ and its effect on the evidence ceiling must be recorded append-only in
   (sample) and
   `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`
   (journal ingest).
-- Next incomplete milestone: fake-gateway terminal-route and journal crash
-  tests, live sampler restart/reconciliation, ERRORLOG rotation/container
-  recovery, read-only tool procedures, then expand/freeze the supported
-  catalog. A small embedding or qwen-smoke port may load only after its real
-  `/metrics` port gate; no long chat campaign may load yet.
+- The pre-inference agent observability gates now pass: nine fake-gateway
+  terminal routes with exact raw-byte/SQL hashes
+  (`fdce92eeeb8344b52c02455a6d244ee9d9839bc57c2f556f01be5caae0f5d474`),
+  committed-batch crash/replay
+  (`ac60e25a385f2ecfedc1bec6d4fd33dc92de9cbb78f6d0c5935bcda529d20660`),
+  two-process sampler restart
+  (`c30e80918b27592426a3657cb0e6c64fe97aa4a09057eda935deff97ba290218`),
+  and p95 added synthetic instrumentation latency of 1.497 ms
+  (`3888e28dbd673f71e75ef09bf34451e9b15c4d3196e8c0db2a4c66a2baa6efea`).
+  Global journal/SQL/raw/trace reconciliation covers 246 events and 66 raw
+  artifacts with receipt
+  `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
+  the derived file rebuilt byte-for-byte.
+- ERRORLOG `sp_cycle_errorlog` recovery passed with a stable pre-roll key,
+  one unique post-roll marker, and 599/599 duplicates on immediate replay;
+  receipt `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
+- SQL/container restart recovery passed with distinct container/SQL start
+  identities, stable pre-restart source identity, a unique post-restart row,
+  and 997/997 duplicates on immediate replay; receipt
+  `f6688d4472af0db6947076097a27be7d14cd58490b736d9dc442fb2c2adc2c99`.
+- The seven-tool `tools-v1` registry and its SQL enforcement layer passed nine
+  positive and eleven negative least-privilege cases. Direct evaluator, snapshot,
+  runbook-table, queue, ingestion, DDL, server-DMV, and `msdb` backup-table
+  bypasses are denied. Receipt:
+  `c0bf815c9db432cc28555146f597eabd46eb935731826763f01e55b75cbfef57`;
+  registry hash:
+  `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
+  The registry remains marked building/unfrozen until standard runbooks close.
+- The deterministic `primary-v1` knowledge corpus now contains 60 original
+  MIT-licensed guides and 480 heading-aware chunks across all ten classes, with
+  exact source/body/chunk hashes and zero lab-identifier leakage findings.
+  Full-text indexes both headings and content; all 11 restricted-agent lexical
+  canaries retrieved the intended family. Manifest/build/gate hashes are
+  `b734ba4c05ff3e548b779b1f9718e8956e4f0f9bb45a8246492664f88a0e66df`,
+  `d8b6b81aff2811460fdee6a5469ceb69540381720ceaf9f961af7c149e2f2d79`,
+  and `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
+  The corpus remains unfrozen pending Qwen embeddings, hybrid retrieval, and
+  the standard scenario leakage audit.
+- The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
+  group-isolated templates and 600 deterministic variants across all ten
+  incident families and all five regimes. Exact role allocation is 60 dev, 60
+  calibration, 300 test-ID, 120 test-variant-holdout, and 60 test-unknown;
+  every family has at least 40 held-out ID/variant episodes and no group crosses
+  a split. Catalog, manifest, schedule, and structural-gate hashes are
+  `b39b3a91107c094b0b7d461cca77deffed69659c07b1d84341dd9d17b477b58f`,
+  `492ca25b89b21d83a3ca10a56e36b769f6b03d1cd1c1737515ca6c741cb525d5`,
+  `617ec3731b116f5a2db7163bae2010ca8b523ee8ebb774c1c7c23b660e01ae76`,
+  and `dd7b8af23dc13f39b191f33cc3a5d53ba632b7f062c0b8c337a6f4836653e0d3`.
+  Schedule `standard-v1` has 600 pending items and a final planned offset of
+  8,039,000 ms; it remains building and has injected zero episodes.
+- Current doctor snapshot:
+  `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`
+  (`PASS`); SQL integration receipt:
+  `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`
+  (8/8).
+- Next incomplete milestone: prove the missing deadlock/blocking/log-full
+  injectors, exact episode correlation, and context snapshots, followed by
+  Qwen embeddings, hybrid retrieval, and the bounded agent loop. A
+  small embedding or qwen-smoke port may then load
+  for the remaining real `/metrics` gate; no long chat campaign may load yet.
 
 ## Fresh-VM preflight
 
@@ -123,10 +176,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 ## Active processes and checkpoints
 
 <!-- lab3-watchdog-status:start -->
-- Last watchdog checkpoint: 2026-08-23T04:18:32.043Z
-- Last watchdog Git head: `1d229cbd5afc742cdf68a193d6c447b876b2d6b3` on `aidataapps-logwarden`
+- Last watchdog checkpoint: 2026-08-23T05:06:32.391Z
+- Last watchdog Git head: `d31bcb67e47145596a51540748b689e668f6951b` on `aidataapps-logwarden`
 - Last watchdog disposition: clean source checkpoint
-- Last watchdog database receipt: `e08c9683bbc54f2d1f559c4cbd79e381dc6a578b240e80b073c92dec30cd2580`
+- Last watchdog database receipt: `fe2f2d1bee1bf01f82a45cd4346b47d348f9998eb9a86116350ad557ad957249`
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
@@ -139,9 +192,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e` (`PASS`)
-- SQL integration receipt: `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156` (8/8 passed)
-- Last durable Git checkpoint: `de9ca40` (clean watchdog handoff); packet/telemetry implementation is being committed now
+- Capability snapshot: `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db` (`PASS`)
+- SQL integration receipt: `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae` (8/8 passed)
+- Last durable Git checkpoint: `293795e` (governed runbook corpus); the standard
+  scenario catalog is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -165,9 +219,10 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the model-client fake-gateway/crash-replay/reconciliation
-gate followed by read-only tools and the standard catalog freeze; do not load a
-model until the remaining observability gates pass. If `docker info` fails,
+this checkpoint is the supported incident catalog and missing injectors,
+followed by Qwen embeddings and the bounded tool gateway/agent loop; do not
+load a long-running model until
+the remaining real-service observability gate can run. If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
 

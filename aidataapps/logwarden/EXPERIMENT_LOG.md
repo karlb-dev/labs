@@ -175,6 +175,179 @@ place and receive a later disposition.
   three new records after the already committed foundation event, projected
   spans, and updated per-epoch cursors; receipt
   `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`.
+- 2026-08-23T04:38:40Z — Adapted the pre-inference journal layout before any
+  model residency: every sampler/worker now owns a uniquely named hash-chained
+  JSONL file. The earlier single-file design was safe for sequential smoke
+  calls but would allow two processes to race on sequence/hash state during a
+  long run. SQL ingestion now discovers the retained journal set and commits
+  bounded batches with per-file/per-epoch cursors. Impact: concurrency and
+  recovery correctness only; no scientific packet or model result exists yet.
+- 2026-08-23T04:38:40Z — The telemetry crash/replay gate injected failure
+  after the first committed two-record batch, recovered the remaining four
+  records, then replayed all six as duplicates. Event IDs, terminal cursor
+  sequence/hash, spans, and traces reconciled exactly; receipt
+  `ac60e25a385f2ecfedc1bec6d4fd33dc92de9cbb78f6d0c5935bcda529d20660`.
+  Two separate sampler processes then produced distinct epochs, two unique
+  queue samples, six unique raw endpoint snapshots, and two closed traces;
+  restart receipt
+  `c30e80918b27592426a3657cb0e6c64fe97aa4a09057eda935deff97ba290218`.
+- 2026-08-23T04:38:40Z — The model-client integration gate passed nine
+  terminal routes: valid decision, retried 503 then success, malformed agent
+  JSON, malformed service envelope, empty output, schema rejection, exhausted
+  HTTP failure, timeout, and response-byte truncation. Exact request/response
+  bytes were durable before parse and matched SQL SHA-256 values; each attempt,
+  validation layer, job, work-item disposition, state event, trace, and span
+  reconciled. Receipt
+  `fdce92eeeb8344b52c02455a6d244ee9d9839bc57c2f556f01be5caae0f5d474`.
+  The first gate launch exposed only a development harness parameter-name bug
+  before inference; its one empty synthetic fixture was explicitly stopped and
+  marked `interrupted_gate` before the clean rerun. No scientific observation
+  or score was affected.
+- 2026-08-23T04:38:40Z — A 20+20 ABBA synthetic comparison measured the
+  complete file-first instrumentation path against the same HTTP/envelope/
+  contract parse without instrumentation. Mean added latency was 1.291 ms and
+  p95 added latency was 1.497 ms (instrumented p95 2.694 ms), below the frozen
+  100 ms development ceiling; receipt
+  `3888e28dbd673f71e75ef09bf34451e9b15c4d3196e8c0db2a4c66a2baa6efea`.
+  Global reconciliation then matched 246 journal rows, 66 exact raw artifacts,
+  all SQL events/cursors, and every closed trace/span. Its input-set and receipt
+  hashes are `f986c6132c3c7d344892d1263d55b54a35858ec676f966557225ee281e3f9dc3`
+  and `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
+  an immediate rebuild was byte-identical.
+- 2026-08-23T04:44:20Z — The mandatory ERRORLOG rotation gate passed. A
+  pre-roll marker retained the exact source-position key after
+  `sys.sp_cycle_errorlog` renamed its generation, a post-roll marker produced a
+  second unique raw/canonical row, and immediate replay inserted zero of 599
+  parsed records (all 599 were recognized duplicates). Receipt
+  `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
+  The file reader was factored into a retrying shared module; this changes only
+  container file-access robustness and has no scientific-result impact.
+- 2026-08-23T04:49:04Z — The checkpointed SQL/container restart gate passed
+  with receipt
+  `f6688d4472af0db6947076097a27be7d14cd58490b736d9dc442fb2c2adc2c99`.
+  A pre-restart marker retained its exact source-position key after moving to
+  `errorlog.1`; a post-restart marker was unique; and immediate replay
+  recognized all 997 parsed records as duplicates. The same container was
+  restarted with a new container-init PID and SQL start time. The first
+  development attempt showed that `SHUTDOWN WITH NOWAIT` stopped the SQL
+  client connection but not this image's host-PID wrapper. The gate now
+  resolves one exact direct `sqlservr` child beneath the inspected container
+  PID and signals only that PID, then proves both databases are ONLINE and
+  queryable before ingestion. This also fixed a real readiness race in which
+  SA login briefly succeeded before `LogWardenControl` was ready. Impact:
+  recovery-test reliability only; no campaign data or scientific factors
+  existed or changed.
+- 2026-08-23T05:02:50Z — Installed the development `tools-v1` least-privilege
+  surface: seven strictly typed, bounded, read-only tools; canonical argument
+  and registry hashes; exact frozen-snapshot lookup; certificate-signed server
+  diagnostics; and full-text runbook search through stored procedures. Direct
+  access to evaluator truth, snapshots, runbook tables, queue/control tables,
+  ingestion procedures, DDL, server DMVs, and `msdb` backup tables remains
+  denied to `lw_agent`. The security gate passed nine positive and ten
+  negative cases; its receipt is
+  `6c2e962c5bb0673e30af5ddc8bac33c540a771cb49fba7d18f666921f6e6ff57`
+  and registry hash is
+  `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
+  The registry remains explicitly unfrozen until the standard corpus and
+  runbooks close.
+- 2026-08-23T05:02:50Z — Tool development produced three fail-closed findings
+  before the passing gate. The first control master-key password derivation
+  used a raw hexadecimal digest that SQL Server rejected under password
+  policy, before any tool migration began; the derivation was corrected. The
+  first migration transaction then rejected reserved output alias
+  `transaction` and rolled back without a migration record; the alias became
+  `txn`. Finally, the initial negative gate discovered that `lw_agent` could
+  read `msdb.dbo.backupset` through inherited `guest`/`public` permissions.
+  An explicit deny closed the bypass, and the required backup-history tool was
+  redesigned as a bounded `msdb` owner-executed proxy rather than granting
+  table access to the signing certificate. The failed gate wrote only unique
+  synthetic development corpus/snapshot fixtures and no passing receipt; they
+  are excluded from any standard corpus or score. Hash-locked migrations
+  017–019 and server assets 003–005 preserve the final design. Afterward the
+  doctor passed with snapshot
+  `82a438326c1d4c42dac6b475fb2987d3039f21eab1113cae22e42d2e70d6f597`,
+  SQL integration passed 8/8 with receipt
+  `d72103d195e7f70853ecda6134fa8f958de0320cf14f372a320d500f4213fa9a`,
+  and 28 unit tests in 11 files passed. Impact: security and deployment
+  correctness only; there is still no model or campaign observation.
+- 2026-08-23T05:05:28Z — A post-gate privilege review found that the bounded
+  internal `msdb` proxy was still directly executable by `lw_agent`, even
+  though direct table access was denied and the proxy was not in the checked-in
+  registry. Forward control migration 020 changed the registry-listed wrapper
+  to a static cross-database call and restored its module signature; server
+  asset 006 grants proxy execution only to the matching certificate user and
+  revokes it from the runtime user. A new negative case proves the direct proxy
+  call fails while the listed backup tool still succeeds. The superseding gate
+  passed nine positive and eleven negative cases with receipt
+  `c0bf815c9db432cc28555146f597eabd46eb935731826763f01e55b75cbfef57`.
+  The doctor passed with snapshot
+  `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34`,
+  SQL integration passed 8/8 with receipt
+  `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655`,
+  and the 28 unit tests still passed. This supersedes the prior development
+  tool-gate receipt without changing data, tools, prompts, or outcomes; impact
+  is a strictly narrower runtime privilege boundary.
+- 2026-08-23T05:18:38Z — Built the unfrozen `primary-v1` knowledge corpus from
+  deterministic source: 60 original MIT-licensed troubleshooting guides (six
+  perspectives for each governed incident class), 480 heading-aware chunks,
+  official Microsoft reference URLs checked on 2026-08-23, exact source/body/
+  chunk hashes, and zero lab-identifier, synthetic-number, or correlation-token
+  leakage findings. Corpus file hash is
+  `cb465736137b45b466aff4d89ec1f89f377039dec49e732301e66f87174e6f3c`,
+  manifest hash is
+  `b734ba4c05ff3e548b779b1f9718e8956e4f0f9bb45a8246492664f88a0e66df`,
+  and build receipt is
+  `d8b6b81aff2811460fdee6a5469ceb69540381720ceaf9f961af7c149e2f2d79`.
+  The manifest is attached to the mutable campaign but remains deliberately
+  unfrozen until embeddings, hybrid retrieval, and the standard scenario
+  leakage audit pass.
+- 2026-08-23T05:18:38Z — The first post-insert population wait used the wrong
+  full-text catalog identifier and timed out after 60 seconds even though SQL's
+  crawl had completed; it wrote no readiness receipt and did not change corpus
+  rows. Review also found that feasibility migration 011 indexed content but
+  not `heading_path`, contrary to the governing K-1 contract. Forward
+  non-transactional migration 021 rebuilt the index over both columns, and
+  migration 022 made the bounded search procedure query both. The corrected
+  population gate observed status 0 and 483 indexed items (480 primary chunks
+  plus three retained synthetic development-gate chunks). Eleven agent-login
+  canaries retrieved the intended family, including punctuation and numeric
+  input; receipt
+  `7e8c38b4218dae4b43c27e95cd522ae669f026fbe94249c3890e7d8cc51808be`.
+  Impact: monitoring and retrieval-contract correctness before freeze; no
+  embedding, model, packet, or scored result was affected. Doctor snapshot
+  `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`,
+  SQL integration receipt
+  `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`,
+  and 31 unit tests in 12 files all pass.
+- 2026-08-23T05:30:58Z — Built and reconciled the unfrozen
+  `logwarden-standard-v1` catalog: 60 scenario templates, 600 deterministic
+  variants, ten governed families, all five K/C/U/M/N regimes, exact role
+  counts of 60 dev, 60 calibration, 300 test-ID, 120 test-variant-holdout, and
+  60 test-unknown, zero cross-role groups, zero truth/tool-budget/runbook
+  violations, and at least 40 held-out ID/variant episodes per family. Catalog
+  file hash is
+  `b39b3a91107c094b0b7d461cca77deffed69659c07b1d84341dd9d17b477b58f`,
+  campaign manifest hash is
+  `492ca25b89b21d83a3ca10a56e36b769f6b03d1cd1c1737515ca6c741cb525d5`,
+  schedule hash is
+  `617ec3731b116f5a2db7163bae2010ca8b523ee8ebb774c1c7c23b660e01ae76`,
+  and structural-gate receipt is
+  `dd7b8af23dc13f39b191f33cc3a5d53ba632b7f062c0b8c337a6f4836653e0d3`.
+  The explicit `--replace-building-manifest` operation replaced the earlier
+  ten-scenario smoke manifest only on the still-mutable, never-frozen campaign;
+  it changed no captured smoke rows and the standard schedule has injected zero
+  episodes.
+- 2026-08-23T05:30:58Z — Adapted the base packet-spacing plan before standard
+  capture. Ten variants in one scenario group are intentionally one second
+  apart to preserve recurrence/burst context; adjacent scenario groups are
+  separated by the sum of their packet before/after windows plus a measured
+  one-second margin. This reduces the planned capture from roughly 20 hours to
+  8,039 seconds (about 2 h 14 min) without permitting evidence-window overlap
+  across independently scored groups. Impact: variants within a group are
+  deliberately correlated and must be scored with group-aware splitting and
+  paired statistics; they are not independent episode-level replicates. The
+  gate records 60 groups of exactly ten, a nonnegative cross-group margin, and
+  the intentional-overlap policy in the hashed schedule configuration.
 
 - 2026-08-23T04:10:28.290Z — LW-0 run initialized: logwarden-smoke-20260823T041027Z; manifest=dfa2aa4cb8ae5cfacc50e8eeb7b000068be080ff9d1114f376a66ccb1c00e979.
 

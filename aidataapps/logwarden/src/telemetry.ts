@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { access, appendFile, mkdir, readdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { performance } from "node:perf_hooks";
 import { canonicalJson, hashJson } from "./hash.js";
@@ -75,13 +75,15 @@ export class FileTelemetryJournal {
   private sequence = 0;
   private previousRecordSha256: string | null = null;
   private writes: Promise<void> = Promise.resolve();
-  private readonly processEpochId = randomUUID();
+  private constructor(
+    readonly path: string,
+    readonly runId: string,
+    readonly processEpochId: string,
+  ) {}
 
-  private constructor(readonly path: string, readonly runId: string) {}
-
-  static async open(path: string, runId: string): Promise<FileTelemetryJournal> {
+  static async open(path: string, runId: string, processEpochId = randomUUID()): Promise<FileTelemetryJournal> {
     await mkdir(dirname(path), { recursive: true });
-    const journal = new FileTelemetryJournal(path, runId);
+    const journal = new FileTelemetryJournal(path, runId, processEpochId);
     try {
       const lines = await readAndValidateTelemetryJournal(path, runId);
       journal.sequence = lines.length;
@@ -166,6 +168,30 @@ export class FileTelemetryJournal {
   async flush(): Promise<void> {
     await this.writes;
   }
+}
+
+export async function createComponentTelemetryJournal(
+  runDirectory: string,
+  runId: string,
+  component: string,
+  processEpochId = randomUUID(),
+): Promise<{ journal: FileTelemetryJournal; path: string; processEpochId: string }> {
+  const safeComponent = component.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+  if (safeComponent.length === 0) throw new Error("Telemetry component must contain an alphanumeric character");
+  const path = `${runDirectory}/telemetry/journals/${safeComponent}-${processEpochId}.jsonl`;
+  return { journal: await FileTelemetryJournal.open(path, runId, processEpochId), path, processEpochId };
+}
+
+export async function discoverTelemetryJournalPaths(runDirectory: string): Promise<string[]> {
+  const paths: string[] = [];
+  const legacy = `${runDirectory}/telemetry/journal.jsonl`;
+  if (await access(legacy).then(() => true).catch(() => false)) paths.push(legacy);
+  const componentDirectory = `${runDirectory}/telemetry/journals`;
+  const entries = await readdir(componentDirectory, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith(".jsonl")) paths.push(`${componentDirectory}/${entry.name}`);
+  }
+  return paths.sort();
 }
 
 function defined<T extends object>(value: T): { [K in keyof T]?: Exclude<T[K], undefined> } {
