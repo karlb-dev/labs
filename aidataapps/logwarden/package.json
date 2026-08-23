@@ -37,6 +37,7 @@
     "packets:build": "node --import tsx scripts/packets-build.ts",
     "packets:audit": "node --import tsx scripts/packets-audit.ts",
     "telemetry:ingest": "node --import tsx scripts/ingest-telemetry-journal.ts",
+    "telemetry:recover": "node --import tsx scripts/recover-telemetry-journal.ts",
     "gate:telemetry-replay": "node --import tsx scripts/telemetry-crash-replay-gate.ts",
     "gate:sampler-restart": "node --import tsx scripts/telemetry-sampler-restart-gate.ts",
     "telemetry:reconcile": "node --import tsx scripts/reconcile-telemetry.ts",

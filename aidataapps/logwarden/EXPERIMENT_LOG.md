@@ -822,4 +822,9 @@ place and receive a later disposition.
   excluded from all standard evidence and reporting. Impact: no packet, label,
   or model output was changed, and no target output existed; the adjustment
   restores the preregistered 600-episode population without deleting useful
-  development evidence.
+  development evidence. The intentional process stop left three open spans in
+  its append-only telemetry file. A new generic recovery command validated the
+  existing hash chain, appended an explicit interruption point plus child-first
+  `interrupted` ends under a distinct recovery process epoch, and revalidated
+  the closed journal; no prior record was edited. Recovery receipt:
+  `7b3012a8155de982a8e011de5379787fffde3302d8cecdb7e39fe68cf92b9f66`.

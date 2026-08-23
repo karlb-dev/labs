@@ -384,10 +384,22 @@ async function loadCompletedCells(episodeIds: string[]): Promise<BenchmarkCell[]
     const expectedRunbooks = parseRunbookArray(row.expected_runbooks_json);
     const returnedRunbooks = parseRunbookArray(row.returned_runbooks_json);
     const metrics = scoreRunbookRetrieval(expectedRunbooks, returnedRunbooks, Number(row.requested_k));
-    if (Math.abs(metrics.recallAtK - Number(row.recall_at_k)) > 0.000001 ||
-        Math.abs(metrics.reciprocalRank - Number(row.reciprocal_rank)) > 0.000001 ||
-        Math.abs(metrics.ndcgAtK - Number(row.ndcg_at_k)) > 0.000001 || metrics.noAnswerCorrect !== row.no_answer_correct) {
-      throw new Error(`Retained retrieval score drift for ${row.episode_id}/${row.retrieval_mode}`);
+    const drift = {
+      recallAtK: Math.abs(metrics.recallAtK - Number(row.recall_at_k)),
+      reciprocalRank: Math.abs(metrics.reciprocalRank - Number(row.reciprocal_rank)),
+      ndcgAtK: Math.abs(metrics.ndcgAtK - Number(row.ndcg_at_k)),
+      noAnswerCorrect: metrics.noAnswerCorrect !== row.no_answer_correct,
+    };
+    if (drift.recallAtK > 0.000001 || drift.reciprocalRank > 0.000001 ||
+        drift.ndcgAtK > 0.000001 || drift.noAnswerCorrect) {
+      throw new Error(`Retained retrieval score drift for ${row.episode_id}/${row.retrieval_mode}: ${JSON.stringify({
+        drift,
+        retained: {
+          recallAtK: Number(row.recall_at_k), reciprocalRank: Number(row.reciprocal_rank),
+          ndcgAtK: Number(row.ndcg_at_k), noAnswerCorrect: row.no_answer_correct,
+        },
+        recomputed: metrics,
+      })}`);
     }
     return {
       episodeId: row.episode_id, splitRole: row.split_role, scenarioGroupId: row.scenario_group_id, family: row.family,
