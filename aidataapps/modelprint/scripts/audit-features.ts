@@ -12,7 +12,7 @@ const runDirectory = resolveRunDirectory();
 const freeze = JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`, "utf8")) as { campaignId: number; campaignHash: string };
 const robustness = await readFile(`${runDirectory}/manifests/robustness-freeze.json`, "utf8")
   .then((value) => JSON.parse(value) as { campaignId: number }).catch(() => null);
-const campaignIds = [freeze.campaignId, ...(robustness ? [robustness.campaignId] : [])];
+const campaignIds = [freeze.campaignId, ...(robustness ? [robustness.campaignId] : [])].map(Number);
 if (!campaignIds.every(Number.isSafeInteger)) throw new Error("Invalid campaign ID in run manifests");
 const campaignSql = campaignIds.join(",");
 const config = loadConfig();
@@ -23,23 +23,34 @@ const pool = await new sql.ConnectionPool({ server: config.database.server, port
 const count = (row: CountRow, key: string) => Number(row[key] ?? 0);
 
 try {
-  const base = await pool.request().query<CountRow>(`
-    WITH cg AS (SELECT generation_id FROM dbo.generations WHERE campaign_id IN (${campaignSql})),
-    ca AS (SELECT DISTINCT t.text_artifact_id,t.text_view_id,t.artifact_text FROM cg
-      JOIN dbo.generation_text_artifacts m ON m.generation_id=cg.generation_id
-      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id),
-    raw AS (SELECT * FROM ca WHERE text_view_id='raw-final-v1')
-    SELECT
-      (SELECT COUNT_BIG(*) FROM cg) AS generations,
-      (SELECT COUNT_BIG(*) FROM cg JOIN dbo.generations g ON g.generation_id=cg.generation_id WHERE g.reference_token_count IS NOT NULL) AS referenceTokenized,
-      (SELECT COUNT_BIG(*) FROM ca) AS artifacts,
-      (SELECT COUNT_BIG(*) FROM raw) AS rawArtifacts,
-      (SELECT COUNT_BIG(*) FROM raw WHERE LEN(LTRIM(RTRIM(artifact_text)))>0) AS nonEmptyRawArtifacts,
-      (SELECT COUNT_BIG(*) FROM ca JOIN dbo.style_vectors s ON s.text_artifact_id=ca.text_artifact_id AND s.representation_id='style512-v1') AS styleVectors,
-      (SELECT COUNT_BIG(*) FROM ca JOIN dbo.output_scalar_features f ON f.text_artifact_id=ca.text_artifact_id AND f.feature_schema_hash='${STYLE_SCHEMA_HASH}') AS scalarFeatures,
-      (SELECT COUNT_BIG(*) FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id) AS segments,
-      (SELECT COUNT_BIG(*) FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id WHERE s.is_primary_eligible=1) AS eligibleSegments;`);
-  const baseCounts = base.recordset[0]!;
+  const generationCounts = await pool.request().query<CountRow>(`
+    SELECT COUNT_BIG(*) AS generations,
+      SUM(CASE WHEN reference_token_count IS NOT NULL THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS referenceTokenized
+    FROM dbo.generations WHERE campaign_id IN (${campaignSql});`);
+  const artifactCounts = await pool.request().query<CountRow>(`
+    WITH ca AS (SELECT DISTINCT t.text_artifact_id,t.text_view_id
+      FROM dbo.generations g JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
+      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id WHERE g.campaign_id IN (${campaignSql}))
+    SELECT COUNT_BIG(*) AS artifacts,
+      SUM(CASE WHEN ca.text_view_id='raw-final-v1' THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS rawArtifacts,
+      SUM(CASE WHEN ca.text_view_id='raw-final-v1' AND LEN(LTRIM(RTRIM(t.artifact_text)))>0 THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS nonEmptyRawArtifacts
+    FROM ca JOIN dbo.text_artifacts t ON t.text_artifact_id=ca.text_artifact_id;`);
+  const featureCounts = await pool.request().query<CountRow>(`
+    WITH ca AS (SELECT DISTINCT t.text_artifact_id
+      FROM dbo.generations g JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
+      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id WHERE g.campaign_id IN (${campaignSql}))
+    SELECT COUNT_BIG(s.style_vector_id) AS styleVectors,COUNT_BIG(f.text_artifact_id) AS scalarFeatures
+    FROM ca LEFT JOIN dbo.style_vectors s ON s.text_artifact_id=ca.text_artifact_id AND s.representation_id='style512-v1'
+      LEFT JOIN dbo.output_scalar_features f ON f.text_artifact_id=ca.text_artifact_id AND f.feature_schema_hash='${STYLE_SCHEMA_HASH}';`);
+  const segmentCounts = await pool.request().query<CountRow>(`
+    WITH raw AS (SELECT DISTINCT t.text_artifact_id
+      FROM dbo.generations g JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
+      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id
+      WHERE g.campaign_id IN (${campaignSql}) AND t.text_view_id='raw-final-v1')
+    SELECT COUNT_BIG(*) AS segments,
+      SUM(CASE WHEN s.is_primary_eligible=1 THEN CONVERT(bigint,1) ELSE CONVERT(bigint,0) END) AS eligibleSegments
+    FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id;`);
+  const baseCounts = { ...generationCounts.recordset[0], ...artifactCounts.recordset[0], ...featureCounts.recordset[0], ...segmentCounts.recordset[0] };
 
   const views = await pool.request().query<{ textView: string; artifacts: number }>(`
     WITH ca AS (SELECT DISTINCT t.text_artifact_id,t.text_view_id FROM dbo.generations g
@@ -57,17 +68,25 @@ try {
     FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id
     GROUP BY s.segmenter_id ORDER BY s.segmenter_id;`);
 
-  const segmentUnicodeRows = await pool.request().query<{ id: number; segmenter: string; text: string }>(`
-    WITH raw AS (SELECT DISTINCT t.text_artifact_id FROM dbo.generations g
-      JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id
-      JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id
-      WHERE g.campaign_id IN (${campaignSql}) AND t.text_view_id='raw-final-v1')
-    SELECT s.segment_id AS id,s.segmenter_id AS segmenter,s.segment_text AS text
-    FROM raw JOIN dbo.output_segments s ON s.text_artifact_id=raw.text_artifact_id WHERE s.is_primary_eligible=1 ORDER BY s.segment_id;`);
-  const unicodeInputRepairs = segmentUnicodeRows.recordset.flatMap((row) => {
-    const repaired = repairUnpairedSurrogates(row.text);
-    return repaired.replacedCodeUnits ? [{ segmentId: Number(row.id), segmenter: row.segmenter, replacedCodeUnits: repaired.replacedCodeUnits }] : [];
-  });
+  const unicodeInputRepairs: Array<{ segmentId: number; segmenter: string; replacedCodeUnits: number }> = [];
+  let lastSegmentId = 0;
+  while (true) {
+    const page = await pool.request().input("lastSegmentId", sql.BigInt, lastSegmentId).query<{ id: number; segmenter: string; text: string }>(`
+      SELECT TOP (10000) s.segment_id AS id,s.segmenter_id AS segmenter,s.segment_text AS text
+      FROM dbo.output_segments s
+      WHERE s.is_primary_eligible=1 AND s.segment_id>@lastSegmentId
+        AND EXISTS (SELECT 1 FROM dbo.text_artifacts t
+          JOIN dbo.generation_text_artifacts m ON m.text_artifact_id=t.text_artifact_id
+          JOIN dbo.generations g ON g.generation_id=m.generation_id
+          WHERE t.text_artifact_id=s.text_artifact_id AND t.text_view_id='raw-final-v1' AND g.campaign_id IN (${campaignSql}))
+      ORDER BY s.segment_id;`);
+    if (!page.recordset.length) break;
+    for (const row of page.recordset) {
+      const repaired = repairUnpairedSurrogates(row.text);
+      if (repaired.replacedCodeUnits) unicodeInputRepairs.push({ segmentId: Number(row.id), segmenter: row.segmenter, replacedCodeUnits: repaired.replacedCodeUnits });
+    }
+    lastSegmentId = Number(page.recordset.at(-1)!.id);
+  }
 
   const profiles = [] as Array<Record<string, unknown>>;
   for (const profile of ["qwen3-embedding-0.6b", "bge-large-en-v1.5"]) {
