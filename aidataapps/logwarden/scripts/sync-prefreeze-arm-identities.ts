@@ -122,10 +122,11 @@ try {
           WHERE job.campaign_id=@campaign) target_predictions,
         (SELECT COUNT(*) FROM telemetry.model_service_samples sample INNER JOIN targets ON targets.model_profile_id=sample.model_profile_id) target_samples,
         (SELECT COUNT(*) FROM control.jobs job INNER JOIN selected ON selected.agent_arm_id=job.agent_arm_id
-          WHERE job.campaign_id=@campaign AND job.status NOT IN ('completed','failed','stopped')) active_jobs,
+          WHERE job.campaign_id=@campaign AND job.status IN ('pending','running')) active_jobs,
         (SELECT COUNT(*) FROM ops.work_items item INNER JOIN control.jobs job ON job.job_id=item.job_id
           INNER JOIN selected ON selected.agent_arm_id=job.agent_arm_id
-          WHERE job.campaign_id=@campaign AND item.status NOT IN ('completed','failed','stopped')) active_work_items;
+          WHERE job.campaign_id=@campaign
+            AND item.status NOT IN ('complete','contract_rejected','policy_rejected','model_timeout','tool_timeout','stopped')) active_work_items;
     `);
   const blockerCounts = blockers.recordset[0]!;
   if (Object.values(blockerCounts).some((value) => Number(value) !== 0)) {

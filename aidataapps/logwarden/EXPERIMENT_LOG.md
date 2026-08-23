@@ -974,3 +974,10 @@ place and receive a later disposition.
   the failure occurred before archive creation, identity updates, evidence
   insertion, or freeze mutation; all database and scientific rows remained
   unchanged.
+- 2026-08-23T11:08:43Z — The corrected identity synchronization again stopped
+  before archive or mutation because its guard used `completed` instead of the
+  schema's terminal job state `complete`, conservatively counting all 720
+  completed baseline jobs as active. The guard now recognizes only `pending`
+  and `running` jobs as active and uses the queue schema's exact terminal work
+  states. Impact: the false-positive stop changed no identity, prediction,
+  score, evidence, or freeze row.

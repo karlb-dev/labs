@@ -49,5 +49,7 @@ describe("pre-freeze arm identity synchronization", () => {
     const source = readFileSync(new URL("../scripts/sync-prefreeze-arm-identities.ts", import.meta.url), "utf8");
     expect(source).not.toContain("prediction.campaign_id");
     expect(source.match(/INNER JOIN control\.jobs job ON job\.job_id=prediction\.job_id/g)).toHaveLength(3);
+    expect(source).toContain("job.status IN ('pending','running')");
+    expect(source).toContain("item.status NOT IN ('complete','contract_rejected','policy_rejected','model_timeout','tool_timeout','stopped')");
   });
 });
