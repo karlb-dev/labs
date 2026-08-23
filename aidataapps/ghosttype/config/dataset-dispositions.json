@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "datasetVersion": "2.0.0",
+  "dispositionId": "dataset-v2.0.0-disposition-2",
+  "splitGroupRoleOverrides": {
+    "gt-vector-indexmeta-g03": "test_id",
+    "gt-ops-forced-g03": "test_template_holdout"
+  },
+  "rationale": "Package defect found by the GT-1 split-exclusivity gate: gt-vector-indexmeta-05 (calibration) and gt-vector-indexmeta-06 (test_id) share split group gt-vector-indexmeta-g03. Per the leakage contract a group lives in exactly one role; the most-held-out role wins (test_id > calibration > train), so the whole group is governed as test_id. Gold rows are untouched; this is role governance only. Effective role math: test_id 336, calibration 44. A future dataset v2.1 should fix the group assignment at the generator. Second defect, same gate: gt-ops-forced-05 (test_id) and gt-ops-forced-06 (test_template_holdout) share gt-ops-forced-g03; governed as test_template_holdout (holdout roles outrank test_id). Effective role math: test_id 336-1=335, test_template_holdout 25+1=26, calibration 44."
+}

@@ -19,3 +19,17 @@
   from Lab 03; package.json command surface mirroring the spec section 76
   contract; config/models.mac.json freezes the mac target registry shape
   (final pins land at the port gate). No science yet; foundation only.
+
+- 2026-08-23 — GT-1 complete. SQL foundation up (migrations 001–004 hash-
+  tracked; compat 170; Query Store per inherited settings; PREVIEW_FEATURES
+  autocommit). Importer re-verified all 588 record hashes in-process, then
+  materialized cases, gold candidates, and 428 split groups. Gates: cursor
+  round-trip 588/588 after correcting the harness's offset interpretation
+  (package offsets are statement-relative; harness fix, gold untouched);
+  insertion integrity 588/588; suffix-duplication trap audit 588/588. Two
+  package defects found by the split-exclusivity gate and dispositioned as
+  role governance (config/dataset-dispositions.json): gt-vector-indexmeta-g03
+  → test_id, gt-ops-forced-g03 → test_template_holdout; effective role math
+  test_id 335, calibration 44, template_holdout 26. Import is wipe-and-reload
+  idempotent for pause/resume. inprogress_lab4.md added as the live
+  checkpoint file per Karl's laptop-shutdown contract.
