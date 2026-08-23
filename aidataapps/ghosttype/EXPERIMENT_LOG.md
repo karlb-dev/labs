@@ -33,3 +33,32 @@
   test_id 335, calibration 44, template_holdout 26. Import is wipe-and-reload
   idempotent for pause/resume. inprogress_lab4.md added as the live
   checkpoint file per Karl's laptop-shutdown contract.
+
+- 2026-08-23 — GT-3 complete. Parse oracle: dotnet 8 JSON-lines service over
+  Microsoft.SqlServer.TransactSql.ScriptDom pinned [170.191.0] (TSql170Parser,
+  assembly 17.0.191.0; pin recorded in csproj and in every status row per
+  addendum B-4). Semantics decided and frozen:
+  (a) ghost-text documents are usually incomplete (582/588 empty suffix), so
+      errors are classified by position — error 46029 or at/after the last
+      meaningful token = trailing incompleteness (allowed); before it =
+      structural (real). Gold gate: zero structural errors in the gold
+      recomposition.
+  (b) recompose-v1 (src/recompose.ts, campaign identity): when the cursor
+      line of the prefix is an open `--` line comment, gold/candidate joins
+      with a newline — plain concatenation lexically swallows intent-mode
+      completions into the comment (376 false fails before this rule; the
+      package's own prompt blocks confirm comment-line cursor placement).
+  Results over 588: parser_generation 487 pass / 101 not_applicable
+  (package parse_eligible=false rows); parse 479 pass / 8 fail / 101 n_a.
+  The 8 fails are adjudicated package defects, logged for dataset v2.1,
+  golds untouched: 3 syntax-invalid golds (gt-cur-case-03/-04 simple-CASE
+  prefix continued as searched-CASE; gt-edge-proc-05 EXEC argument is a
+  TRY_CONVERT expression, not allowed by T-SQL grammar) and 5 cursor-
+  placement defects where the whole statement is the prefix so gold lands
+  after the terminator (gt-sparse-alias-01..04, gt-edge-cont-05; roles:
+  4 train + 2 holdout, 1 train among CASE rows — quality aggregates will
+  carry a parse-oracle-fail exclusion flag, decided at scoring).
+  Status rows in dataset.case_oracle_status (idempotent rewrite);
+  manifest manifests/parse-oracle.json; evidence event PASS_WITH_FINDINGS.
+  Plan adjustment: GT-2-lite (catalog contexts) moves ahead of GT-5
+  baselines because grammar-aware B2 consumes catalog snapshots.

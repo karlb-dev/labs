@@ -27,9 +27,9 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 |---|---|
 | GT-0 intake + scaffold | DONE (pushed) |
 | GT-1 dataset import + gates | DONE — 588/588, gates 588/588, 2 package defects dispositioned (`config/dataset-dispositions.json`) |
-| GT-3 ScriptDom parse oracle | NEXT |
+| GT-3 ScriptDom parse oracle | DONE — 479 pass / 8 package-defect findings / 101 n_a; parser pinned 170.191.0; recompose-v1 frozen |
+| GT-2 catalog contexts (from package catalogs) | NEXT (moved before GT-5: grammar-aware B2 needs catalogs) |
 | GT-5 deterministic baselines | pending |
-| GT-2 catalog contexts (from package catalogs) | pending (lite: catalog text contexts; fixture DDL exec deferred with disposition) |
 | GT-7 replay runner + extraction | pending |
 | Port gates (4 MLX profiles) | pending |
 | Mac quality campaign (4 profiles × eligible rows) | pending — the long stage; resumable per request |
@@ -40,8 +40,9 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 ```bash
 cd /Users/karl/repos/labs/aidataapps/ghosttype
 export PATH=$HOME/.nvm/versions/node/v22.22.1/bin:$PATH
-# next build step is agent work (GT-3 dotnet ScriptDom tool); if resuming a
-# campaign later, the command will be recorded here by the runner.
+# next build step is agent work (GT-2-lite catalog snapshot: scripts/snapshot-catalog.ts
+# reading the package catalog files into dataset/catalog tables). Re-running
+# `npm run oracles:validate` is safe anytime (idempotent rewrite).
 ```
 
 ## Notes
