@@ -127,11 +127,13 @@ def conformal_q(prob,truth,alpha=.1):
 def classifier(alpha,seed):return SGDClassifier(loss="log_loss",penalty="l2",alpha=alpha,max_iter=250,tol=1e-4,class_weight="balanced",random_state=seed,early_stopping=False,average=True)
 def pipeline(alpha,seed):return make_pipeline(StandardScaler(),classifier(alpha,seed))
 def choose_alpha(X,y,mask,groups):
-  indices=np.flatnonzero(mask);splitter=GroupKFold(n_splits=3);best=None
-  for alpha in [1e-5,1e-4,1e-3]:
-    scores=[]
-    for left,right in splitter.split(X[indices],y[indices],groups[indices]):
-      model=pipeline(alpha,SEED);model.fit(X[indices[left]],y[indices[left]]);scores.append(f1_score(y[indices[right]],model.predict(X[indices[right]]),average="macro",labels=np.arange(len(models)),zero_division=0))
+  indices=np.flatnonzero(mask);folds=list(GroupKFold(n_splits=3).split(X[indices],y[indices],groups[indices]));alphas=[1e-5,1e-4,1e-3];best=None
+  def one_cv(alpha,left,right):
+    with threadpool_limits(limits=1):
+      model=pipeline(alpha,SEED);model.fit(X[indices[left]],y[indices[left]]);return f1_score(y[indices[right]],model.predict(X[indices[right]]),average="macro",labels=np.arange(len(models)),zero_division=0)
+  values=Parallel(n_jobs=min(args.jobs,len(alphas)*len(folds)),prefer="threads")(delayed(one_cv)(alpha,left,right) for alpha in alphas for left,right in folds)
+  for alpha_index,alpha in enumerate(alphas):
+    scores=values[alpha_index*len(folds):(alpha_index+1)*len(folds)]
     candidate=(float(np.mean(scores)),-alpha)
     if best is None or candidate>best[0]:best=(candidate,alpha,scores)
   return best[1],best[2]
@@ -222,12 +224,18 @@ for name,(X,available) in representations.items():
     family_test=test_id&base.family_bucket.eq(family).to_numpy();family_train=fit_mask&base.family_bucket.ne(family).to_numpy();family_cal=cal_mask&base.family_bucket.ne(family).to_numpy()
     if family_test.sum()==0 or len(set(y[family_train]))<len(models) or len(set(y[family_cal]))<len(models):continue
     lofo_specs.append((family,family_train,family_cal,family_test,int(family_test.sum())))
-    candidate=pipeline(alpha,SEED);candidate.fit(X[family_train],y[family_train]);family_temp=fit_temp(candidate.decision_function(X[family_cal]),y[family_cal]);family_q=conformal_q(softmax(candidate.decision_function(X[family_cal]),family_temp),y[family_cal])
-    frame=base.loc[family_test].reset_index(drop=True);logits=candidate.decision_function(X[family_test]);raw_prob=softmax(logits);prob=softmax(logits,family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+len(lofo_metrics)),family_q)
-    metric["permutationNull"]={"mean":None,"p95":None,"disposition":"computed-at-aggregate-rotation"};pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets");lofo_metrics[family]=metric
+  def one_lofo(spec_index,spec):
+    family,family_train,family_cal,family_test,_=spec
+    with threadpool_limits(limits=1):
+      candidate=pipeline(alpha,SEED);candidate.fit(X[family_train],y[family_train]);family_logits=candidate.decision_function(X[family_cal]);family_temp=fit_temp(family_logits,y[family_cal]);family_q=conformal_q(softmax(family_logits,family_temp),y[family_cal])
+      frame=base.loc[family_test].reset_index(drop=True);logits=candidate.decision_function(X[family_test]);raw_prob=softmax(logits);prob=softmax(logits,family_temp);metric=metrics(frame,prob,args.bootstrap,np.random.default_rng(SEED+spec_index),family_q)
+    metric["permutationNull"]={"mean":None,"p95":None,"disposition":"computed-at-aggregate-rotation"};pred=metric.pop("predictions");confidence=metric.pop("confidence");sets=metric.pop("sets")
     out=frame[["generation_id","model_profile_id","prompt_group_id","source_id","family","family_bucket","carrier_id","decode_key","length_band","split"]].copy();out["representation"]=name;out["method"]="linear-probe";out["suite"]=f"lofo:{family}"
     out["predicted_model_profile_id"]=[models[i] for i in pred];out["confidence"]=confidence;out["probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in prob]
-    out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];lofo_predictions.append(out)
+    out["uncalibrated_probabilities"]=[json.dumps({models[i]:float(row[i]) for i in range(len(models))}) for row in raw_prob];out["candidate_set"]=[json.dumps([models[i] for i,value in enumerate(row) if value]) for row in sets];return family,metric,out
+  evaluated_lofo=Parallel(n_jobs=min(args.jobs,len(lofo_specs)),prefer="threads")(delayed(one_lofo)(index,spec) for index,spec in enumerate(lofo_specs)) if lofo_specs else []
+  for family,metric,out in evaluated_lofo:
+    lofo_metrics[family]=metric;lofo_predictions.append(out)
   if lofo_metrics:
     eligible=[value for value in lofo_metrics.values() if value["rows"]>=100] or list(lofo_metrics.values());macro=[value["macroF1"] for value in eligible]
     lofo_checkpoint_ready=bool(args.resume_completed and lofo_null_path.exists())
