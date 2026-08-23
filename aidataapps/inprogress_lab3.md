@@ -80,7 +80,8 @@ and its effect on the evidence ceiling must be recorded append-only in
   receipt:
   `0cb7233598d78ccb665d0df8cc06934741ee48eab70e82099b55da2b335eba73`;
   durable commit `1c471f6`.
-- Current source is clean and pushed through `d0bccd5`.
+- Current source is clean and pushed; calibration evidence is durable through
+  `d0bccd5` and queue hardening through `1c471f6`.
   Foundry/Mac/report support is merged; Linux Foundry validation
   remains deferred until the four governed GPU profiles finish.
 - Muse calibration chronology is closed before test access: `A-router` derived
