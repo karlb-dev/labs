@@ -109,8 +109,26 @@ try {
     await writeFile(`${runDirectory}/checkpoints/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...checkpoint, hash: hashJson(checkpoint) }, null, 2)}\n`);
     console.log(JSON.stringify(checkpoint));
   }
+  const persisted = await pool.request().input("scorer", sql.VarChar(80), scorerKey).input("includeHv", sql.Bit, includeHv)
+    .query<{ eligible_nonempty: number; prompted_persisted: number; unprompted_persisted: number }>(`
+      WITH eligible AS (
+        SELECT g.generation_id FROM dbo.generations g JOIN dbo.decode_configs d ON d.decode_config_id=g.decode_config_id
+        WHERE g.campaign_id IN (${campaignSql}) AND (@includeHv=1 OR JSON_VALUE(d.config_json,'$.key')<>'hv') AND LEN(g.final_text)>0
+      )
+      SELECT COUNT(*) eligible_nonempty,
+        SUM(CASE WHEN prompted.generation_id IS NOT NULL THEN 1 ELSE 0 END) prompted_persisted,
+        SUM(CASE WHEN unprompted.generation_id IS NOT NULL THEN 1 ELSE 0 END) unprompted_persisted
+      FROM eligible e
+      LEFT JOIN dbo.likelihood_scores prompted ON prompted.generation_id=e.generation_id AND prompted.scoring_model_profile_id=@scorer AND prompted.prompted=1
+      LEFT JOIN dbo.likelihood_scores unprompted ON unprompted.generation_id=e.generation_id AND unprompted.scoring_model_profile_id=@scorer AND unprompted.prompted=0;`);
+  const persistedRow = persisted.recordset[0];
+  const eligibleNonEmpty = Number(persistedRow?.eligible_nonempty ?? 0);
+  const promptedPersisted = Number(persistedRow?.prompted_persisted ?? 0);
+  const unpromptedPersisted = Number(persistedRow?.unprompted_persisted ?? 0);
+  const completeness = { eligibleNonEmpty, unavailableEmptyFinal, promptedPersisted, unpromptedPersisted,
+    missingPrompted: eligibleNonEmpty - promptedPersisted, missingUnprompted: eligibleNonEmpty - unpromptedPersisted };
   const manifest = { schemaVersion: 1, scorer: scorerKey, campaignIds, selected: query.recordset.length, unavailableEmptyFinal, done, failures,
-    includeHv, includeRobustness, rawPath, rawSha256: query.recordset.length ? await hashFile(rawPath) : null, finishedAt: new Date().toISOString() };
+    includeHv, includeRobustness, completeness, rawPath, rawSha256: await hashFile(rawPath).catch(() => null), finishedAt: new Date().toISOString() };
   await writeFile(`${runDirectory}/manifests/likelihood-${scorerKey}.json`, `${JSON.stringify({ ...manifest, manifestHash: hashJson(manifest) }, null, 2)}\n`);
   console.log(JSON.stringify(manifest, null, 2)); if (failures) process.exitCode = 2;
 } finally { await pool.close(); }
