@@ -50,6 +50,12 @@ if (command === "list") {
 } else if (command === "start") {
   const key = selectedKey;
   const profile = resolveModelProfile(key, registry);
+  const effectiveGpuMemoryUtilization = Number(process.env.CHAT_GPU_MEMORY_UTILIZATION ?? profile.gpuMemoryUtilization);
+  if (!Number.isFinite(effectiveGpuMemoryUtilization) || effectiveGpuMemoryUtilization <= 0 || effectiveGpuMemoryUtilization >= 1) {
+    throw new Error(`CHAT_GPU_MEMORY_UTILIZATION must be between 0 and 1; received ${process.env.CHAT_GPU_MEMORY_UTILIZATION}`);
+  }
+  const profileHash = hashJson(profile);
+  const runtimeProfileHash = hashJson({ profileHash, effectiveGpuMemoryUtilization });
   const snapshot = JSON.parse(readFileSync("data/manifests/model-registry-snapshot.json", "utf8")) as { profiles?: Record<string, { hf?: { weightBytes?: number } }> };
   const weightBytes = snapshot.profiles?.[key]?.hf?.weightBytes ?? 0;
   const volume = process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache";
@@ -66,7 +72,9 @@ if (command === "list") {
   const port = process.env.CHAT_PORT ?? "8000";
   const args = ["run", "--detach", "--name", containerName,
     "--label", `ai.labs.model-profile=${profile.key}`,
-    "--label", `ai.labs.model-profile-hash=${hashJson(profile)}`];
+    "--label", `ai.labs.model-profile-hash=${profileHash}`,
+    "--label", `ai.labs.runtime-profile-hash=${runtimeProfileHash}`,
+    "--label", `ai.labs.gpu-memory-utilization=${effectiveGpuMemoryUtilization}`];
   if (nested) args.push("--device", "nvidia.com/gpu=all", "--pid", "host", "--network", "host", "--ipc", "host", "--cgroupns", "host", "--security-opt", "seccomp=unconfined", "--security-opt", "apparmor=unconfined", "--mount", "type=bind,src=/proc,dst=/proc,readonly", "--mount", "type=bind,src=/sys/fs/cgroup,dst=/sys/fs/cgroup,readonly", "--env", "LD_LIBRARY_PATH=/usr/lib64-nvidia:/usr/local/cuda/lib64:/usr/local/nvidia/lib64");
   else args.push("--gpus", "all", "--ipc", "host", "--publish", `${port}:8000`);
   args.push("--volume", `${process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache"}:/root/.cache/huggingface`,
@@ -77,11 +85,12 @@ if (command === "list") {
   if (process.env.HF_TOKEN) args.push("--env", `HF_TOKEN=${process.env.HF_TOKEN}`);
   const serverArgs = ["--model", profile.modelId, "--revision", profile.revision, "--tokenizer-revision", profile.revision,
     "--served-model-name", profile.key,
-    "--max-model-len", String(profile.maxModelLen), "--gpu-memory-utilization", String(profile.gpuMemoryUtilization),
+    "--max-model-len", String(profile.maxModelLen), "--gpu-memory-utilization", String(effectiveGpuMemoryUtilization),
     "--max-num-seqs", String(profile.maxNumSeqs), "--enable-log-requests", ...(nested ? ["--port", port] : []), ...profile.campaignArgs];
   args.push(profile.vllmImage, ...serverArgs);
   const containerId = docker(args, true); persistProfile(key);
-  console.log(JSON.stringify({ containerId, containerName, profile: key, profileHash: hashJson(profile), modelId: profile.modelId,
+  console.log(JSON.stringify({ containerId, containerName, profile: key, profileHash, runtimeProfileHash, modelId: profile.modelId,
     revision: profile.revision, image: profile.vllmImage, endpoint: `http://127.0.0.1:${port}/v1`, cachedBeforeStart: existsSync(cacheDirectory),
-    weightBytes, freeBytesBeforeStart: freeBytes, batchInvariant: batchInvariant ?? "0" }, null, 2));
+    weightBytes, freeBytesBeforeStart: freeBytes, configuredGpuMemoryUtilization: profile.gpuMemoryUtilization,
+    effectiveGpuMemoryUtilization, batchInvariant: batchInvariant ?? "0" }, null, 2));
 } else throw new Error(`Unknown model command ${command}`);
