@@ -1145,3 +1145,35 @@ place and receive a later disposition.
 - 2026-08-23T14:47:52.778Z — Scored 96 control shuffled-runbooks-v1 test_id,test_unknown predictions for muse-glimmer-30b across A-tools; receipt 9512b4cc223e2dd764689c38e9b789dcfb0eb75be38e76fce370660bfcab59a3.
 
 - 2026-08-23T14:47:57.732Z — Compared 96 muse-glimmer-30b/shuffled-runbooks-v1 predictions with their frozen primary sources: raw=0/96, decision=0.263889/72, tools=0.479167/96, invariance=NOT_APPLICABLE; receipt 750f09ae8244eb9aceee4f9245c9b090cdbe9a01e5aa3a6c850844d0c529f7bb.
+
+- 2026-08-23T15:30:07.501Z — muse-glimmer-30b control batching-sequential-v1 retained 48 cells across test_id,test_unknown and A-tools with 44 decisions, 4 failures, and 129 model requests; receipt cddb387bc8a5cfb62c26a755d47ac7f6a4713e5f229789b737923850704ddbb2.
+
+- 2026-08-23T15:30:17.840Z — Scored 48 control batching-sequential-v1 test_id,test_unknown predictions for muse-glimmer-30b across A-tools; receipt d503dd55f65fffbac10f79b81b3fb2e6d692f9339128855f307966a46c318d80.
+
+- 2026-08-23T15:30:20.617Z — Compared 48 muse-glimmer-30b/batching-sequential-v1 predictions with their frozen primary sources: raw=0/48, decision=0.209302/43, tools=0.604167/48, invariance=NON_INVARIANT; receipt c70563114783f688c794a6452c2a3a1da1e8465fa68bd2b5f086f6c190e36262.
+
+- 2026-08-23T15:36:36.209Z — Diagnosed muse-glimmer-30b/batching-sequential-v1: AGENT_INPUT_DRIFT_REQUEST_LEVEL_INVARIANT; exact-input normalized outputs 48/48, first-turn choices 48/48; receipt 7810da399de51d80e99b133a8490feff11ab7ed3b24821429786feaac43c298d.
+
+- 2026-08-23T15:37:00Z — The frozen batching control's literal comparison
+  labeled the full agent pipeline `NON_INVARIANT` (0/48 raw response bodies,
+  9/43 decision hashes, 38/48 semantic decisions, and 29/48 ordered tool-call
+  sequences matched). A post-control audit found that this label is
+  confounded by execution identity rather than evidence of a vLLM batching
+  defect: raw response bodies contain new response IDs/creation times; every
+  tool-result prompt contains a new `agentRunId:toolInvocationId` call ID; and
+  runbook results contain a new SQL retrieval-run ID. The new diagnostic keeps
+  the original comparison immutable, compares generated choices/usage after
+  removing only response-envelope identity, and separately normalizes the two
+  execution-local prompt fields. All 48/48 byte-identical first-turn requests
+  produced identical normalized choices, content, and reasoning across the
+  original 16-worker and sequential runs; all 48 exact-request pairs across
+  the trace had identical normalized output, with zero exact-input output
+  mismatches. Classification:
+  `AGENT_INPUT_DRIFT_REQUEST_LEVEL_INVARIANT`. Impact: Muse request-level
+  batching invariance is supported for observed identical inputs; full-agent
+  batching invariance is not identifiable from this control and must not be
+  claimed. No retained request, response, prediction, score, or original
+  comparison was rewritten. The diagnostic is stored as a hashed JSONL table,
+  metric receipt, and SQL evidence event; 39/39 test files and 137/137 tests
+  passed. Diagnostic receipt:
+  `7810da399de51d80e99b133a8490feff11ab7ed3b24821429786feaac43c298d`.

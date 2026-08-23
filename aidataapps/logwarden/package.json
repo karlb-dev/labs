@@ -60,6 +60,7 @@
     "campaign:score": "node --import tsx scripts/score-predictions.ts",
     "campaign:calibrate": "node --import tsx scripts/fit-calibration.ts",
     "campaign:control-compare": "node --import tsx scripts/compare-controls.ts",
+    "campaign:diagnose-batching": "node --import tsx scripts/diagnose-batching-control.ts",
     "campaign:analyze": "node --import tsx scripts/analyze-campaign.ts",
     "gate:qwen-e2e": "node --import tsx scripts/qwen-smoke-e2e.ts",
     "campaign:sync-prefreeze-arms": "node --import tsx scripts/sync-prefreeze-arm-identities.ts",

@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 14:48 UTC
+Last manually updated: 2026-08-23 15:37 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -112,13 +112,25 @@ and its effect on the evidence ceiling must be recorded append-only in
   agreement and a -0.1875 delta. Comparison receipts:
   `a566c9b7046a69446a1c71f3c4b01d65386845f2360781137d2e20d2bd27fe42`
   and `750f09ae8244eb9aceee4f9245c9b090cdbe9a01e5aa3a6c850844d0c529f7bb`.
-  Next: run, score, and compare the 48-cell single-worker batching control,
-  then end Muse residency. Do not relaunch completed primary/control jobs.
+  The 48-cell single-worker batching replay also passed (44 decisions, four
+  retained agent failures, 129/129 successful stop-finished requests, zero
+  service errors/preemptions), then scored and compared. Its literal full-agent
+  result was `NON_INVARIANT`, but a formal audit proved that later prompts embed
+  new agent/tool/retrieval execution IDs and raw vLLM bodies embed response
+  IDs/timestamps. All 48/48 byte-identical first-turn requests and all 48 exact
+  request pairs produced identical normalized choices/reasoning. The governing
+  interpretation is therefore `AGENT_INPUT_DRIFT_REQUEST_LEVEL_INVARIANT`:
+  observed request-level invariance, full-agent invariance not identifiable.
+  Original rows remain immutable. Diagnostic receipt:
+  `7810da399de51d80e99b133a8490feff11ab7ed3b24821429786feaac43c298d`.
+  Next: close/reconcile Muse residency telemetry, take the profile checkpoint,
+  apply bounded redundant-checkpoint retention, stop/evict Muse, and start the
+  frozen Gemma profile. Do not relaunch completed primary/control jobs.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
 source scripts/runtime-env.sh
-npm run campaign:replay -- --profile muse-glimmer-30b --roles test_id,test_unknown --arms A-tools --control batching-sequential-v1 --workers 1
+npm run telemetry:reconcile
 ```
 
 ## Historical setup context (superseded where conflicting)
@@ -390,8 +402,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Last watchdog run: `logwarden-smoke-20260823T031714Z`
 <!-- lab3-watchdog-status:end -->
 
-- Long-running scientific process: no replay is active at this checkpoint;
-  the next command is the third Muse frozen inference control shown above.
+- Long-running scientific process: no replay is active; the next boundary is
+  Muse residency telemetry reconciliation and checkpointing shown above.
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `muse-glimmer-30b-residency` whole-system sampler
