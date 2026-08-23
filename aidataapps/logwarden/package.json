@@ -9,6 +9,7 @@
     "check": "npm run build && npm test",
     "test": "vitest run",
     "test:sql": "node --import tsx scripts/sql-integration.ts",
+    "gate:tools": "node --import tsx scripts/tool-security-gate.ts",
     "run:init": "node --import tsx scripts/run-init.ts",
     "models:sync": "node --import tsx scripts/sync-model-registry.ts",
     "doctor": "node --import tsx scripts/doctor.ts",

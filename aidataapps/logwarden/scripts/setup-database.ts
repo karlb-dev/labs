@@ -85,6 +85,16 @@ try {
 const controlPool = await connect(config.databases.admin, config.databases.controlName);
 let controlMigrations;
 try {
+  const masterKeyPassword = `Lw!${sha256(`logwarden-control-master-key:${config.databases.lab.password}`)}`;
+  await controlPool.request()
+    .input("password", sql.NVarChar(128), masterKeyPassword)
+    .query(`
+      IF NOT EXISTS (SELECT 1 FROM sys.symmetric_keys WHERE name=N'##MS_DatabaseMasterKey##')
+      BEGIN
+        DECLARE @statement nvarchar(max) = N'CREATE MASTER KEY ENCRYPTION BY PASSWORD=' + QUOTENAME(@password,N'''');
+        EXEC sys.sp_executesql @statement;
+      END;
+    `);
   controlMigrations = await applyControlMigrations(controlPool, `${LAB_ROOT}/db/migrations`, run.runId);
   await seedControlMetadata(controlPool, run);
 } finally {
@@ -99,7 +109,7 @@ try {
   await workloadPool.close();
 }
 
-const serverPool = await connect(config.databases.lab, "master");
+const serverPool = await connect(config.databases.admin, "master");
 let serverMigrations;
 try {
   serverMigrations = await applyUntrackedMigrations(serverPool, `${LAB_ROOT}/db/server`);

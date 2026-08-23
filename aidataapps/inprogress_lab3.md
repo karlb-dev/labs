@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 03:58 UTC
+Last manually updated: 2026-08-23 05:05 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -32,7 +32,9 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery, and pre-inference observability gates passed except the real vLLM metrics canary.
+- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
+  agent-observability, and least-privilege tool gates passed except the real
+  vLLM metrics canary.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -45,10 +47,11 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Sixteen hash-locked control migrations and two versioned server/XE assets now
-  apply idempotently. `npm run doctor` passes all required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 10
-  test files and 25 unit tests. The capture-specific XE predicate excludes
+- Twenty hash-locked control migrations and six versioned
+  server/XE/security assets now apply idempotently. `npm run doctor` passes all
+  required probes;
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 11
+  test files and 28 unit tests. The capture-specific XE predicate excludes
   agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -56,11 +59,6 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Raw ERRORLOG replay is idempotent (0 inserted / 461 duplicates on immediate
   replay). XE uses file + block offset + within-block ordinal after runtime
   discovery that offsets are block-scoped.
-- Current doctor snapshot:
-  `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e`
-  (`PASS`); SQL integration receipt:
-  `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156`
-  (8/8).
 - Ten development packets have separately protected evaluator truth and passed
   the leakage audit with zero findings. Packet build/audit receipts are
   `06670cc91548962090843e921f0b72d0f58e38544f79b2fd0ffb9768fb749e11`
@@ -88,9 +86,26 @@ and its effect on the evidence ceiling must be recorded append-only in
 - ERRORLOG `sp_cycle_errorlog` recovery passed with a stable pre-roll key,
   one unique post-roll marker, and 599/599 duplicates on immediate replay;
   receipt `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
-- Next incomplete milestone: the checkpointed container restart recovery gate
-  and least-privilege read-only tool procedures, followed by supported catalog and
-  runbook expansion/freeze. A small embedding or qwen-smoke port may then load
+- SQL/container restart recovery passed with distinct container/SQL start
+  identities, stable pre-restart source identity, a unique post-restart row,
+  and 997/997 duplicates on immediate replay; receipt
+  `f6688d4472af0db6947076097a27be7d14cd58490b736d9dc442fb2c2adc2c99`.
+- The seven-tool `tools-v1` registry and its SQL enforcement layer passed nine
+  positive and eleven negative least-privilege cases. Direct evaluator, snapshot,
+  runbook-table, queue, ingestion, DDL, server-DMV, and `msdb` backup-table
+  bypasses are denied. Receipt:
+  `c0bf815c9db432cc28555146f597eabd46eb935731826763f01e55b75cbfef57`;
+  registry hash:
+  `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
+  The registry remains marked building/unfrozen until standard runbooks close.
+- Current doctor snapshot:
+  `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34`
+  (`PASS`); SQL integration receipt:
+  `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655`
+  (8/8).
+- Next incomplete milestone: supported incident catalog and runbook
+  expansion/freeze, then the read-only tool gateway and bounded agent loop. A
+  small embedding or qwen-smoke port may then load
   for the remaining real `/metrics` gate; no long chat campaign may load yet.
 
 ## Fresh-VM preflight
@@ -154,9 +169,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e` (`PASS`)
-- SQL integration receipt: `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156` (8/8 passed)
-- Last durable Git checkpoint: `762806d` (packet/base telemetry watchdog handoff); terminal-route/recovery instrumentation is being committed now
+- Capability snapshot: `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34` (`PASS`)
+- SQL integration receipt: `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655` (8/8 passed)
+- Last durable Git checkpoint: `7607761` (ERRORLOG rotation watchdog handoff);
+  restart recovery and the least-privilege tool layer are being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -180,9 +196,9 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is checkpointed ERRORLOG container-restart recovery followed by read-only
-tools and the standard catalog/runbook freeze; do not load a model until the
-remaining real-service observability gate can run. If `docker info` fails,
+this checkpoint is the supported incident catalog and runbook freeze followed
+by the bounded tool gateway/agent loop; do not load a long-running model until
+the remaining real-service observability gate can run. If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
 

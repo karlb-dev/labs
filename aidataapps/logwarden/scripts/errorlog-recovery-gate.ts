@@ -30,20 +30,7 @@ if (mode === "rotation") {
   await withAdmin((pool) => pool.request().execute("sys.sp_cycle_errorlog").then(() => undefined));
   recoveryEvidence = { operation: "sys.sp_cycle_errorlog", completed: true };
 } else {
-  const shutdownStartedAtUtc = new Date().toISOString();
-  await shutdownSqlServer();
-  await waitFor(async () => (await docker(["inspect", "--format", "{{.State.Running}}", container])).trim() === "false", 30_000, "container did not stop after SQL SHUTDOWN");
-  const stoppedAtUtc = new Date().toISOString();
-  await docker(["start", container]);
-  await waitFor(async () => {
-    try {
-      await withAdmin((pool) => pool.request().query("SELECT 1 AS ready").then(() => undefined));
-      return true;
-    } catch {
-      return false;
-    }
-  }, 90_000, "SQL Server did not become ready after container start");
-  recoveryEvidence = { operation: "SQL SHUTDOWN WITH NOWAIT + docker start", shutdownStartedAtUtc, stoppedAtUtc, readyAtUtc: new Date().toISOString() };
+  recoveryEvidence = await restartSqlContainer();
 }
 
 await writeMarker(postMarker);
@@ -137,15 +124,6 @@ async function writeMarker(value: string): Promise<void> {
   });
 }
 
-async function shutdownSqlServer(): Promise<void> {
-  const pool = await connect(config.databases.admin, "master", 30_000);
-  try {
-    await pool.request().query("SHUTDOWN WITH NOWAIT;").catch(() => undefined);
-  } finally {
-    await pool.close().catch(() => undefined);
-  }
-}
-
 async function withAdmin<T>(operation: (pool: sql.ConnectionPool) => Promise<T>): Promise<T> {
   const pool = await connect(config.databases.admin, "master", 30_000);
   try {
@@ -157,9 +135,112 @@ async function withAdmin<T>(operation: (pool: sql.ConnectionPool) => Promise<T>)
 
 function docker(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    execFile("docker", args, { encoding: "utf8", maxBuffer: 4 * 1024 * 1024 }, (error, stdout, stderr) => {
+    execFile("docker", args, { encoding: "utf8", maxBuffer: 4 * 1024 * 1024, timeout: 10_000 }, (error, stdout, stderr) => {
       if (error === null) resolve(stdout);
       else reject(new Error(`docker ${args[0]} failed: ${stderr.trim() || error.message}`));
+    });
+  });
+}
+
+async function restartSqlContainer(): Promise<Record<string, unknown>> {
+  const beforeState = await containerState();
+  if (!beforeState.Running || !Number.isSafeInteger(beforeState.Pid) || beforeState.Pid <= 1) {
+    throw new Error(`SQL container is not running with a valid init PID: ${JSON.stringify(beforeState)}`);
+  }
+  const beforeSqlStartUtc = await sqlStartTime();
+  const processRows = await processTable();
+  const candidates = processRows.filter((row) => row.ppid === beforeState.Pid && row.command === "/opt/mssql/bin/sqlservr");
+  if (candidates.length !== 1) {
+    throw new Error(`Expected one sqlservr child of inspected container PID ${beforeState.Pid}; observed ${JSON.stringify(candidates)}`);
+  }
+  const sqlParentPid = candidates[0]!.pid;
+  const signaledAtUtc = new Date().toISOString();
+  process.kill(sqlParentPid, "SIGTERM");
+  let dockerStartIssued = false;
+  let afterState: ContainerState | null = null;
+  let afterSqlStartUtc: string | null = null;
+  await waitFor(async () => {
+    try {
+      afterState = await containerState();
+      if (!afterState.Running) {
+        if (!dockerStartIssued) {
+          await docker(["start", container]);
+          dockerStartIssued = true;
+        }
+        return false;
+      }
+      if (afterState.Pid === beforeState.Pid) return false;
+      try {
+        afterSqlStartUtc = await sqlStartTime();
+        return afterSqlStartUtc !== beforeSqlStartUtc && await labDatabasesReady();
+      } catch {
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }, 90_000, "SQL container did not restart with a new PID/start time after targeted SIGTERM");
+  return {
+    operation: "SIGTERM exact sqlservr child of inspected host-PID container; unless-stopped recovery",
+    containerId: beforeState.Id,
+    beforeContainerPid: beforeState.Pid,
+    signaledSqlParentPid: sqlParentPid,
+    beforeSqlStartUtc,
+    signaledAtUtc,
+    dockerStartIssued,
+    afterContainerPid: afterState!.Pid,
+    afterSqlStartUtc,
+    readyAtUtc: new Date().toISOString(),
+  };
+}
+
+interface ContainerState { Id: string; Running: boolean; Pid: number }
+
+async function containerState(): Promise<ContainerState> {
+  const output = await docker(["inspect", "--format", "{{json .Id}} {{json .State.Running}} {{json .State.Pid}}", container]);
+  const match = /^("[0-9a-f]+")\s+(true|false)\s+(\d+)\s*$/.exec(output);
+  if (match === null) throw new Error(`Unexpected docker inspect state: ${output.trim()}`);
+  return { Id: JSON.parse(match[1]!) as string, Running: match[2] === "true", Pid: Number(match[3]) };
+}
+
+async function sqlStartTime(): Promise<string> {
+  return withAdmin(async (pool) => {
+    const result = await pool.request().query<{ sqlserver_start_time: Date }>("SELECT sqlserver_start_time FROM sys.dm_os_sys_info;");
+    return result.recordset[0]!.sqlserver_start_time.toISOString();
+  });
+}
+
+async function labDatabasesReady(): Promise<boolean> {
+  const adminReady = await withAdmin(async (pool) => {
+    const result = await pool.request().query<{ online_count: number }>(`
+      SELECT COUNT(*) AS online_count
+      FROM sys.databases
+      WHERE name IN ('LogWardenControl','LogWardenWorkload')
+        AND state_desc='ONLINE' AND user_access_desc='MULTI_USER';
+    `);
+    return Number(result.recordset[0]?.online_count) === 2;
+  });
+  if (!adminReady) return false;
+  const pool = await connect(config.databases.lab, config.databases.controlName, 10_000);
+  try {
+    await pool.request().query("SELECT 1 AS ready;");
+    return true;
+  } finally {
+    await pool.close();
+  }
+}
+
+function processTable(): Promise<Array<{ pid: number; ppid: number; command: string }>> {
+  return new Promise((resolve, reject) => {
+    execFile("ps", ["-eo", "pid=,ppid=,args="], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error !== null) {
+        reject(new Error(`ps failed: ${stderr.trim() || error.message}`));
+        return;
+      }
+      resolve(stdout.split("\n").flatMap((line) => {
+        const match = /^\s*(\d+)\s+(\d+)\s+(.*?)\s*$/.exec(line);
+        return match === null ? [] : [{ pid: Number(match[1]), ppid: Number(match[2]), command: match[3]! }];
+      }));
     });
   });
 }

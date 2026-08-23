@@ -222,3 +222,68 @@ place and receive a later disposition.
   `594b46485c6865068c2093c311190b09eb900406c51b76d2f972704a73087d1e`.
   The file reader was factored into a retrying shared module; this changes only
   container file-access robustness and has no scientific-result impact.
+- 2026-08-23T04:49:04Z — The checkpointed SQL/container restart gate passed
+  with receipt
+  `f6688d4472af0db6947076097a27be7d14cd58490b736d9dc442fb2c2adc2c99`.
+  A pre-restart marker retained its exact source-position key after moving to
+  `errorlog.1`; a post-restart marker was unique; and immediate replay
+  recognized all 997 parsed records as duplicates. The same container was
+  restarted with a new container-init PID and SQL start time. The first
+  development attempt showed that `SHUTDOWN WITH NOWAIT` stopped the SQL
+  client connection but not this image's host-PID wrapper. The gate now
+  resolves one exact direct `sqlservr` child beneath the inspected container
+  PID and signals only that PID, then proves both databases are ONLINE and
+  queryable before ingestion. This also fixed a real readiness race in which
+  SA login briefly succeeded before `LogWardenControl` was ready. Impact:
+  recovery-test reliability only; no campaign data or scientific factors
+  existed or changed.
+- 2026-08-23T05:02:50Z — Installed the development `tools-v1` least-privilege
+  surface: seven strictly typed, bounded, read-only tools; canonical argument
+  and registry hashes; exact frozen-snapshot lookup; certificate-signed server
+  diagnostics; and full-text runbook search through stored procedures. Direct
+  access to evaluator truth, snapshots, runbook tables, queue/control tables,
+  ingestion procedures, DDL, server DMVs, and `msdb` backup tables remains
+  denied to `lw_agent`. The security gate passed nine positive and ten
+  negative cases; its receipt is
+  `6c2e962c5bb0673e30af5ddc8bac33c540a771cb49fba7d18f666921f6e6ff57`
+  and registry hash is
+  `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
+  The registry remains explicitly unfrozen until the standard corpus and
+  runbooks close.
+- 2026-08-23T05:02:50Z — Tool development produced three fail-closed findings
+  before the passing gate. The first control master-key password derivation
+  used a raw hexadecimal digest that SQL Server rejected under password
+  policy, before any tool migration began; the derivation was corrected. The
+  first migration transaction then rejected reserved output alias
+  `transaction` and rolled back without a migration record; the alias became
+  `txn`. Finally, the initial negative gate discovered that `lw_agent` could
+  read `msdb.dbo.backupset` through inherited `guest`/`public` permissions.
+  An explicit deny closed the bypass, and the required backup-history tool was
+  redesigned as a bounded `msdb` owner-executed proxy rather than granting
+  table access to the signing certificate. The failed gate wrote only unique
+  synthetic development corpus/snapshot fixtures and no passing receipt; they
+  are excluded from any standard corpus or score. Hash-locked migrations
+  017–019 and server assets 003–005 preserve the final design. Afterward the
+  doctor passed with snapshot
+  `82a438326c1d4c42dac6b475fb2987d3039f21eab1113cae22e42d2e70d6f597`,
+  SQL integration passed 8/8 with receipt
+  `d72103d195e7f70853ecda6134fa8f958de0320cf14f372a320d500f4213fa9a`,
+  and 28 unit tests in 11 files passed. Impact: security and deployment
+  correctness only; there is still no model or campaign observation.
+- 2026-08-23T05:05:28Z — A post-gate privilege review found that the bounded
+  internal `msdb` proxy was still directly executable by `lw_agent`, even
+  though direct table access was denied and the proxy was not in the checked-in
+  registry. Forward control migration 020 changed the registry-listed wrapper
+  to a static cross-database call and restored its module signature; server
+  asset 006 grants proxy execution only to the matching certificate user and
+  revokes it from the runtime user. A new negative case proves the direct proxy
+  call fails while the listed backup tool still succeeds. The superseding gate
+  passed nine positive and eleven negative cases with receipt
+  `c0bf815c9db432cc28555146f597eabd46eb935731826763f01e55b75cbfef57`.
+  The doctor passed with snapshot
+  `a315adb9b7e36c3fe901d3dd9b2f6f02ffcb3026da827e4d7bbd48bd14769c34`,
+  SQL integration passed 8/8 with receipt
+  `107e85c39510a2e161796a348579740f288d8d834472f00862bd3be30fc2d655`,
+  and the 28 unit tests still passed. This supersedes the prior development
+  tool-gate receipt without changing data, tools, prompts, or outcomes; impact
+  is a strictly narrower runtime privilege boundary.
