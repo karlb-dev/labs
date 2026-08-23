@@ -152,11 +152,17 @@ async function samplePrometheus(
       `);
   }
   const modelAvailability = modelFields(parsed.samples);
+  const modelProfileId = service.kind === "chat" && errorDetail === null
+    ? process.env.MODEL_PROFILE ?? null
+    : null;
   await pool.request()
     .input("key", sql.Char(64), snapshotKey)
     .input("run", sql.VarChar(120), run.runId)
     .input("at", sql.DateTime2(7), sampledAt)
     .input("raw", sql.BigInt, rawSnapshotId)
+    .input("instance", sql.VarChar(160), service.instance)
+    .input("phase", sql.VarChar(40), phase)
+    .input("profile", sql.VarChar(80), modelProfileId)
     .input("running", sql.Float, modelAvailability.runningRequests)
     .input("waiting", sql.Float, modelAvailability.waitingRequests)
     .input("swapped", sql.Float, modelAvailability.swappedRequests)
@@ -173,11 +179,12 @@ async function samplePrometheus(
     .input("json", sql.NVarChar(sql.MAX), canonicalJson({ discoveredMetricNames: parsed.metricNames, mappedFields: modelAvailability }))
     .query(`
       INSERT telemetry.model_service_samples
-        (sample_key,run_id,sampled_at_utc,running_requests,waiting_requests,swapped_requests,
+        (sample_key,run_id,source_instance,phase,model_profile_id,sampled_at_utc,
+         running_requests,waiting_requests,swapped_requests,
          prompt_tokens_total,generation_tokens_total,prompt_throughput,generation_throughput,
          kv_cache_usage_ratio,prefix_cache_hits_total,prefix_cache_queries_total,
          preemptions_total,request_errors_total,cancellations_total,raw_metric_snapshot_id,availability_json)
-      VALUES(@key,@run,@at,@running,@waiting,@swapped,@prompt_total,@generation_total,
+      VALUES(@key,@run,@instance,@phase,@profile,@at,@running,@waiting,@swapped,@prompt_total,@generation_total,
         @prompt_rate,@generation_rate,@kv,@prefix_hits,@prefix_queries,@preemptions,
         @errors,@cancellations,@raw,@json);
     `);

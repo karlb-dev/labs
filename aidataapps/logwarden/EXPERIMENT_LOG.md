@@ -692,3 +692,19 @@ place and receive a later disposition.
   dropped buffers, or blocked-event-fire time. The Qwen EngineCore remains
   resident at 6,042 MiB; standard injection is intentionally a SQL/CPU capture
   phase and does not require chat-model GPU load.
+- 2026-08-23T07:46:56Z — While capture remained healthy at 60/60 terminal,
+  zero failed/unclean, and zero XE loss counters, prepared the chat inference
+  residency and port-gate path without loading a chat model or altering the
+  active database. The fixed Lab-3 container lifecycle pins image/model/
+  revision/tokenizer/served name, nested-Colab CDI, host networking, cache
+  volumes, disk floor, max sequence override, and effective server arguments.
+  The port gate retains health/models/metrics/service logs, exact raw request
+  and response bodies, complete requested and effective decode evidence,
+  sequential/batched canaries, usage/finish/repair data, GPU snapshots, and
+  journal-to-SQL telemetry. Migration 031 is authored but deliberately not yet
+  applied during capture; it adds separate reasoning-channel content/hash/byte
+  provenance, chat/embedding service-instance and phase attribution, and
+  evaluator-only held-out retrieval result rows. The raw response envelope
+  remains the authoritative superset. All 22 test files/73 tests pass. Impact:
+  implementation-only; no scientific packet, target inference, or active
+  capture row changed.

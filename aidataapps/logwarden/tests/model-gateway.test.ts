@@ -37,6 +37,7 @@ describe("instrumented OpenAI-compatible gateway", () => {
 
   for (const testCase of [
     { route: "success", status: "success", terminal: "decision_received", error: null },
+    { route: "reasoning", status: "success", terminal: "decision_received", error: null },
     { route: "invalid-json", status: "failed", terminal: "contract_rejected", error: "invalid_json" },
     { route: "empty", status: "failed", terminal: "contract_rejected", error: "empty_output" },
     { route: "schema", status: "failed", terminal: "contract_rejected", error: "contract_schema" },
@@ -54,7 +55,7 @@ describe("instrumented OpenAI-compatible gateway", () => {
         journal: fixture.journal,
         runDirectory: fixture.directory,
         timeoutMs: 40,
-        maxResponseBytes: 512,
+        maxResponseBytes: 1024,
       });
       expect(result.status).toBe(testCase.status);
       expect(result.terminalState).toBe(testCase.terminal);
@@ -65,6 +66,7 @@ describe("instrumented OpenAI-compatible gateway", () => {
       expect(lines.some(({ record }) => record.name === `state.${testCase.terminal}`)).toBe(true);
       expect(await readFile(result.attempts[0]!.requestPath)).toEqual(result.attempts[0]!.requestBody);
       expect(await readFile(result.attempts[0]!.responsePath)).toEqual(result.attempts[0]!.responseBody);
+      if (testCase.route === "reasoning") expect(result.attempts[0]!.reasoningContent).toBe("retained private reasoning channel");
     });
   }
 
@@ -113,15 +115,16 @@ function route(request: IncomingMessage, response: ServerResponse, counts: Map<s
     response.end(JSON.stringify({ choices: [{ message: { content: "x".repeat(2048) } }] }));
     return;
   }
+  if (name === "reasoning") return openAi(response, decision, "retained private reasoning channel");
   openAi(response, decision);
 }
 
-function openAi(response: ServerResponse, value: unknown): void {
+function openAi(response: ServerResponse, value: unknown, reasoning?: string): void {
   const content = typeof value === "string" ? value : JSON.stringify(value);
   response.writeHead(200, { "content-type": "application/json", "x-request-id": "fake-service-request" });
   response.end(JSON.stringify({
     id: "fake-completion",
-    choices: [{ finish_reason: "stop", message: { role: "assistant", content } }],
+    choices: [{ finish_reason: "stop", message: { role: "assistant", content, ...(reasoning === undefined ? {} : { reasoning }) } }],
     usage: { prompt_tokens: 10, completion_tokens: 20, total_tokens: 30 },
   }));
 }

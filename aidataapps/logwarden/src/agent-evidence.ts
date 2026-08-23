@@ -1,6 +1,6 @@
 import sql from "mssql";
 import type { AgentResponse } from "./contracts.js";
-import { canonicalJson, hashJson } from "./hash.js";
+import { canonicalJson, hashJson, sha256 } from "./hash.js";
 import type { GatewayAttemptEvidence, GatewayCallResult, GatewayMessage } from "./model-gateway.js";
 
 export interface GatewayEvidenceIdentity {
@@ -239,6 +239,8 @@ async function insertAttempt(
     `);
   const modelRequestId = Number(insertedRequest.recordset[0]!.model_request_id);
   const repairKind = attempt.repairKind === "fence_strip" ? "strip_code_fence" : attempt.repairKind === "leading_text_strip" ? "strip_leading_text" : attempt.repairKind;
+  const reasoningSha256 = attempt.reasoningContent === null ? null : sha256(attempt.reasoningContent);
+  const reasoningBytes = attempt.reasoningContent === null ? null : Buffer.byteLength(attempt.reasoningContent);
   const insertedResponse = await new sql.Request(transaction)
     .input("request", sql.BigInt, modelRequestId)
     .input("http", sql.Int, attempt.httpStatus)
@@ -257,6 +259,9 @@ async function insertAttempt(
     .input("parse_status", sql.VarChar(32), attempt.parsedValue !== null ? "parsed" : attempt.parseMs === null ? "not_attempted" : "rejected")
     .input("repair", sql.VarChar(40), repairKind)
     .input("json", sql.NVarChar(sql.MAX), attempt.parsedValue === null ? null : canonicalJson(attempt.parsedValue))
+    .input("reasoning", sql.NVarChar(sql.MAX), attempt.reasoningContent)
+    .input("reasoning_hash", sql.Char(64), reasoningSha256)
+    .input("reasoning_bytes", sql.Int, reasoningBytes)
     .input("error", sql.VarChar(80), attempt.errorClass)
     .input("detail", sql.NVarChar(sql.MAX), attempt.errorDetail)
     .query<{ model_response_id: string }>(`
@@ -264,11 +269,13 @@ async function insertAttempt(
         (model_request_id,http_status,service_request_id,response_body,response_body_sha256,
          response_bytes,finish_reason,prompt_tokens,completion_tokens,total_tokens,
          token_count_provenance,parse_started_at_utc,parse_finished_at_utc,parse_ms,
-         parse_status,repair_kind,structured_json,error_class,error_detail)
+         parse_status,repair_kind,structured_json,reasoning_content,reasoning_sha256,
+         reasoning_bytes,error_class,error_detail)
       OUTPUT INSERTED.model_response_id
       VALUES(@request,@http,@service,@body,@hash,@bytes,@finish,@prompt_tokens,
         @completion_tokens,@total_tokens,@provenance,@parse_started,@parse_finished,
-        @parse_ms,@parse_status,@repair,@json,@error,@detail);
+        @parse_ms,@parse_status,@repair,@json,@reasoning,@reasoning_hash,
+        @reasoning_bytes,@error,@detail);
     `);
   const modelResponseId = Number(insertedResponse.recordset[0]!.model_response_id);
   for (const validation of validationsFor(attempt)) {

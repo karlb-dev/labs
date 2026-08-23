@@ -76,6 +76,7 @@ export interface GatewayAttemptEvidence {
   completionTokens: number | null;
   totalTokens: number | null;
   content: string | null;
+  reasoningContent: string | null;
   repairKind: RepairKind | "rejected";
   parsedValue: AgentResponse | null;
   parseMs: number | null;
@@ -110,7 +111,14 @@ export interface GatewayCallResult {
 
 interface OpenAiEnvelope {
   id?: string;
-  choices?: Array<{ finish_reason?: string | null; message?: { content?: string | null } }>;
+  choices?: Array<{
+    finish_reason?: string | null;
+    message?: {
+      content?: string | null;
+      reasoning?: string | null;
+      reasoning_content?: string | null;
+    };
+  }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 }
 
@@ -283,6 +291,7 @@ async function executeAttempt(input: {
   let completionTokens: number | null = null;
   let totalTokens: number | null = null;
   let content: string | null = null;
+  let reasoningContent: string | null = null;
   let repairKind: RepairKind | "rejected" = "rejected";
   let parsedValue: AgentResponse | null = null;
   let parseMs: number | null = null;
@@ -335,6 +344,9 @@ async function executeAttempt(input: {
           throw new AgentResponseParseError("invalid_json", "OpenAI-compatible response envelope is not JSON", { cause: error });
         }
         const choice = envelope.choices?.[0];
+        reasoningContent = typeof choice?.message?.reasoning_content === "string"
+          ? choice.message.reasoning_content
+          : typeof choice?.message?.reasoning === "string" ? choice.message.reasoning : null;
         if (choice?.message === undefined || typeof choice.message.content !== "string") {
           errorClass = "response_envelope_invalid";
           errorDetail = "Response is missing choices[0].message.content";
@@ -398,6 +410,7 @@ async function executeAttempt(input: {
     completionTokens,
     totalTokens,
     content,
+    reasoningContent,
     repairKind,
     parsedValue,
     parseMs,
@@ -436,12 +449,14 @@ async function readLimitedBody(
 }
 
 function attemptMetadata(attempt: GatewayAttemptEvidence): Record<string, unknown> {
-  const { requestBody: _requestBody, responseBody: _responseBody, parsedValue, content, ...metadata } = attempt;
+  const { requestBody: _requestBody, responseBody: _responseBody, parsedValue, content, reasoningContent, ...metadata } = attempt;
   return {
     schemaVersion: 1,
     ...metadata,
     parsedValueSha256: parsedValue === null ? null : hashJson(parsedValue),
     contentSha256: content === null ? null : sha256(content),
+    reasoningSha256: reasoningContent === null ? null : sha256(reasoningContent),
+    reasoningBytes: reasoningContent === null ? null : Buffer.byteLength(reasoningContent),
   };
 }
 

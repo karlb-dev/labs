@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 07:35 UTC
+Last manually updated: 2026-08-23 07:47 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -52,11 +52,14 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Thirty hash-locked control migrations and seven versioned
+- Thirty hash-locked control migrations are applied and a thirty-first
+  inference/retrieval-provenance migration is authored but intentionally held
+  until standard capture completes; seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 20 test files and 68 unit tests, including the new
-  four-case resumable schedule timing gate. The capture-specific
+  `npm run check` passes 22 test files and 73 unit tests, including resumable
+  schedule timing, pinned chat-service construction, chat Prometheus deltas,
+  and separate reasoning-channel retention. The capture-specific
   XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -161,6 +164,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   Queue migrations 029/030 add RCSI-safe locking reads and normalize pooled
   session isolation; three fail-closed attempts and their evidence impact are
   append-only in `EXPERIMENT_LOG.md`.
+- The target chat lifecycle and port gate are implemented but have not loaded
+  any chat weights. They pin the dynamic vLLM container identity and retain
+  raw transport, service logs, complete requested/effective decode settings,
+  model metrics, GPU state, sequential/batched canaries, finish/repair/token
+  fields, and hash-chained telemetry. Authored migration 031 will preserve a
+  server-split reasoning channel independently from final content and raw
+  envelopes, attribute service samples to instance/phase, and store
+  evaluator-only held-out retrieval rows; it remains unapplied until capture
+  is no longer mutating SQL.
 - The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
   group-isolated templates and 600 deterministic variants across all ten
   incident families and all five regimes. Exact role allocation is 60 dev, 60
@@ -274,8 +286,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 <!-- lab3-watchdog-status:end -->
 
 - Long-running scientific process: `standard-v1` injector retained in Codex
-  exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; early
-  check was 5/5 terminal with zero failed/unclean rows and zero XE loss counters
+  exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; latest
+  check was 60/60 terminal with zero failed/unclean rows and zero XE loss counters
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `standard-capture` whole-system sampler retained in
