@@ -47,9 +47,14 @@ Append-only operator record.
 - 2026-08-23T00:22:02.548Z — MP-4 robustness generation completed for qwen-3.8-27b; selected=500; completed=500; failed=0.
 
 - 2026-08-23T00:38:31.712Z — MP-4 likelihood checkpoint for qwen-3.8-27b: decoded-character assistant-span slicing replaced unsafe separately-tokenized prefix slicing after 267 junction-merge failures were observed. The retained selective rerun recovered every prompted score (8,001/8,001 det/nat target and robustness rows). Unprompted echo scoring is explicitly unavailable for 17 one-token outputs because vLLM returns a null first-token log probability; those rows remain missing rather than receiving an invented likelihood.
+- 2026-08-23T04:13:00Z — MP-4 Muse cross-likelihood runtime correction: the first Muse scoring pass preserved valid unprompted channels but reported prompted-span failures where vLLM's per-token `decoded_token` rendered Unicode byte-fallback pieces as U+FFFD (and sometimes absorbed the token-internal leading space). This is a token-inspection artifact, not altered model text or an HTTP failure. `sliceAssistantLogprobs` now retains exact ASCII matching and permits replacement runs only at governed non-ASCII code points, with an optional immediately preceding space only inside that fallback alternative. Tests prove exact junction behavior, recovery of the observed `⚠️` form, and refusal of an unrelated ASCII mismatch. Five original failures were replayed against the unchanged resident Muse server and all five recovered with the `unicode-byte-fallback` alignment. The already-running old-code pass was not interrupted; its partial channels remain append-only and an idempotent selective rerun will fill only SQL-missing cells before residency rotation.
 
 - 2026-08-23T01:03:40.803Z — MP-3 port gate STOP_PORT for muse-glimmer-30b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-muse-glimmer-30b.json.
 
 - 2026-08-23T01:04:23.277Z — MP-3 Muse initial port gate STOP_PORT: exact sequential/batched greedy outputs differed. Moderate runtime adjustment: enable the pinned vLLM image batch-invariant mode and rerun the unchanged governed gate; first artifact retained as environment/port-gate-muse-glimmer-30b-attempt1.json.
 
 - 2026-08-23T01:10:10.870Z — MP-3 port gate PASS for muse-glimmer-30b; artifact=runs/modelprint-full-20260822T230728Z/environment/port-gate-muse-glimmer-30b.json.
+
+- 2026-08-23T03:59:58.533Z — MP-4 generation invocation completed for muse-glimmer-30b; selected=10000; completed=10000; failed=0.
+
+- 2026-08-23T04:05:08.802Z — MP-4 robustness generation completed for muse-glimmer-30b; selected=501; completed=501; failed=0.

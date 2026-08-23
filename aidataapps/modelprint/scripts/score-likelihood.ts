@@ -55,7 +55,8 @@ async function score(job: ScoreJob, prompted: boolean) {
     const values = span.values;
     const ll = values.reduce((a, b) => a + b, 0); return { prompted, ll, tokens: values.length, chars: job.final_text.length,
       bitsPerChar: -ll / Math.LN2 / Math.max(job.final_text.length, 1), detail: { prefixTokens: span.firstTokenIndex, fullTokens: tokens.length,
-        assistantCharStart: span.assistantCharStart, assistantCharEnd: span.assistantCharEnd, slicing: "decoded-character-overlap-v1" } };
+        assistantCharStart: span.assistantCharStart, assistantCharEnd: span.assistantCharEnd,
+        slicing: span.alignment === "exact" ? "decoded-character-overlap-v1" : "decoded-character-overlap-v2-byte-fallback" } };
   }
   const response = await post<CompletionScoreResponse>("/v1/completions", { model: scorerKey, prompt: job.final_text, temperature: 0, top_p: 1, top_k: 0,
     min_p: 0, repetition_penalty: 1, presence_penalty: 0, frequency_penalty: 0, seed: 0, max_tokens: 0, echo: true, logprobs: 1, stop: [] });
