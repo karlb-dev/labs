@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 12:43 UTC
+Last manually updated: 2026-08-23 12:44 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -91,9 +91,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   and four calibration-only models hash-locked with test authorization
   (receipt `61b5ccffadacffc05e6a97f0aced1a0db3a7acae25013e6f3c88c4252e5dcb16`).
   The guard confirmed zero Muse test predictions at fit time.
-- Next scientific command opens all 480 frozen test episodes together for
-  `A-direct` and `A-tools`, plus the 410 preregistered retrieval-covered cells
-  for `A-rag`: 1,370 protected inference cells total, using 16 workers.
+- Muse protected primary replay is active in retained exec session `45836`,
+  invocation `78f6d391-e6d9-48e6-91c1-11e5d08c072d`. It opened all 480 frozen
+  test episodes together for `A-direct` and `A-tools`, plus the 410
+  preregistered retrieval-covered cells for `A-rag`: 1,370 cells total. All 16
+  worker journals started and vLLM showed 16 running / 0 waiting requests,
+  proving the post-calibration queue fix in the protected run. Do not launch a
+  duplicate while PID/session and active leases exist. After PASS: derive
+  `A-router`, score the four test arms, then run the three frozen Tier 1
+  inference controls before ending Muse residency.
 
 ```bash
 cd /content/worktrees/aidataapps-logwarden/aidataapps/logwarden
