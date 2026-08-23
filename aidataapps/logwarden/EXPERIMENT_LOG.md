@@ -1241,3 +1241,71 @@ place and receive a later disposition.
   post-inference persistence overhead for controls and later profiles; model
   prompts, responses, decisions, inference telemetry, and scientific metrics
   are unchanged.
+
+- 2026-08-23T17:19:32.737Z — Gemma protected-primary inference retained
+  1,370/1,370 terminal cells, 1,318 decisions, 52 `decision_policy` /
+  `policy_rejected` failures, and 1,938 model requests. All 1,938 requests
+  finished `stop`; HTTP/model errors and length finishes were zero. The strict
+  final metric gate nevertheless retained `FAIL` receipt
+  `368496f8a89c8b9f5e43af2a83b6c33e904c25d62754eae0f0961cf29d059c02`
+  because `vllm:num_preemptions_total` advanced once. Sampler and service-log
+  evidence place the event just after 16:41:16Z, when 16 requests drove KV
+  usage to 96.5%; the counter first appeared in the 16:41:21Z sample and did
+  not advance again. The preemption is retained as real performance evidence:
+  it may increase affected-request latency/compute and makes Gemma's aggregate
+  throughput a resource-pressure result, but vLLM recompleted the request and
+  it does not create a missing or retried scientific cell.
+
+- 2026-08-23T17:22:45.331Z — A governed no-op replay resume claimed zero work
+  and issued zero new model requests, then reverified the immutable Gemma
+  protected rows: 1,370 cells, 1,318 decisions, 52 failures, and 1,938 retained
+  model requests. Receipt
+  `4b25775a105fa9765d39d27352f88dddfcd249f647d201d60f8584989fa81583`
+  is the persistence/coverage PASS and the prior strict metric FAIL remains
+  authoritative for the original inference window. No output was regenerated
+  or replaced. Quality scoring may proceed; performance reporting must include
+  the one-preemption caveat and use the original 16:30:12Z–16:51:06Z telemetry
+  window rather than the no-op resume's zero delta.
+
+- 2026-08-23T17:23:43.746Z — Derived 480 predictions for A-router over test_id,test_variant_holdout,test_unknown and gemma-4-31b; receipt 4e58860875c4235f7ce1f73fc185bf95c9615eae266eb3af282c16d5bc238a5e.
+
+- 2026-08-23T17:25:57.913Z — Scored 1850 primary test_id,test_variant_holdout,test_unknown predictions for gemma-4-31b across A-direct,A-rag,A-tools,A-router; receipt 91c0436a027ac454601addbccce5ef85d0d3956b7830576f6cd241e4adf129e5.
+
+- 2026-08-23T17:29:40.890Z — gemma-4-31b control error-number-mask-v1 retained 96 cells across test_id,test_unknown and A-tools with 96 decisions, 0 failures, and 139 model requests; receipt 5c71fca49c2adbce13e461d9e97993a39914dabdd607fd36bf14782661c7fd40.
+
+- 2026-08-23T17:29:55.100Z — Scored 96 control error-number-mask-v1 test_id,test_unknown predictions for gemma-4-31b across A-tools; receipt 45117730861182af6649f037869b3fc9bb64138760589c99a2ee0868d8130b4a.
+
+- 2026-08-23T17:30:06.655Z — Compared 96 gemma-4-31b/error-number-mask-v1 predictions with their frozen primary sources: raw=0/96, decision=0.117021/94, tools=0.802083/96, invariance=NOT_APPLICABLE; receipt a0d34731d2c3432d2843a1ef0f5a1182c5725ca371c7c1fff92e4c2d83d5f8fa.
+
+- 2026-08-23T17:31:51.886Z — Gemma shuffled-runbook inference completed
+  all 96 scientific cells (94 decisions, two policy rejections, 131/131 model
+  requests ending `stop`, zero error/length/preemption deltas), but three idle
+  queue workers were selected as SQL Server deadlock victims during their
+  terminal availability probes. Strict orchestration receipt
+  `f37125338620584f1f531c3bf0fcb65b150371e11fb69a7b0319dcce9559eac7`
+  remains `FAIL`. Workers 3, 6, and 12 had only 3, 15, and 4 journal records,
+  respectively, ending in claim-retry points; none claimed a cell and all
+  journals had zero open spans. The other 13 workers ended normally. Explicit
+  recovery ingested all 2,786 records with zero duplicates under receipt
+  `f11cd77611350794b6e83be14cb923f97b64e7eec2d23f5258760f7f57fdba4d`.
+  A no-op coverage resume then issued zero new model requests and verified all
+  immutable rows under receipt
+  `1c58b319c144b2954c55b350f23867bc8c8aecf7f7be0bd1fbe413876c3bbd14`.
+  Impact is orchestration-only; no scientific output was regenerated.
+
+- 2026-08-23T17:35:16.412Z — gemma-4-31b control shuffled-runbooks-v1 retained 96 cells across test_id,test_unknown and A-tools with 94 decisions, 2 failures, and 131 model requests; receipt 1c58b319c144b2954c55b350f23867bc8c8aecf7f7be0bd1fbe413876c3bbd14.
+
+- 2026-08-23T17:35:42.501Z — Scored 96 control shuffled-runbooks-v1 test_id,test_unknown predictions for gemma-4-31b across A-tools; receipt 83292c6b0315973ac4dfde9b348082bc0f396ff52d75b84e8e8fd28358e2244a.
+
+- 2026-08-23T17:35:51.706Z — Compared 96 gemma-4-31b/shuffled-runbooks-v1 predictions with their frozen primary sources: raw=0/96, decision=0.489362/94, tools=0.989583/96, invariance=NOT_APPLICABLE; receipt 77fe9f24e48fe3b1b3fc6487c4caba5b6ac6fb7f5863226bbe1ad46c3410b251.
+
+- 2026-08-23T17:37:53Z — Added bounded SQL error-1205 retry only around
+  transaction-bounded queue claims and read-only selected-work availability
+  probes. SQL Server rolls back the deadlock-victim transaction before error
+  1205 is returned, making these exact retries safe; model inference, tools,
+  decisions, and external actions are explicitly outside the wrapper. The
+  policy allows at most eight deterministic 25–500 ms exponential waits plus
+  worker staggering, records every retry in the worker journal, and reports
+  per-worker retry/wait totals plus the policy in replay receipts. Build and 42
+  test files / 148 tests passed. Impact: later invocations tolerate transient
+  queue lock cycles without retrying or changing any scientific cell.

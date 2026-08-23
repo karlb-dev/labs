@@ -10,6 +10,7 @@ import { canonicalJson, hashJson, sha256 } from "../src/hash.js";
 import { resolveEmbeddingProfile, resolveModelProfile } from "../src/models.js";
 import { claimWithAvailabilityRetry, defaultClaimRetryPolicy } from "../src/queue-claim.js";
 import { connect } from "../src/repository.js";
+import { defaultSqlDeadlockRetryPolicy, retrySqlDeadlock } from "../src/sql-deadlock-retry.js";
 import {
   buildReplayCells,
   expectedReplayEpisodeCount,
@@ -62,6 +63,8 @@ interface WorkerExecution {
   claimRetryCount: number;
   claimAvailabilityCheckCount: number;
   claimRetryWaitMs: number;
+  sqlDeadlockRetryCount: number;
+  sqlDeadlockRetryWaitMs: number;
   links: AgentSpanLink[];
 }
 interface FrozenControlRow { episodeId: string; splitRole: ReplayRole; family: string; regime: string }
@@ -160,7 +163,11 @@ try {
     controlId,
     controlPolicySha256: controlId === null ? null : controlPolicySha256,
     workerCount,
-    workerClaimPolicy: { ...defaultClaimRetryPolicy, replayPoolMax },
+    workerClaimPolicy: {
+      ...defaultClaimRetryPolicy,
+      replayPoolMax,
+      sqlDeadlock: defaultSqlDeadlockRetryPolicy,
+    },
     runKind,
     decodeConfigId,
     decodeConfigSha256: hashJson(decodeConfig),
@@ -570,19 +577,23 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
   let claimRetryCount = 0;
   let claimAvailabilityCheckCount = 0;
   let claimRetryWaitMs = 0;
+  let sqlDeadlockRetryCount = 0;
+  let sqlDeadlockRetryWaitMs = 0;
   await created.journal.record("point", "replay.worker.started", {}, { invocationId, workerId, profileKey, roles, arms, controlId, runKind });
   while (true) {
     let leaseToken = randomUUID();
     const claimResult = await claimWithAvailabilityRetry({
       workerIndex: index,
-      claim: async () => {
+      claim: () => retrySqlDeadlock(async () => {
         leaseToken = randomUUID();
         const claim = await control.request().input("worker_id", sql.VarChar(120), workerId)
           .input("lease_token", sql.UniqueIdentifier, leaseToken).input("lease_seconds", sql.Int, 300)
           .execute<ClaimedWork>("ops.usp_claim_work_item");
         return claim.recordset[0];
-      },
-      countClaimableSelected: () => selectedClaimableWorkCount(selectedJobIdsJson),
+      }, deadlockRetryOptions("queue_claim")),
+      countClaimableSelected: () => retrySqlDeadlock(
+        () => selectedClaimableWorkCount(selectedJobIdsJson), deadlockRetryOptions("availability_probe"),
+      ),
       onRetry: async (observation) => {
         await created.journal.record("point", "replay.worker.claim.retry", {}, {
           invocationId, workerId, controlId, ...observation,
@@ -656,12 +667,28 @@ async function runWorker(index: number, campaign: CampaignRow, jobs: JobIdentity
   await created.journal.record("point", "replay.worker.finished", {}, {
     invocationId, workerId, controlId, claimed, decisions, failures,
     emptyClaimCount, claimRetryCount, claimAvailabilityCheckCount, claimRetryWaitMs,
+    sqlDeadlockRetryCount, sqlDeadlockRetryWaitMs,
   }, { status: "success" });
   await created.journal.flush();
   return {
     workerId, journalPath: created.path, processEpochId: created.processEpochId, claimed, decisions, failures,
-    emptyClaimCount, claimRetryCount, claimAvailabilityCheckCount, claimRetryWaitMs, links,
+    emptyClaimCount, claimRetryCount, claimAvailabilityCheckCount, claimRetryWaitMs,
+    sqlDeadlockRetryCount, sqlDeadlockRetryWaitMs, links,
   };
+
+  function deadlockRetryOptions(operation: string) {
+    return {
+      operation,
+      workerIndex: index,
+      onRetry: async (observation: { retryOrdinal: number; delayMs: number; errorNumber: 1205 }) => {
+        sqlDeadlockRetryCount += 1;
+        sqlDeadlockRetryWaitMs += observation.delayMs;
+        await created.journal.record("point", "replay.worker.sql_deadlock.retry", {}, {
+          invocationId, workerId, controlId, operation, ...observation,
+        }, { status: "retry" });
+      },
+    };
+  }
 }
 
 async function selectedClaimableWorkCount(selectedJobIdsJson: string): Promise<number> {
