@@ -1455,3 +1455,9 @@ place and receive a later disposition.
   with zero new model requests and zero delta in every vLLM counter. Impact:
   orchestration and throughput reporting only; no packet, prompt, decode,
   model output, prediction, or quality row was retried or changed.
+
+- 2026-08-23T19:42:55.611Z — qwen-3.8-27b primary replay retained 1370 cells across test_id,test_variant_holdout,test_unknown and A-direct,A-rag,A-tools with 1292 decisions, 78 failures, and 2370 model requests; receipt 420b2c74a56028625588b32540dded381265ec4f6fae4d3c76f0eb55f0903f8b.
+
+- 2026-08-23T19:43:27.390Z — Derived 480 predictions for A-router over test_id,test_variant_holdout,test_unknown and qwen-3.8-27b; receipt 104190270f4761ede775eda69b47a3f091c73aa0058074323c46bc40f5a64e5a.
+
+- 2026-08-23T19:45:35.512Z — Scored 1850 primary test_id,test_variant_holdout,test_unknown predictions for qwen-3.8-27b across A-direct,A-rag,A-tools,A-router; receipt ac1a72a6ff621afce68f01ecc901ef5f3006b967c98df5c4b3240810c66b470c.

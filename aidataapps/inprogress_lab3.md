@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 18:45 UTC
+Last manually updated: 2026-08-23 19:45 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -84,8 +84,18 @@ and its effect on the evidence ceiling must be recorded append-only in
   guard intact. Receipts: `5fd6edf4bb7a8c39ca467f192d9a704c75efa15a5f077f52bbbbeceb27d9545e`,
   `deed862fd9bfd107e2644cb5cd8164cf91d5cebb303fbb7286da9ea8a1874295`,
   and `19ec484c4a714501826ff678a1564877e3c051db585bd6a1e12155c1cfb45d61`.
-  Next: run Qwen's 1,370 protected primary cells, then derive/score and execute
-  the three inference controls before closing the profile boundary.
+  Qwen protected primary replay has also passed: all 1,370 cells are terminal
+  with 1,292 decisions, 78 retained end-to-end failures, and 2,370/2,370
+  successful stop-finished requests. vLLM recorded zero length, error, or
+  preemption outcomes across 4,240,923 prompt and 289,557 generation tokens.
+  Receipt:
+  `420b2c74a56028625588b32540dded381265ec4f6fae4d3c76f0eb55f0903f8b`.
+  A-router derived all 480 protected rows and all 1,850 primary four-arm rows
+  scored under receipts
+  `104190270f4761ede775eda69b47a3f091c73aa0058074323c46bc40f5a64e5a`
+  and `ac1a72a6ff621afce68f01ecc901ef5f3006b967c98df5c4b3240810c66b470c`.
+  Next: execute, score, and compare error-number-mask, shuffled-runbook, and
+  sequential-batching controls, then close and pin the Qwen profile boundary.
 - Muse whole-residency sampling is closed. Epoch
   `26eda471-0ceb-476f-be48-6304e7ed6c4b` contributed 6,276/6,276 records; the
   global reconciliation then passed across 193 journals, 119,595 records,
