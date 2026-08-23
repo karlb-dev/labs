@@ -17,13 +17,84 @@ const role = argument("--role") ?? "dev";
 const scheduleRoleArgument = argument("--schedule-role") ?? role;
 const scheduleRole = scheduleRoleArgument === "all" ? null : scheduleRoleArgument;
 const replaceBuildingManifest = process.argv.includes("--replace-building-manifest");
+const replaceBuildingCatalog = process.argv.includes("--replace-building-catalog");
+const developmentOnly = process.argv.includes("--development-only");
 const repeats = Number(argument("--repeat-count") ?? "1");
+const seed = Number(argument("--seed") ?? "0");
 const rateProfile = argument("--rate-profile") ?? "smoke-fast";
+if (!Number.isSafeInteger(seed)) throw new Error("--seed must be a safe integer");
 const catalogBytes = await readFile(catalogPath, "utf8");
 const catalog = scenarioCatalogSchema.parse(JSON.parse(catalogBytes));
 validateScenarioCatalog(catalog);
 const pool = await connect(config.databases.lab, config.databases.controlName);
+let replacedCatalog: Record<string, unknown> | null = null;
 try {
+  if (replaceBuildingCatalog) {
+    const removed = await pool.request()
+      .input("run", sql.VarChar(120), run.runId)
+      .input("catalog", sql.VarChar(80), catalog.catalogId)
+      .query<Record<string, number>>(`
+        DECLARE @campaign_id bigint;
+        SELECT @campaign_id=campaign.campaign_id
+        FROM control.campaigns AS campaign
+        INNER JOIN control.runs AS run ON run.campaign_id=campaign.campaign_id
+        WHERE run.run_id=@run AND campaign.status='building';
+        IF @campaign_id IS NULL THROW 51610, 'Catalog replacement requires the run building campaign', 1;
+        IF EXISTS (SELECT 1 FROM control.campaign_freezes WHERE campaign_id=@campaign_id)
+          THROW 51611, 'Catalog replacement is forbidden after any campaign freeze', 1;
+        IF EXISTS
+        (
+          SELECT 1 FROM workload.injection_executions AS execution
+          INNER JOIN workload.schedule_items AS item ON item.schedule_item_id=execution.schedule_item_id
+          INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=item.scenario_variant_id
+          INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+          WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog
+        ) THROW 51612, 'Catalog replacement is forbidden after an injection execution exists', 1;
+        IF EXISTS
+        (
+          SELECT 1 FROM ingest.incident_packets AS packet
+          INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=packet.scenario_variant_id
+          INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+          WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog
+        ) THROW 51613, 'Catalog replacement is forbidden after a packet exists', 1;
+        DECLARE @schedule_count int,@scenario_count int,@variant_count int,@evidence_count int;
+        SELECT @schedule_count=COUNT(DISTINCT schedule.schedule_id)
+        FROM workload.schedules AS schedule
+        INNER JOIN workload.schedule_items AS item ON item.schedule_id=schedule.schedule_id
+        INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=item.scenario_variant_id
+        INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+        WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        SELECT @scenario_count=COUNT(*) FROM workload.scenario_definitions
+          WHERE JSON_VALUE(config_json,'$.catalogId')=@catalog;
+        SELECT @variant_count=COUNT(*) FROM workload.scenario_variants AS variant
+          INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+          WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        SELECT @evidence_count=COUNT(*) FROM workload.expected_evidence AS evidence
+          INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=evidence.scenario_variant_id
+          INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+          WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        BEGIN TRANSACTION;
+        DELETE item FROM workload.schedule_items AS item
+        INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=item.scenario_variant_id
+        INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+        WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        DELETE schedule FROM workload.schedules AS schedule
+        WHERE NOT EXISTS (SELECT 1 FROM workload.schedule_items AS item WHERE item.schedule_id=schedule.schedule_id)
+          AND JSON_VALUE(schedule.config_json,'$.catalogId')=@catalog;
+        DELETE evidence FROM workload.expected_evidence AS evidence
+        INNER JOIN workload.scenario_variants AS variant ON variant.scenario_variant_id=evidence.scenario_variant_id
+        INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+        WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        DELETE variant FROM workload.scenario_variants AS variant
+        INNER JOIN workload.scenario_definitions AS scenario ON scenario.scenario_id=variant.scenario_id
+        WHERE JSON_VALUE(scenario.config_json,'$.catalogId')=@catalog;
+        DELETE FROM workload.scenario_definitions WHERE JSON_VALUE(config_json,'$.catalogId')=@catalog;
+        COMMIT;
+        SELECT @schedule_count AS removed_schedules,@scenario_count AS removed_scenarios,
+          @variant_count AS removed_variants,@evidence_count AS removed_evidence_rules;
+      `);
+    replacedCatalog = removed.recordset[0] ?? null;
+  }
   for (const scenario of catalog.scenarios) {
     const identity = scenarioIdentity(catalog.catalogId, scenario);
     const existing = await pool.request()
@@ -134,6 +205,7 @@ try {
     .input("run", sql.VarChar(120), run.runId)
     .input("manifest", sql.Char(64), manifestHash)
     .input("replace", sql.Bit, replaceBuildingManifest)
+    .input("development", sql.Bit, developmentOnly)
     .query<{ campaign_id: number; prior_manifest_hash: string | null }>(`
       DECLARE @campaign_id bigint,@prior char(64);
       SELECT @campaign_id=campaign.campaign_id,@prior=campaign.scenario_manifest_hash
@@ -141,11 +213,11 @@ try {
       INNER JOIN control.runs AS run ON run.campaign_id=campaign.campaign_id
       WHERE run.run_id=@run AND campaign.status='building';
       IF @campaign_id IS NULL THROW 51600, 'No mutable campaign belongs to this run', 1;
-      IF @prior IS NOT NULL AND @prior<>@manifest AND @replace=0
+      IF @development=0 AND @prior IS NOT NULL AND @prior<>@manifest AND @replace=0
         THROW 51601, 'Building campaign already has a different scenario manifest; explicit replacement is required', 1;
-      IF @prior<>@manifest AND EXISTS (SELECT 1 FROM control.campaign_freezes WHERE campaign_id=@campaign_id)
+      IF @development=0 AND @prior<>@manifest AND EXISTS (SELECT 1 FROM control.campaign_freezes WHERE campaign_id=@campaign_id)
         THROW 51602, 'A frozen campaign manifest cannot be replaced', 1;
-      UPDATE control.campaigns SET scenario_manifest_hash=@manifest WHERE campaign_id=@campaign_id;
+      IF @development=0 UPDATE control.campaigns SET scenario_manifest_hash=@manifest WHERE campaign_id=@campaign_id;
       SELECT @campaign_id AS campaign_id,@prior AS prior_manifest_hash;
     `);
   const campaignId = campaign.recordset[0]?.campaign_id;
@@ -153,7 +225,7 @@ try {
   const schedule = await pool.request()
     .input("campaign_id", sql.BigInt, campaignId)
     .input("schedule_name", sql.VarChar(80), scheduleName)
-    .input("seed", sql.BigInt, 0)
+    .input("seed", sql.BigInt, seed)
     .input("scenario_role_filter", sql.VarChar(40), scheduleRole)
     .input("catalog_id", sql.VarChar(80), catalog.catalogId)
     .input("repeat_count", sql.Int, repeats)
@@ -184,6 +256,9 @@ try {
     manifestHash,
     priorManifestHash: campaign.recordset[0]?.prior_manifest_hash ?? null,
     replacedBuildingManifest: replaceBuildingManifest,
+    replacedCatalog,
+    developmentOnly,
+    attachedManifestToCampaign: !developmentOnly,
     scenarioCount: catalog.scenarios.length,
     variantCount: manifest.reduce((total, scenario) => total + scenario.variants.length, 0),
     scheduleRole,
@@ -191,7 +266,8 @@ try {
     scheduleItems,
   };
   const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
-  await atomicWrite(`${runDirectory}/capture/scenario-build.json`, `${JSON.stringify(receipt, null, 2)}\n`);
+  const receiptName = developmentOnly ? `scenario-build-${safeName(scheduleName)}.json` : "scenario-build.json";
+  await atomicWrite(`${runDirectory}/capture/${receiptName}`, `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify(receipt, null, 2));
 } finally {
   await pool.close();
@@ -200,4 +276,9 @@ try {
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   return index < 0 ? undefined : process.argv[index + 1];
+}
+
+function safeName(value: string): string {
+  if (!/^[a-z0-9-]{1,80}$/i.test(value)) throw new Error(`Unsafe schedule name: ${value}`);
+  return value.toLowerCase();
 }

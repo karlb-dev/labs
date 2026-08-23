@@ -228,8 +228,25 @@ async function collectXe(pool: sql.ConnectionPool): Promise<Record<string, unkno
     SELECT c.file_name,c.file_offset,c.watermark_utc,
       (SELECT MAX(source_timestamp_utc) FROM ingest.raw_events WHERE source_id='xe-logwarden-capture') AS newest_event_at_utc,
       (SELECT TOP (1) rows_inserted FROM ingest.ingestion_batches WHERE source_id='xe-logwarden-capture' ORDER BY ingestion_batch_id DESC) AS batch_rows,
-      (SELECT COUNT(*) FROM ingest.raw_events WHERE source_id='xe-logwarden-capture' AND parse_status<>'parsed') AS parse_errors_total
-    FROM ingest.source_cursors AS c WHERE c.source_id='xe-logwarden-capture';
+      (SELECT COUNT(*) FROM ingest.raw_events WHERE source_id='xe-logwarden-capture' AND parse_status<>'parsed') AS parse_errors_total,
+      runtime.dropped_event_count AS dropped_events_total,
+      runtime.dropped_buffer_count AS dropped_buffers_total,
+      runtime.blocked_event_fire_time AS blocked_event_fire_time_ms,
+      target.failed_buffer_count AS failed_target_buffers_total,
+      target.bytes_written AS source_bytes,
+      target.target_xml.value('count((/EventFileTarget/File))','int') AS rollover_files
+    FROM ingest.source_cursors AS c
+    OUTER APPLY
+    (
+      SELECT TOP (1) dropped_event_count,dropped_buffer_count,blocked_event_fire_time,address
+      FROM sys.dm_xe_sessions WHERE name=N'logwarden_capture'
+    ) AS runtime
+    OUTER APPLY
+    (
+      SELECT TOP (1) failed_buffer_count,bytes_written,CONVERT(xml,target_data) AS target_xml
+      FROM sys.dm_xe_session_targets WHERE event_session_address=runtime.address AND target_name=N'event_file'
+    ) AS target
+    WHERE c.source_id='xe-logwarden-capture';
   `);
   return { status: "available", ...(result.recordset[0] ?? {}) };
 }
@@ -272,7 +289,11 @@ async function persistXe(pool: sql.ConnectionPool, at: Date, value: Record<strin
   const newest=value.newest_event_at_utc instanceof Date ? value.newest_event_at_utc : null;
   await pool.request().input("key",sql.Char(64),key).input("run",sql.VarChar(120),run.runId).input("at",sql.DateTime2(7),at).input("file",sql.NVarChar(500),value.file_name ?? null)
     .input("offset",sql.BigInt,value.file_offset ?? null).input("newest",sql.DateTime2(7),newest).input("lag",sql.BigInt,newest===null?null:at.getTime()-newest.getTime())
-    .input("batch",sql.Int,value.batch_rows ?? null).input("errors",sql.BigInt,value.parse_errors_total ?? 0).query(`INSERT telemetry.xe_pipeline_samples(sample_key,run_id,source_id,sampled_at_utc,cursor_file_name,cursor_file_offset,newest_event_at_utc,ingest_lag_ms,batch_rows,parse_errors_total) VALUES(@key,@run,'xe-logwarden-capture',@at,@file,@offset,@newest,@lag,@batch,@errors);`);
+    .input("batch",sql.Int,value.batch_rows ?? null).input("errors",sql.BigInt,value.parse_errors_total ?? 0)
+    .input("rollover",sql.Int,value.rollover_files ?? null).input("dropped",sql.BigInt,value.dropped_events_total ?? null)
+    .input("dropped_buffers",sql.BigInt,value.dropped_buffers_total ?? null).input("blocked_fire",sql.BigInt,value.blocked_event_fire_time_ms ?? null)
+    .input("failed_buffers",sql.BigInt,value.failed_target_buffers_total ?? null).input("bytes",sql.BigInt,value.source_bytes ?? null)
+    .query(`INSERT telemetry.xe_pipeline_samples(sample_key,run_id,source_id,sampled_at_utc,cursor_file_name,cursor_file_offset,newest_event_at_utc,ingest_lag_ms,batch_rows,parse_errors_total,rollover_files,dropped_events_total,source_bytes,dropped_buffers_total,blocked_event_fire_time_ms,failed_target_buffers_total) VALUES(@key,@run,'xe-logwarden-capture',@at,@file,@offset,@newest,@lag,@batch,@errors,@rollover,@dropped,@bytes,@dropped_buffers,@blocked_fire,@failed_buffers);`);
 }
 
 async function persistHost(pool: sql.ConnectionPool, at: Date, value: Record<string, unknown>): Promise<void> {

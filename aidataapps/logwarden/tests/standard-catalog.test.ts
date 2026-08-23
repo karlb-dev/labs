@@ -44,4 +44,14 @@ describe("standard scenario catalog", () => {
       expect(new Set(tools).size).toBe(tools.length);
     }
   });
+
+  it("anchors successful workload evidence to the RPC carrying the correlation marker", () => {
+    const successful = catalog.scenarios.filter((scenario) =>
+      scenario.injector === "query_pressure" || scenario.injector === "benign_noise");
+    expect(successful.length).toBeGreaterThan(0);
+    for (const scenario of successful)
+      expect(scenario.expectedEvidence).toEqual([
+        expect.objectContaining({ source: "xe", event: "rpc_completed" }),
+      ]);
+  });
 });

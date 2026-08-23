@@ -243,7 +243,7 @@ async function seedControlMetadata(pool: sql.ConnectionPool, run: RunManifest): 
 }
 
 async function seedIngestionSources(pool: sql.ConnectionPool): Promise<void> {
-  const xePath = `${LAB_ROOT}/db/server/002_xe_capture_contract.sql`;
+  const xePath = `${LAB_ROOT}/db/server/007_xe_capture_contract_v3.sql`;
   const errorlogParserPath = `${LAB_ROOT}/src/errorlog.ts`;
   const errorlogParserSha256 = sha256(await readFile(errorlogParserPath, "utf8"));
   const definitions = [
@@ -256,8 +256,13 @@ async function seedIngestionSources(pool: sql.ConnectionPool): Promise<void> {
         schemaVersion: 1,
         targetPattern: "/var/opt/mssql/log/logwarden_capture*.xel",
         cursor: "file_name+file_offset",
-        dispatchLatencySeconds: 2,
-        definitionPath: "db/server/002_xe_capture_contract.sql",
+        dispatchLatencySeconds: 1,
+        requestedEventRetentionMode: "NO_EVENT_LOSS",
+        actualEventRetentionMode: "ALLOW_SINGLE_EVENT_LOSS",
+        retentionAdaptation: "SQL Server error 25643: error_reported cannot be added to a NO_EVENT_LOSS session",
+        maxFileSizeMb: 16,
+        maxRolloverFiles: 20,
+        definitionPath: "db/server/007_xe_capture_contract_v3.sql",
       },
     },
     {

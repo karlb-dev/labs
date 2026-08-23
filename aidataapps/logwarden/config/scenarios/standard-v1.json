@@ -484,14 +484,14 @@
         {
           "source": "xe",
           "event": "xml_deadlock_report",
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         },
         {
           "source": "xe",
           "event": "error_reported",
           "errorNumber": 1205,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -951,7 +951,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -1875,7 +1875,7 @@
         {
           "source": "xe",
           "event": "blocked_process_report",
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -2348,7 +2348,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -3276,7 +3276,7 @@
           "source": "xe",
           "event": "error_reported",
           "errorNumber": 9002,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -3748,7 +3748,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -4165,15 +4165,15 @@
       "shouldAbstain": false,
       "expectedEvidence": [
         {
-          "source": "xe",
-          "event": "error_reported",
+          "source": "errorlog",
+          "event": "errorlog",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
         },
         {
-          "source": "errorlog",
-          "event": "errorlog",
+          "source": "xe",
+          "event": "error_reported",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
@@ -4186,16 +4186,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "authentication_failure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "authentication_failure",
         "severity": "high",
@@ -4400,15 +4391,15 @@
       "shouldAbstain": false,
       "expectedEvidence": [
         {
-          "source": "xe",
-          "event": "error_reported",
+          "source": "errorlog",
+          "event": "errorlog",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
         },
         {
-          "source": "errorlog",
-          "event": "errorlog",
+          "source": "xe",
+          "event": "error_reported",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
@@ -4421,16 +4412,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "authentication_failure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "authentication_failure",
         "severity": "high",
@@ -4635,17 +4617,17 @@
       "shouldAbstain": false,
       "expectedEvidence": [
         {
-          "source": "xe",
-          "event": "error_reported",
-          "errorNumber": 18456,
-          "minimumCount": 1,
-          "required": true
-        },
-        {
           "source": "errorlog",
           "event": "errorlog",
           "errorNumber": 18456,
-          "minimumCount": 1,
+          "minimumCount": 3,
+          "required": true
+        },
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 18456,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -4656,16 +4638,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "authentication_failure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "authentication_failure",
         "severity": "high",
@@ -4870,15 +4843,15 @@
       "shouldAbstain": false,
       "expectedEvidence": [
         {
-          "source": "xe",
-          "event": "error_reported",
+          "source": "errorlog",
+          "event": "errorlog",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
         },
         {
-          "source": "errorlog",
-          "event": "errorlog",
+          "source": "xe",
+          "event": "error_reported",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
@@ -4891,16 +4864,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "authentication_failure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "authentication_failure",
         "severity": "high",
@@ -5105,15 +5069,15 @@
       "shouldAbstain": false,
       "expectedEvidence": [
         {
-          "source": "xe",
-          "event": "error_reported",
+          "source": "errorlog",
+          "event": "errorlog",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
         },
         {
-          "source": "errorlog",
-          "event": "errorlog",
+          "source": "xe",
+          "event": "error_reported",
           "errorNumber": 18456,
           "minimumCount": 1,
           "required": true
@@ -5126,16 +5090,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "authentication_failure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "authentication_failure",
         "severity": "high",
@@ -5571,16 +5526,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "integrity_signal",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "integrity_signal",
         "severity": "high",
@@ -5807,16 +5753,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "integrity_signal",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "integrity_signal",
         "severity": "high",
@@ -6025,14 +5962,14 @@
           "source": "xe",
           "event": "error_reported",
           "errorNumber": 50000,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         },
         {
           "source": "errorlog",
           "event": "errorlog",
           "errorNumber": 50000,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -6043,16 +5980,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "integrity_signal",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "integrity_signal",
         "severity": "high",
@@ -6279,16 +6207,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "integrity_signal",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "integrity_signal",
         "severity": "high",
@@ -6495,7 +6414,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -6730,16 +6649,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "integrity_signal",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "integrity_signal",
         "severity": "high",
@@ -7408,7 +7318,7 @@
           "source": "xe",
           "event": "error_reported",
           "errorNumber": 3201,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -8306,7 +8216,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -8318,16 +8228,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "query_resource_pressure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "query_resource_pressure",
         "severity": "medium",
@@ -8534,7 +8435,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -8546,16 +8447,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "query_resource_pressure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "query_resource_pressure",
         "severity": "medium",
@@ -8762,8 +8654,8 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
-          "minimumCount": 1,
+          "event": "rpc_completed",
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -8774,16 +8666,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "query_resource_pressure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "query_resource_pressure",
         "severity": "high",
@@ -8990,7 +8873,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -9002,16 +8885,7 @@
         "beforeSeconds": 30,
         "afterSeconds": 90
       },
-      "snapshotPlan": [
-        {
-          "tool": "get_recent_incident_counts",
-          "atMsAfterStart": 0,
-          "arguments": {
-            "incidentClass": "query_resource_pressure",
-            "windowMinutes": 60
-          }
-        }
-      ],
+      "snapshotPlan": [],
       "groundTruth": {
         "incidentClass": "query_resource_pressure",
         "severity": "medium",
@@ -9218,7 +9092,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -10078,7 +9952,7 @@
           "source": "xe",
           "event": "error_reported",
           "errorNumber": 2627,
-          "minimumCount": 1,
+          "minimumCount": 3,
           "required": true
         }
       ],
@@ -11768,7 +11642,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -12186,7 +12060,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -12401,7 +12275,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -12616,7 +12490,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -12831,7 +12705,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }
@@ -13046,7 +12920,7 @@
       "expectedEvidence": [
         {
           "source": "xe",
-          "event": "sql_batch_completed",
+          "event": "rpc_completed",
           "minimumCount": 1,
           "required": true
         }

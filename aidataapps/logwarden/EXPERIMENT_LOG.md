@@ -348,3 +348,76 @@ place and receive a later disposition.
   paired statistics; they are not independent episode-level replicates. The
   gate records 60 groups of exactly ten, a nonnegative cross-group margin, and
   the intentional-overlap policy in the hashed schedule configuration.
+- 2026-08-23T06:11:01Z — Completed the real incident injector and context
+  snapshot implementation before any standard capture. The driver now creates
+  tokenized, bounded deadlocks, sustained blocking, transaction-log exhaustion
+  in a registered disposable database, failed authentication, controlled
+  logged errors, failed backup attempts, query pressure, and schema/data
+  errors. Each episode records driver observations, SQL session IDs, exact
+  context-snapshot argument/result hashes, verification state, and cleanup
+  postconditions. The deadlock tool returns only a bounded semantic summary
+  (victim, process/resource counts, client/login/isolation/wait metadata, and
+  statement/resource hashes), never raw deadlock XML. The four-family
+  deadlock/blocking/log-full/error gate passes 20 checks under the final
+  verifier with receipt
+  `fe4f1101303cc038fa522b7b9a5a17324f1011fb37fbf2e2a9441c3d646b835f`;
+  its 4/4 capture receipt remains
+  `97d75d34a7d1eecced3800ab023a90f27ae056ebe3d12a29bcda55f9d7aed974`.
+- 2026-08-23T06:11:01Z — The addendum requests `NO_EVENT_LOSS` for the
+  Extended Events session. SQL Server 2025 RTM-CU8 (`17.0.4075.5`) rejected
+  `error_reported` in a `NO_EVENT_LOSS` session with engine error 25643. The
+  failed DDL temporarily removed the development session but no scientific
+  episode ran in that interval. The capability-forced contract therefore uses
+  `ALLOW_SINGLE_EVENT_LOSS`, while retaining 1-second dispatch latency, 16 MiB
+  files, 20 rollover files, the severity/application predicates, and all
+  required events. Doctor and the injector gate fail closed unless runtime
+  dropped-event, dropped-buffer, and failed-target-buffer counters are zero;
+  the telemetry sampler additionally records blocked fire time, bytes written,
+  rollover count, and parse errors. The versioned contract hash is
+  `667bee8af19d8b2dba416cd31968215945b8f39ee1121e6294e37549bc2068c1`.
+  Current counters are all zero. Impact: the requested retention mode is not
+  supported for this event mix, so losslessness is monitored and gated rather
+  than guaranteed by the mode; any nonzero loss counter invalidates a run.
+- 2026-08-23T06:11:01Z — The first eight-family, three-signal development gate
+  captured and broadly verified 8/8 episodes, but its deep gate correctly
+  failed because `query_pressure` linked 12 nearby `sql_batch_completed`
+  records and only two carried its application token. Investigation showed
+  that `mssql` sends the actual parameterized workload through
+  `sp_executesql`, producing token-bearing `rpc_completed` events; the SQL
+  batches were connection initialization. The former ±2-second paired-event
+  attribution could therefore accept neighboring episodes. No standard
+  episode, packet, freeze, or model result existed. The verifier now deletes
+  and deterministically rebuilds episode links, forbids proximity-only
+  attribution, and requires the full 32-character token in successful RPC or
+  batch payloads. The v1 catalog is retained byte-for-byte at hash
+  `6c39c83b269ed1f39829e389b9a697945ca5b8ad712678996f42512f150851de`
+  as failed development evidence. Corrected v2 hash
+  `1d6b9352645a15b40f1caed66f12c5ab94f2eeef6201c6ca7b5a4b29d4cb9ebd`
+  then passed 8/8 capture verification
+  (`0ff81209e857278a56c9920c233281cb34d4b97815d60936efff9291b407e79a`)
+  and all 32 deep checks
+  (`8ace73c31d9b07e7dba3388900eca9b0da94d71740176313f76b260f901cabe3`).
+  Impact: this closes a false-attribution path and strengthens episode
+  independence; the failure and rerun are development-only and excluded from
+  scored data.
+- 2026-08-23T06:11:01Z — Before freeze, rebuilt the still-uninjected standard
+  catalog to make successful query/noise evidence use the actual token-bearing
+  RPC event. The governed allocation and 8,039,000 ms schedule duration are
+  unchanged. The superseding catalog, campaign manifest, schedule, build, and
+  structural-gate hashes are respectively
+  `5bc260b8c11c6ace97cb5f047dd0ad7f68958860cc24c3e0e43313ee9f05934f`,
+  `50d47873fda8ccd3367ddbd5f9f1356f1fd306f6406c33de122471a1c5e7872d`,
+  `3b7097f5b855d91741bc2d470e3074040464b96a9ae66e1df766639c6daea20b`,
+  `02f48fb93c18e26fa8b637774f839b7ea3c635988ab99151e1ff79372390437b`,
+  and `5535d9f8c29d58d6b1ec222b3ab0842c20de0c669d01367d3118ff07e1f17f82`.
+  The guarded replacement removed exactly one prior standard schedule, 60
+  templates, 600 variants, and 750 evidence rules only after proving zero
+  standard injections, packets, or freezes. Current regressions pass: doctor
+  `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe`,
+  SQL 8/8
+  `8310ac0f46310d125926e12aa05a44a5aa065c44de0292b9860f329fd6c8b215`,
+  tool security 9 positive/11 negative
+  `a7d1cd7484dd8dd1a510307c32e3e36274588dc7bb64294ef5b695b91a63a0ae`,
+  39 unit tests in 14 files, and telemetry reconciliation over 252 journal
+  records plus 66 raw artifacts
+  `8ffc7bd73a43d50d64113cabfe8fc9f0e70db105b0271acd308230cc6c89c505`.

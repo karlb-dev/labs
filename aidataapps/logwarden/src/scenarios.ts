@@ -13,7 +13,7 @@ const expectedEvidenceSchema = z.object({
 
 const splitRoleSchema = z.enum(["dev", "calibration", "test_id", "test_variant_holdout", "test_unknown", "test_live_parity", "test_storm"]);
 const snapshotPlanSchema = z.object({
-  tool: z.enum(["get_recent_incident_counts", "get_blocking_snapshot", "get_log_space", "get_active_transactions", "get_backup_history", "get_deadlock_graph"]),
+  tool: z.enum(["get_blocking_snapshot", "get_log_space", "get_active_transactions", "get_backup_history", "get_deadlock_graph"]),
   atMsAfterStart: z.number().int().min(0).max(120_000),
   arguments: z.record(z.string(), z.unknown()),
 }).strict();

@@ -103,8 +103,15 @@ try {
     SELECT s.name, s.startup_state, s.event_retention_mode_desc,
            s.max_dispatch_latency, s.track_causality,
            CONVERT(bit, CASE WHEN r.name IS NULL THEN 0 ELSE 1 END) AS running,
+           r.dropped_event_count,r.dropped_buffer_count,r.blocked_event_fire_time,
            (SELECT COUNT(*) FROM sys.server_event_session_events AS e WHERE e.event_session_id = s.event_session_id) AS event_count,
-           (SELECT COUNT(*) FROM sys.server_event_session_targets AS t WHERE t.event_session_id = s.event_session_id AND t.name = N'event_file') AS file_target_count
+           (SELECT COUNT(*) FROM sys.server_event_session_targets AS t WHERE t.event_session_id = s.event_session_id AND t.name = N'event_file') AS file_target_count,
+           (SELECT TRY_CONVERT(int,field.value) FROM sys.server_event_session_targets AS target
+             INNER JOIN sys.server_event_session_fields AS field ON field.event_session_id=target.event_session_id AND field.object_id=target.target_id
+             WHERE target.event_session_id=s.event_session_id AND target.name=N'event_file' AND field.name=N'max_file_size') AS max_file_size_mb,
+           (SELECT TRY_CONVERT(int,field.value) FROM sys.server_event_session_targets AS target
+             INNER JOIN sys.server_event_session_fields AS field ON field.event_session_id=target.event_session_id AND field.object_id=target.target_id
+             WHERE target.event_session_id=s.event_session_id AND target.name=N'event_file' AND field.name=N'max_rollover_files') AS max_rollover_files
     FROM sys.server_event_sessions AS s
     LEFT JOIN sys.dm_xe_sessions AS r ON r.name = s.name
     WHERE s.name = N'logwarden_capture';
@@ -112,7 +119,10 @@ try {
   const xeRow = xe.rows[0] ?? {};
   record("xe_session", true,
     xe.ok && xe.rows.length === 1 && xeRow.running === true && xeRow.startup_state === true &&
-      xeRow.max_dispatch_latency === 2000 && Number(xeRow.event_count) >= 5 && xeRow.file_target_count === 1,
+      xeRow.event_retention_mode_desc === "ALLOW_SINGLE_EVENT_LOSS" && xeRow.max_dispatch_latency === 1000 &&
+      Number(xeRow.event_count) >= 5 && xeRow.file_target_count === 1 &&
+      Number(xeRow.max_file_size_mb) === 16 && Number(xeRow.max_rollover_files) === 20 &&
+      Number(xeRow.dropped_event_count) === 0 && Number(xeRow.dropped_buffer_count) === 0,
     xe.rows, xe.error);
 
   const blockedThreshold = await requiredQuery("blocked_process_threshold_query", masterLab, `

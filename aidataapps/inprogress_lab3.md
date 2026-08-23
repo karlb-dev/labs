@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 05:31 UTC
+Last manually updated: 2026-08-23 06:11 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -33,8 +33,9 @@ and its effect on the evidence ceiling must be recorded append-only in
 ## Current state
 
 - Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery,
-  agent-observability, and least-privilege tool gates passed except the real
-  vLLM metrics canary.
+  agent-observability, least-privilege tools, real eight-family injectors, and
+  exact-correlation/context-snapshot gates passed. The real vLLM metrics
+  canary, embeddings/hybrid retrieval, freeze, and standard capture remain.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -47,12 +48,11 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twenty-three hash-locked control migrations and six versioned
+- Twenty-five hash-locked control migrations and seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
-  required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 13
-  test files and 35 unit tests. The capture-specific XE predicate excludes
-  agent/ingest traffic.
+  required probes; `npm run test:sql` passes 8/8 integration cases;
+  `npm run check` passes 14 test files and 39 unit tests. The capture-specific
+  XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
   receipt: `7271b30792a9e054b8f95cedb057df153dda4434517f348b8894cc11fe6bbd5`.
@@ -79,9 +79,9 @@ and its effect on the evidence ceiling must be recorded append-only in
   (`c30e80918b27592426a3657cb0e6c64fe97aa4a09057eda935deff97ba290218`),
   and p95 added synthetic instrumentation latency of 1.497 ms
   (`3888e28dbd673f71e75ef09bf34451e9b15c4d3196e8c0db2a4c66a2baa6efea`).
-  Global journal/SQL/raw/trace reconciliation covers 246 events and 66 raw
+  Global journal/SQL/raw/trace reconciliation covers 252 events and 66 raw
   artifacts with receipt
-  `ecf98a36f50811ec934d64c42670fdbd70f7f6bd735eccc09495ea2ccc2a0c70`;
+  `8ffc7bd73a43d50d64113cabfe8fc9f0e70db105b0271acd308230cc6c89c505`;
   the derived file rebuilt byte-for-byte.
 - ERRORLOG `sp_cycle_errorlog` recovery passed with a stable pre-roll key,
   one unique post-roll marker, and 599/599 duplicates on immediate replay;
@@ -94,7 +94,7 @@ and its effect on the evidence ceiling must be recorded append-only in
   positive and eleven negative least-privilege cases. Direct evaluator, snapshot,
   runbook-table, queue, ingestion, DDL, server-DMV, and `msdb` backup-table
   bypasses are denied. Receipt:
-  `c0bf815c9db432cc28555146f597eabd46eb935731826763f01e55b75cbfef57`;
+  `a7d1cd7484dd8dd1a510307c32e3e36274588dc7bb64294ef5b695b91a63a0ae`;
   registry hash:
   `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
   The registry remains marked building/unfrozen until standard runbooks close.
@@ -114,22 +114,41 @@ and its effect on the evidence ceiling must be recorded append-only in
   calibration, 300 test-ID, 120 test-variant-holdout, and 60 test-unknown;
   every family has at least 40 held-out ID/variant episodes and no group crosses
   a split. Catalog, manifest, schedule, and structural-gate hashes are
-  `b39b3a91107c094b0b7d461cca77deffed69659c07b1d84341dd9d17b477b58f`,
-  `492ca25b89b21d83a3ca10a56e36b769f6b03d1cd1c1737515ca6c741cb525d5`,
-  `617ec3731b116f5a2db7163bae2010ca8b523ee8ebb774c1c7c23b660e01ae76`,
-  and `dd7b8af23dc13f39b191f33cc3a5d53ba632b7f062c0b8c337a6f4836653e0d3`.
+  `5bc260b8c11c6ace97cb5f047dd0ad7f68958860cc24c3e0e43313ee9f05934f`,
+  `50d47873fda8ccd3367ddbd5f9f1356f1fd306f6406c33de122471a1c5e7872d`,
+  `3b7097f5b855d91741bc2d470e3074040464b96a9ae66e1df766639c6daea20b`,
+  and `5535d9f8c29d58d6b1ec222b3ab0842c20de0c669d01367d3118ff07e1f17f82`.
   Schedule `standard-v1` has 600 pending items and a final planned offset of
   8,039,000 ms; it remains building and has injected zero episodes.
+- All eight real incident injector families passed the three-signal
+  development feasibility gate: 8/8 capture verification receipt
+  `0ff81209e857278a56c9920c233281cb34d4b97815d60936efff9291b407e79a`
+  and 32-check deep receipt
+  `8ace73c31d9b07e7dba3388900eca9b0da94d71740176313f76b260f901cabe3`.
+  The gate proves exact raw-token attribution, three observed driver signals,
+  current deadlock semantic hashes, sustained blocking/active transactions,
+  >=90% log utilization with `ACTIVE_TRANSACTION`, snapshot hashes, cleanup,
+  and zero XE loss counters. A v1 development run was rejected when the deep
+  gate exposed proximity-only attribution of connection setup batches; the
+  corrected verifier requires intrinsic full-token RPC/batch evidence and
+  deterministically rebuilds links. No standard data existed, so result impact
+  is limited to stronger pre-capture independence.
+- SQL Server rejected the requested `NO_EVENT_LOSS` mode for this
+  `error_reported` event mix (error 25643). The documented capability-forced
+  contract uses `ALLOW_SINGLE_EVENT_LOSS`, 1-second dispatch, 16 MiB x 20
+  files, and fail-closed zero loss counters. Asset hash:
+  `667bee8af19d8b2dba416cd31968215945b8f39ee1121e6294e37549bc2068c1`.
 - Current doctor snapshot:
-  `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db`
+  `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe`
   (`PASS`); SQL integration receipt:
-  `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae`
+  `8310ac0f46310d125926e12aa05a44a5aa065c44de0292b9860f329fd6c8b215`
   (8/8).
-- Next incomplete milestone: prove the missing deadlock/blocking/log-full
-  injectors, exact episode correlation, and context snapshots, followed by
-  Qwen embeddings, hybrid retrieval, and the bounded agent loop. A
-  small embedding or qwen-smoke port may then load
-  for the remaining real `/metrics` gate; no long chat campaign may load yet.
+- Next incomplete milestone: merge and validate the user-supplied
+  `aidataapps-logwarden-mac`/Foundry/report commits, then build Qwen embeddings,
+  hybrid retrieval, and the bounded agent loop. A small embedding or
+  qwen-smoke service may then load for the remaining real `/metrics` gate; no
+  long chat campaign may load until that gate passes. Foundry model validation
+  is deliberately deferred until after the governed local models.
 
 ## Fresh-VM preflight
 
@@ -192,10 +211,10 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
   receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `55a221402864f730c49f72aaef5609de404dc3a2cd9f6f2c419950f9dbe9e7db` (`PASS`)
-- SQL integration receipt: `ee107c1615f7d8830e766826d223edb844f9339c8a4a8523cf338e43b861ddae` (8/8 passed)
-- Last durable Git checkpoint: `293795e` (governed runbook corpus); the standard
-  scenario catalog is being committed now
+- Capability snapshot: `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe` (`PASS`)
+- SQL integration receipt: `8310ac0f46310d125926e12aa05a44a5aa065c44de0292b9860f329fd6c8b215` (8/8 passed)
+- Last durable Git checkpoint: `2987b41` (governed scenario catalog); the real
+  injector/XE/correlation checkpoint is being committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -219,10 +238,10 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the supported incident catalog and missing injectors,
-followed by Qwen embeddings and the bounded tool gateway/agent loop; do not
-load a long-running model until
-the remaining real-service observability gate can run. If `docker info` fails,
+this checkpoint is the fetched Mac/Foundry/report branch merge, followed by
+Qwen embeddings and the bounded tool gateway/agent loop; do not load a
+long-running model until the remaining real-service observability gate can run.
+If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
 cell.
 

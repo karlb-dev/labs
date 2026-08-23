@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "logwarden-injector-gate-v1",
+  "scenarios": [
+    {
+      "id": "gate-deadlock",
+      "groupId": "gate-group-deadlock",
+      "family": "deadlock",
+      "regime": "K",
+      "description": "Development-only controlled two-session deadlock gate.",
+      "injector": "deadlock",
+      "expectedClass": "deadlock",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        { "source": "xe", "event": "xml_deadlock_report", "minimumCount": 1, "required": true },
+        { "source": "xe", "event": "error_reported", "errorNumber": 1205, "minimumCount": 1, "required": true }
+      ],
+      "maxRuntimeSeconds": 20,
+      "packetWindow": { "beforeSeconds": 30, "afterSeconds": 90 },
+      "snapshotPlan": [
+        { "tool": "get_deadlock_graph", "atMsAfterStart": 0, "arguments": { "maxRows": 5 } }
+      ]
+    },
+    {
+      "id": "gate-blocking",
+      "groupId": "gate-group-blocking",
+      "family": "blocking_waits",
+      "regime": "K",
+      "description": "Development-only sustained blocker, waiter, and in-flight DMV snapshot gate.",
+      "injector": "blocking",
+      "expectedClass": "blocking",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        { "source": "xe", "event": "blocked_process_report", "minimumCount": 1, "required": true }
+      ],
+      "maxRuntimeSeconds": 20,
+      "packetWindow": { "beforeSeconds": 30, "afterSeconds": 120 },
+      "snapshotPlan": [
+        { "tool": "get_blocking_snapshot", "atMsAfterStart": 2500, "arguments": { "databaseName": "LogWardenWorkload", "maxRows": 20 } },
+        { "tool": "get_active_transactions", "atMsAfterStart": 2600, "arguments": { "databaseName": "LogWardenWorkload", "maxRows": 20 } }
+      ]
+    },
+    {
+      "id": "gate-log-full",
+      "groupId": "gate-group-log-full",
+      "family": "transaction_log_space",
+      "regime": "K",
+      "description": "Development-only token-protected disposable database log-full and cleanup gate.",
+      "injector": "transaction_log_full",
+      "expectedClass": "transaction_log_full",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        { "source": "xe", "event": "error_reported", "errorNumber": 9002, "minimumCount": 1, "required": true }
+      ],
+      "maxRuntimeSeconds": 45,
+      "packetWindow": { "beforeSeconds": 30, "afterSeconds": 120 },
+      "snapshotPlan": [
+        { "tool": "get_log_space", "atMsAfterStart": 0, "arguments": { "databaseName": "TARGET_DATABASE" } },
+        { "tool": "get_active_transactions", "atMsAfterStart": 0, "arguments": { "databaseName": "TARGET_DATABASE", "maxRows": 20 } }
+      ]
+    },
+    {
+      "id": "gate-divide-by-zero",
+      "groupId": "gate-group-divide-by-zero",
+      "family": "schema_data_errors",
+      "regime": "K",
+      "description": "Development-only deterministic divide-by-zero capture gate.",
+      "injector": "divide_by_zero",
+      "expectedClass": "schema_data_error",
+      "expectedSeverity": "medium",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        { "source": "xe", "event": "error_reported", "errorNumber": 8134, "minimumCount": 1, "required": true }
+      ],
+      "maxRuntimeSeconds": 10,
+      "packetWindow": { "beforeSeconds": 30, "afterSeconds": 90 },
+      "snapshotPlan": []
+    }
+  ]
+}

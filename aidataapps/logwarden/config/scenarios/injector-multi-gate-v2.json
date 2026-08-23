@@ -1,0 +1,756 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "logwarden-injector-multi-gate-v2",
+  "scenarios": [
+    {
+      "id": "gate-multi-v2-deadlock",
+      "groupId": "gate-multi-v2-group-deadlock",
+      "family": "deadlock",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for deadlock.",
+      "injector": "deadlock",
+      "expectedClass": "deadlock",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "xml_deadlock_report",
+          "minimumCount": 3,
+          "required": true
+        },
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 1205,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 20,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [
+        {
+          "tool": "get_deadlock_graph",
+          "atMsAfterStart": 0,
+          "arguments": {
+            "maxRows": 5
+          }
+        }
+      ],
+      "groundTruth": {
+        "incidentClass": "deadlock",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-DLK-01",
+          "TSG-DLK-02",
+          "TSG-DLK-03",
+          "TSG-DLK-04",
+          "TSG-DLK-05",
+          "TSG-DLK-06"
+        ],
+        "requiredTools": [
+          "get_deadlock_graph",
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_recent_incident_counts"
+        ],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_backup_history"
+        ],
+        "argumentConstraints": {
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-deadlock-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "deadlock"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-blocking-waits",
+      "groupId": "gate-multi-v2-group-blocking-waits",
+      "family": "blocking_waits",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for blocking_waits.",
+      "injector": "blocking",
+      "expectedClass": "blocking",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "blocked_process_report",
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 20,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 120
+      },
+      "snapshotPlan": [
+        {
+          "tool": "get_blocking_snapshot",
+          "atMsAfterStart": 2500,
+          "arguments": {
+            "databaseName": "LogWardenWorkload",
+            "maxRows": 20
+          }
+        },
+        {
+          "tool": "get_active_transactions",
+          "atMsAfterStart": 2600,
+          "arguments": {
+            "databaseName": "LogWardenWorkload",
+            "maxRows": 20
+          }
+        }
+      ],
+      "groundTruth": {
+        "incidentClass": "blocking",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-BLK-01",
+          "TSG-BLK-02",
+          "TSG-BLK-03",
+          "TSG-BLK-04",
+          "TSG-BLK-05",
+          "TSG-BLK-06"
+        ],
+        "requiredTools": [
+          "get_blocking_snapshot",
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_active_transactions",
+          "get_recent_incident_counts"
+        ],
+        "forbiddenTools": [
+          "get_log_space",
+          "get_backup_history",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "get_blocking_snapshot.databaseName": "LogWardenWorkload",
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-blocking-waits-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "blocking"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-transaction-log-space",
+      "groupId": "gate-multi-v2-group-transaction-log-space",
+      "family": "transaction_log_space",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for transaction_log_space.",
+      "injector": "transaction_log_full",
+      "expectedClass": "transaction_log_full",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 9002,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 45,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 120
+      },
+      "snapshotPlan": [
+        {
+          "tool": "get_log_space",
+          "atMsAfterStart": 0,
+          "arguments": {
+            "databaseName": "TARGET_DATABASE"
+          }
+        },
+        {
+          "tool": "get_active_transactions",
+          "atMsAfterStart": 0,
+          "arguments": {
+            "databaseName": "TARGET_DATABASE",
+            "maxRows": 20
+          }
+        }
+      ],
+      "groundTruth": {
+        "incidentClass": "transaction_log_full",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-LOG-01",
+          "TSG-LOG-02",
+          "TSG-LOG-03",
+          "TSG-LOG-04",
+          "TSG-LOG-05",
+          "TSG-LOG-06"
+        ],
+        "requiredTools": [
+          "get_log_space",
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_active_transactions",
+          "get_backup_history"
+        ],
+        "forbiddenTools": [
+          "get_recent_incident_counts",
+          "get_blocking_snapshot",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "get_log_space.databaseName": "TARGET_DATABASE",
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-transaction-log-space-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "transaction_log_full"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-authentication-access",
+      "groupId": "gate-multi-v2-group-authentication-access",
+      "family": "authentication_access",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for authentication_access.",
+      "injector": "bad_login",
+      "expectedClass": "authentication_failure",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "errorlog",
+          "event": "errorlog",
+          "errorNumber": 18456,
+          "minimumCount": 3,
+          "required": true
+        },
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 18456,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 30,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [],
+      "groundTruth": {
+        "incidentClass": "authentication_failure",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-AUT-01",
+          "TSG-AUT-02",
+          "TSG-AUT-03",
+          "TSG-AUT-04",
+          "TSG-AUT-05",
+          "TSG-AUT-06"
+        ],
+        "requiredTools": [
+          "get_recent_incident_counts",
+          "runbook_search"
+        ],
+        "optionalTools": [],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_backup_history",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-authentication-access-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "bad_login"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-integrity-signal",
+      "groupId": "gate-multi-v2-group-integrity-signal",
+      "family": "integrity_signal",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for integrity_signal.",
+      "injector": "controlled_signal",
+      "expectedClass": "integrity_signal",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 50000,
+          "minimumCount": 3,
+          "required": true
+        },
+        {
+          "source": "errorlog",
+          "event": "errorlog",
+          "errorNumber": 50000,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 30,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [],
+      "groundTruth": {
+        "incidentClass": "integrity_signal",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-INT-01",
+          "TSG-INT-02",
+          "TSG-INT-03",
+          "TSG-INT-04",
+          "TSG-INT-05",
+          "TSG-INT-06"
+        ],
+        "requiredTools": [
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_recent_incident_counts",
+          "get_backup_history"
+        ],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-integrity-signal-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "controlled_signal"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-backup-restore-recovery",
+      "groupId": "gate-multi-v2-group-backup-restore-recovery",
+      "family": "backup_restore_recovery",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for backup_restore_recovery.",
+      "injector": "backup_failure",
+      "expectedClass": "backup_restore_failure",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 3201,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 30,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [
+        {
+          "tool": "get_backup_history",
+          "atMsAfterStart": 0,
+          "arguments": {
+            "databaseName": "LogWardenWorkload",
+            "maxRows": 20
+          }
+        }
+      ],
+      "groundTruth": {
+        "incidentClass": "backup_restore_failure",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-BAK-01",
+          "TSG-BAK-02",
+          "TSG-BAK-03",
+          "TSG-BAK-04",
+          "TSG-BAK-05",
+          "TSG-BAK-06"
+        ],
+        "requiredTools": [
+          "get_backup_history",
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_recent_incident_counts"
+        ],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "get_backup_history.databaseName": "LogWardenWorkload",
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-backup-restore-recovery-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "backup_failure"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-query-resource-pressure",
+      "groupId": "gate-multi-v2-group-query-resource-pressure",
+      "family": "query_resource_pressure",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for query_resource_pressure.",
+      "injector": "query_pressure",
+      "expectedClass": "query_resource_pressure",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "rpc_completed",
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 30,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [],
+      "groundTruth": {
+        "incidentClass": "query_resource_pressure",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-QRY-01",
+          "TSG-QRY-02",
+          "TSG-QRY-03",
+          "TSG-QRY-04",
+          "TSG-QRY-05",
+          "TSG-QRY-06"
+        ],
+        "requiredTools": [
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_recent_incident_counts"
+        ],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_backup_history",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-query-resource-pressure-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "query_pressure"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    },
+    {
+      "id": "gate-multi-v2-schema-data-errors",
+      "groupId": "gate-multi-v2-group-schema-data-errors",
+      "family": "schema_data_errors",
+      "regime": "M",
+      "description": "Development-only three-signal feasibility gate for schema_data_errors.",
+      "injector": "duplicate_key",
+      "expectedClass": "schema_data_error",
+      "expectedSeverity": "high",
+      "shouldAbstain": false,
+      "expectedEvidence": [
+        {
+          "source": "xe",
+          "event": "error_reported",
+          "errorNumber": 2627,
+          "minimumCount": 3,
+          "required": true
+        }
+      ],
+      "maxRuntimeSeconds": 30,
+      "isMultiEvent": true,
+      "isContextDependent": true,
+      "packetWindow": {
+        "beforeSeconds": 30,
+        "afterSeconds": 90
+      },
+      "snapshotPlan": [],
+      "groundTruth": {
+        "incidentClass": "schema_data_error",
+        "severity": "high",
+        "correctActions": [
+          "run_tsg",
+          "open_work_item"
+        ],
+        "preferredAction": "run_tsg",
+        "acceptableRunbooks": [
+          "TSG-DAT-01",
+          "TSG-DAT-02",
+          "TSG-DAT-03",
+          "TSG-DAT-04",
+          "TSG-DAT-05",
+          "TSG-DAT-06"
+        ],
+        "requiredTools": [
+          "runbook_search"
+        ],
+        "optionalTools": [
+          "get_recent_incident_counts"
+        ],
+        "forbiddenTools": [
+          "get_blocking_snapshot",
+          "get_log_space",
+          "get_active_transactions",
+          "get_backup_history",
+          "get_deadlock_graph"
+        ],
+        "argumentConstraints": {
+          "runbook_search.corpusId": "primary-v1"
+        },
+        "shouldAbstain": false,
+        "maxIndependentDecisions": 1,
+        "costWeights": {
+          "miss": 10,
+          "falseAlarm": 2,
+          "unnecessaryTool": 0.25
+        }
+      },
+      "variants": [
+        {
+          "id": "gate-multi-v2-schema-data-errors-v1",
+          "splitRole": "dev",
+          "parameters": {
+            "schemaVersion": 1,
+            "variantOrdinal": 1,
+            "messageVariant": 1,
+            "signalCount": 3,
+            "recurrenceOrdinal": 1,
+            "mode": "multi",
+            "injector": "duplicate_key"
+          },
+          "messageViewPolicy": "raw-minimal-v1",
+          "rateContextId": "gate-multi-3"
+        }
+      ]
+    }
+  ]
+}

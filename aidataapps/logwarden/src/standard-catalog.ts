@@ -63,17 +63,17 @@ const plans: FamilyPlan[] = [
     code: "aut", family: "authentication_access", incidentClass: "authentication_failure", injector: "bad_login", severity: "high", runbookCode: "AUT",
     description: "A rejected disposable identity produces correlated login-failure evidence.",
     requiredTools: ["get_recent_incident_counts", "runbook_search"], optionalTools: [],
-    snapshots: [{ tool: "get_recent_incident_counts", atMsAfterStart: 0, arguments: { incidentClass: "authentication_failure", windowMinutes: 60 } }],
+    snapshots: [],
     expectedEvidence: [
-      { source: "xe", event: "error_reported", errorNumber: 18456, minimumCount: 1, required: true },
       { source: "errorlog", event: "errorlog", errorNumber: 18456, minimumCount: 1, required: true },
+      { source: "xe", event: "error_reported", errorNumber: 18456, minimumCount: 1, required: true },
     ],
   },
   {
     code: "int", family: "integrity_signal", incidentClass: "integrity_signal", injector: "controlled_signal", severity: "high", runbookCode: "INT",
     description: "A logged, lab-authored integrity signal exercises conservative escalation without page damage.",
     requiredTools: ["runbook_search"], optionalTools: ["get_recent_incident_counts", "get_backup_history"],
-    snapshots: [{ tool: "get_recent_incident_counts", atMsAfterStart: 0, arguments: { incidentClass: "integrity_signal", windowMinutes: 60 } }],
+    snapshots: [],
     expectedEvidence: [
       { source: "xe", event: "error_reported", errorNumber: 50000, minimumCount: 1, required: true },
       { source: "errorlog", event: "errorlog", errorNumber: 50000, minimumCount: 1, required: true },
@@ -90,8 +90,8 @@ const plans: FamilyPlan[] = [
     code: "qry", family: "query_resource_pressure", incidentClass: "query_resource_pressure", injector: "query_pressure", severity: "medium", runbookCode: "QRY",
     description: "A bounded CPU-heavy query records duration and resource evidence without host exhaustion.",
     requiredTools: ["runbook_search"], optionalTools: ["get_recent_incident_counts"],
-    snapshots: [{ tool: "get_recent_incident_counts", atMsAfterStart: 0, arguments: { incidentClass: "query_resource_pressure", windowMinutes: 60 } }],
-    expectedEvidence: [{ source: "xe", event: "sql_batch_completed", minimumCount: 1, required: true }],
+    snapshots: [],
+    expectedEvidence: [{ source: "xe", event: "rpc_completed", minimumCount: 1, required: true }],
   },
   {
     code: "dat", family: "schema_data_errors", incidentClass: "schema_data_error", injector: "conversion_error", severity: "medium", runbookCode: "DAT",
@@ -109,7 +109,7 @@ const plans: FamilyPlan[] = [
     code: "noi", family: "benign_noise", incidentClass: "benign_noise", injector: "benign_noise", severity: "medium", runbookCode: "NOI",
     description: "Successful or subthreshold activity must remain a no-action observation.",
     requiredTools: [], optionalTools: ["runbook_search"], snapshots: [],
-    expectedEvidence: [{ source: "xe", event: "sql_batch_completed", minimumCount: 1, required: true }],
+    expectedEvidence: [{ source: "xe", event: "rpc_completed", minimumCount: 1, required: true }],
   },
 ];
 
@@ -130,6 +130,36 @@ export function generateStandardScenarioCatalog(): ScenarioCatalog {
   const scenarios = plans.flatMap((plan, familyIndex) => templateSlots(familyIndex).map((slot, slotIndex) =>
     buildScenario(plan, familyIndex, slot, slotIndex)));
   const catalog = scenarioCatalogSchema.parse({ schemaVersion: 1, catalogId: "logwarden-standard-v1", scenarios });
+  validateScenarioCatalog(catalog);
+  return catalog;
+}
+
+export function generateMultiInjectorGateCatalog(): ScenarioCatalog {
+  const gateVersion = "v2";
+  const standard = generateStandardScenarioCatalog();
+  const scenarios = standard.scenarios
+    .filter((scenario) => scenario.regime === "M" && scenario.expectedClass !== "unknown_ambiguous" && scenario.expectedClass !== "benign_noise")
+    .map((scenario) => {
+      const slug = scenario.family.replaceAll("_", "-");
+      const sourceVariant = scenario.variants![0]!;
+      return {
+        ...scenario,
+        id: `gate-multi-${gateVersion}-${slug}`,
+        groupId: `gate-multi-${gateVersion}-group-${slug}`,
+        description: `Development-only three-signal feasibility gate for ${scenario.family}.`,
+        variants: [{
+          ...sourceVariant,
+          id: `gate-multi-${gateVersion}-${slug}-v1`,
+          splitRole: "dev" as const,
+          rateContextId: "gate-multi-3",
+        }],
+      };
+    });
+  const catalog = scenarioCatalogSchema.parse({
+    schemaVersion: 1,
+    catalogId: `logwarden-injector-multi-gate-${gateVersion}`,
+    scenarios,
+  });
   validateScenarioCatalog(catalog);
   return catalog;
 }
@@ -159,11 +189,14 @@ function buildScenario(plan: FamilyPlan, familyIndex: number, slot: TemplateSlot
   const expectedClass = isUnknown ? "unknown_ambiguous" : isNearMiss ? "benign_noise" : plan.incidentClass;
   const expectedSeverity = isUnknown ? "low" : isNearMiss ? "info" : mode === "multi" && plan.severity === "medium" ? "high" : plan.severity;
   const injector = isUnknown ? "ambiguous_signal" : isNearMiss ? "benign_noise" : resolveInjector(plan, slotIndex);
-  const evidence = isUnknown
+  const baseEvidence = isUnknown
     ? [{ source: "xe", event: "error_reported", errorNumber: 50000, minimumCount: 1, required: true }]
     : isNearMiss
-      ? [{ source: "xe", event: "sql_batch_completed", minimumCount: 1, required: true }]
+      ? [{ source: "xe", event: "rpc_completed", minimumCount: 1, required: true }]
       : resolveEvidence(plan, injector);
+  const evidence = mode === "multi"
+    ? baseEvidence.map((item) => ({ ...item, minimumCount: Math.max(item.minimumCount, 3) }))
+    : baseEvidence;
   const toolPolicy = toolPolicyFor(expectedClass, plan);
   const runbookCode = isUnknown ? "UNK" : isNearMiss ? "NOI" : plan.runbookCode;
   const noAnswer = isUnknown && familyIndex % 2 === 0;
