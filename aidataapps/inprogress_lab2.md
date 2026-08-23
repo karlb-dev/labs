@@ -1,6 +1,6 @@
 # Lab 02 in progress — ModelPrint
 
-Last manually updated: 2026-08-23 04:14 UTC
+Last manually updated: 2026-08-23 04:54 UTC
 
 Read `resume.md` first for multi-agent and recovery rules. The more detailed
 machine-local narrative is `/content/handoff.md`; the watchdog copies it into
@@ -36,7 +36,8 @@ archive.
 - primary hash: `52113ce90ed5302c0f40f55e79d5962aa692925721cec0ce3c2684c6947673d9`
 - robustness campaign: ID 4, 501 variants per target profile, 2,004 jobs
 - older campaigns 1 and 2 are excluded and must not be substituted
-- latest pushed HEAD: `d9ac4db`
+- latest pushed baseline at this update: `c8f9731` (run `git rev-parse HEAD`
+  because later watchdog-safe milestone commits supersede this prose)
 - scientific freeze tag: `modelprint-mp2-freeze-v3`
 
 The four generated target profiles, in residency order, are:
@@ -63,37 +64,52 @@ Qwen is complete:
 - verified native backup exists in `runs/.../database/`
 - its 62 GiB weight cache was removed only after backup and Drive mirror
 
-Muse is active:
+Muse is complete:
 
 - strict port gate passed with six identical deterministic hashes
 - tokenizer revision is explicit
 - vLLM batch-invariant kernels are enabled for this model
-- chat container: `aidataapps-modelprint-chat-muse-r1`
 - primary generation completed 10,000/10,000 with zero failed at
   `2026-08-23T03:59:58Z`
 - robustness generation completed 501/501 with zero failed; raw SHA-256
   `ed7faf0cd842f1516f77c7ea706b30be4d8740b1dcd3e357afdbf07075c77de4`
-- active command is the first Muse likelihood pass:
+- the corrected selective likelihood pass recovered all 61 Unicode-alignment
+  gaps with zero failures
+- cumulative audit: 15,938 eligible non-empty rows have both prompted and
+  unprompted values; both missing counts are zero; 64 retained empty-final
+  truncated rows are explicitly unavailable and were not imputed
+- cumulative raw SHA-256:
+  `9d59cb2fbc7e2fdde8168e6654b19c53407b29aaf59f8a63668cf6f6a1682193`
+- final verified native backup SHA-256:
+  `d53eeed6ba71dc7147cab8f6fc48c8ed6a3aaf313ee98bee7cfd75180c08d3f4`
+- its exact weight cache was evicted only after local/Drive evidence and backup
+  hashes matched; it is re-downloadable at the pinned revision
+
+Gemma is active:
+
+- profile `gemma-4-31b`, pinned revision `842da3794eaa0b77d5f08bae87a17459d91ff475`
+- chat container `aidataapps-modelprint-chat-gemma-r4`
+- attempt 1 stopped before the gate because GPU utilization 0.78 provided
+  13.22 GiB KV cache versus 13.76 GiB required for frozen 16K context
+- attempt 2 reached the gate at utilization 0.80 and exposed batch-sensitive
+  greedy output; both stopped attempts are retained as run evidence
+- final runtime uses validated `CHAT_GPU_MEMORY_UTILIZATION=0.80` and
+  `VLLM_BATCH_INVARIANT=1`; runtime identity hash is
+  `5cfe529ebcb21f66e51cd070f13fa2ca172fc812ea7b0d03bd036e65b2f65831`
+- strict gate passed with six identical deterministic hashes; gate artifact
+  SHA-256 is `f3e39acac7a475ef7d9ec675bb57b9e93125753ddd172c1f507e107065dad9b6`
+- active primary command:
 
 ```bash
-npm run likelihood:score -- --scorer muse-glimmer-30b --include-robustness --concurrency 32 --checkpoint-size 200
+npm run generate -- --profile gemma-4-31b --resume --concurrency 64 --checkpoint-size 100
 ```
 
-- last manual likelihood observation: 4,200/16,002 selected jobs consumed,
-  4,172 fully scored and 28 with a missing prompted channel; the process is
-  still running and later counters supersede these numbers
-- the missing prompted channels are diagnosed as vLLM per-token Unicode
-  byte-fallback display artifacts. Commit `d9ac4db` adds a constrained,
-  tested alignment fallback. Do not interrupt the already-loaded old-code
-  pass; after it exits, rerun the exact command idempotently so the new code
-  selects and fills only SQL-missing cells
-- some Muse rows can exhaust the answer budget in reasoning and have an empty
-  final-answer field; retain them as truncated per addendum C-15 and report the
-  rate rather than silently regenerating or filling them
+- first durable checkpoint: 100/10,000 complete, zero failed at
+  `2026-08-23T04:53:38Z`; later checkpoint/SQL counts supersede this value
 
-Gemma and OLMo generation have not started. Final cross-likelihood completion,
-features, analyses, reports, BACPAC, archive, mirror, and reproducibility run
-remain.
+OLMo has not started. Gemma robustness/likelihood, OLMo, final
+cross-likelihood completion, features, analyses, reports, BACPAC, archive,
+mirror, and reproducibility run remain.
 
 The four dirty tracked root documents are a partial mid-run report render and
 must not be treated as final: `README.md`, `MODELPRINT_STATE_OF_RECORD.md`,
@@ -157,12 +173,10 @@ cat .current-run
 tail -n 80 runs/modelprint-full-20260822T230728Z/checkpoints/watchdog.log
 ```
 
-Do not start a second Muse scorer if the command is alive. If it is absent,
-rerun the exact likelihood command above; it is idempotent and SQL-backed.
-After the current old-code invocation exits (expected exit 2 when it reports
-retained partial channels), rerun once with commit `d9ac4db`, then verify SQL
-prompted/unprompted completeness before rotating. Confirm current counts with
-the manifests and SQL/doctor output rather than trusting this timestamped prose.
+Do not start a second Gemma generator if the command is alive. If it is absent,
+rerun the exact primary command above; `--resume` reconciles SQL state and its
+config hash before selecting missing rows. Confirm current counts with the
+checkpoint, manifests, and SQL rather than trusting this timestamped prose.
 
 ## Twenty-minute checkpoint watchdog
 
@@ -224,26 +238,11 @@ tested, and recorded append-only in `EXPERIMENT_LOG.md`.
 
 ## Remaining residency workflow
 
-The Muse primary and robustness commands below are complete. Do not rerun them.
-Complete likelihood recovery while Muse is still resident:
+Muse is fully complete and no longer resident. Gemma is gated and its primary
+generator is active. After primary completion, run its robustness and
+likelihood stages:
 
 ```bash
-npm run likelihood:score -- --scorer muse-glimmer-30b --include-robustness --concurrency 32 --checkpoint-size 200
-npm run checkpoint:once
-```
-
-Then make a milestone commit/push for any durable source/log changes, stop only
-the Muse chat engine, verify port 8000 and VRAM, and evict only the exact Muse
-weight cache after the SQL backup and Drive mirror succeed.
-
-For Gemma, use a unique chat container, run its unchanged gate, then primary,
-robustness, and likelihood stages:
-
-```bash
-export CHAT_CONTAINER_NAME=aidataapps-modelprint-chat-gemma-r1
-npm run model -- start --profile gemma-4-31b
-npm run port:gate -- --profile gemma-4-31b
-npm run generate -- --profile gemma-4-31b --resume --concurrency 64 --checkpoint-size 100
 npm run robustness:generate -- --profile gemma-4-31b --concurrency 64 --checkpoint-size 100
 npm run likelihood:score -- --scorer gemma-4-31b --include-robustness --concurrency 64 --checkpoint-size 200
 npm run checkpoint:once
