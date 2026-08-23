@@ -72,12 +72,16 @@ if (command === "list") {
   args.push("--volume", `${process.env.SHARED_HF_VOLUME ?? "aidataapps-rag-huggingface-cache"}:/root/.cache/huggingface`,
     "--volume", `${process.env.SHARED_VLLM_VOLUME ?? "aidataapps-rag-vllm-cache"}:/root/.cache/vllm`,
     "--env", "VLLM_ENABLE_CUDA_COMPATIBILITY=1");
+  const batchInvariant = process.env.VLLM_BATCH_INVARIANT ?? (key === "muse-glimmer-30b" ? "1" : undefined);
+  if (batchInvariant) args.push("--env", `VLLM_BATCH_INVARIANT=${batchInvariant}`, "--label", `ai.labs.batch-invariant=${batchInvariant}`);
   if (process.env.HF_TOKEN) args.push("--env", `HF_TOKEN=${process.env.HF_TOKEN}`);
-  args.push(profile.vllmImage, "--model", profile.modelId, "--revision", profile.revision, "--served-model-name", profile.key,
+  const serverArgs = ["--model", profile.modelId, "--revision", profile.revision, "--tokenizer-revision", profile.revision,
+    "--served-model-name", profile.key,
     "--max-model-len", String(profile.maxModelLen), "--gpu-memory-utilization", String(profile.gpuMemoryUtilization),
-    "--max-num-seqs", String(profile.maxNumSeqs), "--enable-log-requests", ...(nested ? ["--port", port] : []), ...profile.campaignArgs);
+    "--max-num-seqs", String(profile.maxNumSeqs), "--enable-log-requests", ...(nested ? ["--port", port] : []), ...profile.campaignArgs];
+  args.push(profile.vllmImage, ...serverArgs);
   const containerId = docker(args, true); persistProfile(key);
   console.log(JSON.stringify({ containerId, containerName, profile: key, profileHash: hashJson(profile), modelId: profile.modelId,
     revision: profile.revision, image: profile.vllmImage, endpoint: `http://127.0.0.1:${port}/v1`, cachedBeforeStart: existsSync(cacheDirectory),
-    weightBytes, freeBytesBeforeStart: freeBytes }, null, 2));
+    weightBytes, freeBytesBeforeStart: freeBytes, batchInvariant: batchInvariant ?? "0" }, null, 2));
 } else throw new Error(`Unknown model command ${command}`);
