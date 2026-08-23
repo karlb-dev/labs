@@ -783,3 +783,22 @@ place and receive a later disposition.
   before the episode set seeds a larger catalog. Display note: the retired
   Foundry Muse serving now renders in neutral gray — the validated palette
   has eight categorical slots, and retirement keeps the ninth series honest.
+
+- 2026-08-23T09:14:55Z — Froze and pushed executable Tier 1 inference controls
+  in commit `764c9c3` while standard SQL capture was active at 483/600
+  executions with zero injector errors, before packet construction, target
+  inference, target scoring, or campaign freeze. The 96-cell masking control
+  removes frozen error numbers and exact signatures from both packet and tool
+  results; the 96-cell shuffled-runbook control clones evaluator-only wrong
+  retrieval rows into provenance-distinct agent-visible rows; and the first 48
+  frozen cells re-run A-tools sequentially for batching invariance. Control
+  jobs, predictions, raw exports, telemetry, scores, and receipts are isolated
+  from primary reporting and link to their exact primary prediction. A
+  comparison ledger records exact raw-response, decision, ordered-tool-call,
+  transmitted-result, and raw-result agreement plus action-score and confidence
+  deltas. The label-permutation policy fixes family/split strata,
+  scenario-group units, seed 20260823, and 1,000 repetitions for the later
+  no-inference analysis driver. Migration 032 is authored but intentionally
+  unapplied until capture closes. Full build and 30-file/98-test suite pass.
+  Impact: no captured row or model output changed; the late pre-freeze timing is
+  disclosed and hash-bound, and control rows cannot contaminate primary views.

@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 07:47 UTC
+Last manually updated: 2026-08-23 09:15 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -36,7 +36,8 @@ and its effect on the evidence ceiling must be recorded append-only in
   agent-observability, least-privilege tools, real eight-family injectors,
   exact-correlation/context-snapshot gates, the real Qwen embedding vLLM port
   gate, all 480 corpus embeddings, the three-mode hybrid retrieval development
-  gate, and the fully persisted bounded agent loop passed. Standard capture,
+  gate, the fully persisted bounded agent loop, executable baselines, and
+  inference-control instrumentation passed. Standard capture is active;
   held-out retrieval assessment, corpus freeze, and chat-model canary remain.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
@@ -52,12 +53,13 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Thirty hash-locked control migrations are applied and a thirty-first
-  inference/retrieval-provenance migration is authored but intentionally held
-  until standard capture completes; seven versioned
+- Thirty hash-locked control migrations are applied. Migration 031 for
+  inference/retrieval provenance and migration 032 for Tier 1 control
+  provenance are authored but intentionally held until standard capture
+  completes; seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 22 test files and 73 unit tests, including resumable
+  `npm run check` passes 30 test files and 98 unit tests, including resumable
   schedule timing, pinned chat-service construction, chat Prometheus deltas,
   and separate reasoning-channel retention. The capture-specific
   XE predicate excludes agent/ingest traffic.
@@ -173,6 +175,16 @@ and its effect on the evidence ceiling must be recorded append-only in
   envelopes, attribute service samples to instance/phase, and store
   evaluator-only held-out retrieval rows; it remains unapplied until capture
   is no longer mutating SQL.
+- The executable Tier 1 control policy was hash-frozen during capture and
+  before packet construction or target-output inspection. Error-number and
+  exact-signature masking now transforms both packets and tool results;
+  shuffled retrieval clones evaluator-only wrong-runbook rows into separately
+  provenance-marked agent-visible retrieval runs; and the sequential 48-cell
+  batching control preserves distinct job/raw/telemetry identities. Every
+  control prediction links to its primary A-tools source, scores separately,
+  and materializes exact raw-response, decision, ordered-tool-call, and result
+  agreement. The timing and its no-data-impact limitation are disclosed in the
+  preregistration and experiment log. Durable commit: `764c9c3`.
 - The unfrozen `logwarden-standard-v1` scenario catalog now contains 60
   group-isolated templates and 600 deterministic variants across all ten
   incident families and all five regimes. Exact role allocation is 60 dev, 60
@@ -183,8 +195,9 @@ and its effect on the evidence ceiling must be recorded append-only in
   `50d47873fda8ccd3367ddbd5f9f1356f1fd306f6406c33de122471a1c5e7872d`,
   `3b7097f5b855d91741bc2d470e3074040464b96a9ae66e1df766639c6daea20b`,
   and `5535d9f8c29d58d6b1ec222b3ab0842c20de0c669d01367d3118ff07e1f17f82`.
-  Schedule `standard-v1` has 600 pending items and a final planned offset of
-  8,039,000 ms; it remains building and has injected zero episodes.
+  Schedule `standard-v1` has 600 items and a final planned offset of 8,039,000
+  ms; at the 09:13 UTC check it had durably injected 483 episodes with zero
+  injector errors. Verification is intentionally finalized after capture.
 - Long-run preflight fixed the injector's schedule-clock resume semantics
   before any standard row existed. A resumed process now reconstructs the
   original clock from the earliest durable execution rather than waiting the
@@ -215,14 +228,15 @@ and its effect on the evidence ceiling must be recorded append-only in
   (8/8); least-privilege tool receipt:
   `fca0eaa2e865c00082141f98527c85b9e6f83f77caeae10a2254c0f4a879126f`
   (9 positive/11 negative).
-- The user-supplied Mac/Foundry/report series and follow-ups through `443c17e`
+- The user-supplied Mac/Foundry/report series and follow-ups through `ecec5f4`
   are
   merged. Their platform-separated Foundry/MLX registry, Apple Silicon
   Docker/Rosetta setup, 16-episode dev harness, six-model retained results, and
   report generator coexist with the Colab path. Colab Compose validation,
   doctor, SQL, security, backup/restore, and all pre-merge tests pass; the
-  committed seven-model x 16-episode HTML report rebuilds byte-for-byte from
-  retained data and its template. Foundry is absent on this Linux VM and, by user direction,
+  committed nine-serving x 16-episode HTML report rebuilds byte-for-byte from
+  retained data and its template after correcting stale eight-serving
+  cardinality. Foundry is absent on this Linux VM and, by user direction,
   remains a post-governed-model validation lane with non-comparable results.
 - Active milestone: complete standard capture, then build/audit its packets,
   assess held-out retrieval, and freeze the corpus. The qwen-smoke chat service
@@ -287,8 +301,8 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 
 - Long-running scientific process: `standard-v1` injector retained in Codex
   exec session `75344` (node PID 227614), launched 2026-08-23T07:34:15Z; latest
-  check was 131/600 executed (ordinals 0–130) with zero failed/unclean rows and
-  zero XE loss counters
+  check was 483/600 executed with zero injector errors; the latest observed XE
+  loss counters remain zero
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
 - Telemetry: continuous `standard-capture` whole-system sampler retained in
@@ -304,9 +318,9 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548` (`PASS`)
 - SQL integration receipt: `407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2` (8/8 passed)
-- Last durable implementation checkpoint: `91c5e7d` (held-out retrieval,
-  search-freeze, and paired grouped power gates); launch watchdog checkpoint:
-  `89b42ff`
+- Last durable implementation checkpoint: `764c9c3` (frozen Tier 1 inference
+  controls, separate scoring, and primary/control comparison ledger); launch
+  watchdog checkpoint: `89b42ff`
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -332,7 +346,7 @@ Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
 this checkpoint is to let the resumable `standard-v1` capture finish under the
 recurring watchdog and telemetry sampler, then drain/verify, build and audit
-packets, apply migration 031, run held-out retrieval, empirically calibrate the
+packets, apply migrations 031 and 032, run held-out retrieval, empirically calibrate the
 power receipt with qwen-smoke dev pairs, and freeze. Retrieval evaluation is
 resumable and persists five evaluator-only modes per packet; the search freeze
 proves complete embeddings/full-text/evaluation inventories. Do not load a
