@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 03:39 UTC
+Last manually updated: 2026-08-23 03:58 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -32,7 +32,7 @@ and its effect on the evidence ceiling must be recorded append-only in
 
 ## Current state
 
-- Phase: LW-0/LW-1 foundation and SQL control plane complete; beginning LW-2/LW-3 capture implementation.
+- Phase: LW-0/LW-1 complete; LW-2/LW-3 smoke capture, packet, recovery, and base systems telemetry gates passed.
 - The dedicated worktree was created from the exact current Lab 2 remote head.
 - The new branch was pushed to GitHub and tracks its own remote branch.
 - The repository was clean at branch creation.
@@ -45,13 +45,38 @@ and its effect on the evidence ceiling must be recorded append-only in
 - A user-directed pre-inference observability gate now promotes detailed
   agent/vLLM/queue/SQL/XE/GPU telemetry and dual file/SQL persistence before
   any long model campaign; see `logwarden/docs/OBSERVABILITY_CONTRACT.md`.
-- Twelve hash-locked control migrations plus one workload and one server/XE
-  migration apply idempotently. `npm run doctor` passes all required probes;
-  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 5
-  test files and 11 unit tests.
-- Next incomplete milestone: implement the deterministic smoke scenario
-  catalog, safe injectors, XE/ERRORLOG cursor ingestion, verification/cleanup,
-  and frozen incident-packet builder before loading an embedding or chat model.
+- Sixteen hash-locked control migrations and two versioned server/XE assets now
+  apply idempotently. `npm run doctor` passes all required probes;
+  `npm run test:sql` passes 8/8 integration cases; `npm run check` passes 9
+  test files and 17 unit tests. The capture-specific XE predicate excludes
+  agent/ingest traffic.
+- Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
+  gates and all required XE/ERRORLOG evidence rules passed. Capture verification
+  receipt: `7271b30792a9e054b8f95cedb057df153dda4434517f348b8894cc11fe6bbd5`.
+- Raw ERRORLOG replay is idempotent (0 inserted / 461 duplicates on immediate
+  replay). XE uses file + block offset + within-block ordinal after runtime
+  discovery that offsets are block-scoped.
+- Current doctor snapshot:
+  `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e`
+  (`PASS`); SQL integration receipt:
+  `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156`
+  (8/8).
+- Ten development packets have separately protected evaluator truth and passed
+  the leakage audit with zero findings. Packet build/audit receipts are
+  `06670cc91548962090843e921f0b72d0f58e38544f79b2fd0ffb9768fb749e11`
+  and `f6cc4310ac038a320106c94ad3d43912e9737fd840043c85b63ccc7a698fbd74`.
+- A full no-model systems sample persisted GPU, SQL, queue, XE, host, and raw
+  endpoint-unavailable observations. Journal-to-SQL replay is hash validated
+  and idempotent; latest receipts are
+  `f19f2884678a01d417f41dbe559f5be4416adc2a46012b0cde6cb3c4f4e89867`
+  (sample) and
+  `430d53f721b081915e88d5d79ece7362673e7e611e9332b6e7153e9b342d3ab4`
+  (journal ingest).
+- Next incomplete milestone: fake-gateway terminal-route and journal crash
+  tests, live sampler restart/reconciliation, ERRORLOG rotation/container
+  recovery, read-only tool procedures, then expand/freeze the supported
+  catalog. A small embedding or qwen-smoke port may load only after its real
+  `/metrics` port gate; no long chat campaign may load yet.
 
 ## Fresh-VM preflight
 
@@ -97,22 +122,32 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
 
 ## Active processes and checkpoints
 
+<!-- lab3-watchdog-status:start -->
+- Last watchdog checkpoint: 2026-08-23T04:18:32.043Z
+- Last watchdog Git head: `1d229cbd5afc742cdf68a193d6c447b876b2d6b3` on `aidataapps-logwarden`
+- Last watchdog disposition: clean source checkpoint
+- Last watchdog database receipt: `e08c9683bbc54f2d1f559c4cbd79e381dc6a578b240e80b073c92dec30cd2580`
+- Last watchdog run: `logwarden-smoke-20260823T031714Z`
+<!-- lab3-watchdog-status:end -->
+
 - Long-running scientific process: none
 - Infrastructure process: rootless Docker is supervised by retained Codex exec
   cell `64558`; detached children are reaped in this environment
-- Watchdog: scaffold exists but has not yet passed its recovery/backup gate or
-  been launched
-- SQL backup: none (foundation schema only; backup path is next durability gate)
+- Watchdog: dirty-tree recovery and clean-tree handoff/commit modes both passed
+  and mirrored; recurring watch is not running because no long job exists
+- SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
+  full disposable restore, physical CHECKDB, and teardown; latest restore-test
+  receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
-- Capability snapshot: `72dd444ac65f7b1203c711c1383878e100f78cffd33fa2e4bc8b775a9f6d88e3` (`PASS`)
-- SQL integration receipt: `8ecaf7cd8f3693b96554b9fb3a0e2108fe698de301c0f5c7f649282ddd9a4ebd` (8/8 passed)
-- Last durable Git checkpoint: `3b42bbf` (`Harden LogWarden Colab runtime`); the verified schema checkpoint is being committed now
+- Capability snapshot: `10b7667fdde9bb9f110a001e7c28a8d21b57524eb738e02dccb50c43f1fc5f9e` (`PASS`)
+- SQL integration receipt: `88859a41d5b05e2a95851b6df58e7975e311349003e579013c4914c55bed7156` (8/8 passed)
+- Last durable Git checkpoint: `de9ca40` (clean watchdog handoff); packet/telemetry implementation is being committed now
 - Last durable Drive checkpoint: this file
 
-Before the first job expected to exceed 20 minutes, implement and launch one
-Lab-3-scoped checkpoint watchdog. It must push committed work, make a verified
-branch bundle and worktree recovery capture, back up the Lab 3 database when it
-exists, archive/mirror only the active Lab 3 run, and update this file without
+Before the first job expected to exceed 20 minutes, launch the tested
+Lab-3-scoped checkpoint watchdog. It pushes committed work, makes a verified
+branch bundle and worktree recovery capture, backs up both Lab 3 databases,
+archives/mirrors only the active Lab 3 run, and updates this file without
 touching Lab 2 state.
 
 ## Exact resume procedure
@@ -130,9 +165,11 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is LW-2/LW-3 scenario capture and ingestion; do not load a model
-until the observability gate and campaign freeze both pass. If `docker info` fails, rerun
-`./scripts/colab-host-init.sh` or launch the rootless daemon in a retained cell.
+this checkpoint is the model-client fake-gateway/crash-replay/reconciliation
+gate followed by read-only tools and the standard catalog freeze; do not load a
+model until the remaining observability gates pass. If `docker info` fails,
+rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained
+cell.
 
 ## Completion rule currently in force
 

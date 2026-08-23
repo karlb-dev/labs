@@ -39,6 +39,38 @@ export interface StartedSpan {
   context: TelemetryContext;
 }
 
+export interface ValidatedTelemetryLine {
+  record: TelemetryRecord;
+  byteOffsetAfter: number;
+}
+
+export async function readAndValidateTelemetryJournal(path: string, runId: string): Promise<ValidatedTelemetryLine[]> {
+  const source = await readFile(path, "utf8");
+  const output: ValidatedTelemetryLine[] = [];
+  let previousRecordSha256: string | null = null;
+  let byteOffset = 0;
+  for (const [index, lineWithNewline] of source.match(/.*(?:\n|$)/g)?.filter((line) => line.length > 0).entries() ?? []) {
+    const line = lineWithNewline.endsWith("\n") ? lineWithNewline.slice(0, -1) : lineWithNewline;
+    byteOffset += Buffer.byteLength(lineWithNewline);
+    if (line.trim().length === 0) continue;
+    let record: TelemetryRecord;
+    try {
+      record = JSON.parse(line) as TelemetryRecord;
+    } catch (error) {
+      throw new Error(`Telemetry journal has invalid JSON at sequence ${index + 1}: ${path}`, { cause: error });
+    }
+    const { payloadSha256, ...payload } = record;
+    const expectedSequence = output.length + 1;
+    if (
+      record.runId !== runId || record.sequence !== expectedSequence ||
+      record.previousRecordSha256 !== previousRecordSha256 || payloadSha256 !== hashJson(payload)
+    ) throw new Error(`Telemetry journal integrity check failed at sequence ${expectedSequence}: ${path}`);
+    previousRecordSha256 = payloadSha256;
+    output.push({ record, byteOffsetAfter: byteOffset });
+  }
+  return output;
+}
+
 export class FileTelemetryJournal {
   private sequence = 0;
   private previousRecordSha256: string | null = null;
@@ -51,29 +83,9 @@ export class FileTelemetryJournal {
     await mkdir(dirname(path), { recursive: true });
     const journal = new FileTelemetryJournal(path, runId);
     try {
-      const lines = (await readFile(path, "utf8")).split("\n").filter((line) => line.trim().length > 0);
-      let previousRecordSha256: string | null = null;
-      for (const [index, line] of lines.entries()) {
-        let record: TelemetryRecord;
-        try {
-          record = JSON.parse(line) as TelemetryRecord;
-        } catch (error) {
-          throw new Error(`Telemetry journal has invalid JSON at sequence ${index + 1}: ${path}`, { cause: error });
-        }
-        const { payloadSha256, ...payload } = record;
-        const expectedSequence = index + 1;
-        if (
-          record.runId !== runId ||
-          record.sequence !== expectedSequence ||
-          record.previousRecordSha256 !== previousRecordSha256 ||
-          payloadSha256 !== hashJson(payload)
-        ) {
-          throw new Error(`Telemetry journal integrity check failed at sequence ${expectedSequence}: ${path}`);
-        }
-        previousRecordSha256 = payloadSha256;
-      }
+      const lines = await readAndValidateTelemetryJournal(path, runId);
       journal.sequence = lines.length;
-      journal.previousRecordSha256 = previousRecordSha256;
+      journal.previousRecordSha256 = lines.at(-1)?.record.payloadSha256 ?? null;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
       if (code !== "ENOENT") throw error;

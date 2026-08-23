@@ -30,7 +30,7 @@ export function loadConfig(values: NodeJS.ProcessEnv = process.env) {
   const baseDatabase = {
     server: env.SQLSERVER_HOST,
     port: env.SQLSERVER_PORT,
-    options: { encrypt: false, trustServerCertificate: true, appName: "LogWarden" },
+    options: { encrypt: false, trustServerCertificate: true },
   } as const;
   return {
     host: env.HOST,
@@ -39,9 +39,9 @@ export function loadConfig(values: NodeJS.ProcessEnv = process.env) {
     databases: {
       controlName: env.CONTROL_DATABASE,
       workloadName: env.WORKLOAD_DATABASE,
-      admin: { ...baseDatabase, user: "sa", password: env.MSSQL_SA_PASSWORD },
-      lab: { ...baseDatabase, user: "lw_lab", password: env.LW_LAB_PASSWORD },
-      agent: { ...baseDatabase, user: "lw_agent", password: env.LW_AGENT_PASSWORD },
+      admin: { ...baseDatabase, options: { ...baseDatabase.options, appName: "LogWarden-Admin" }, user: "sa", password: env.MSSQL_SA_PASSWORD },
+      lab: { ...baseDatabase, options: { ...baseDatabase.options, appName: "LogWarden-Lab" }, user: "lw_lab", password: env.LW_LAB_PASSWORD },
+      agent: { ...baseDatabase, options: { ...baseDatabase.options, appName: "LogWarden-Agent" }, user: "lw_agent", password: env.LW_AGENT_PASSWORD },
     },
     inference: {
       chatBaseUrl: env.CHAT_BASE_URL.replace(/\/$/, ""),
