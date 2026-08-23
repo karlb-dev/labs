@@ -1,6 +1,6 @@
 # Lab 03 in progress — LogWarden
 
-Last manually updated: 2026-08-23 06:11 UTC
+Last manually updated: 2026-08-23 06:15 UTC
 
 Read `resume.md` first for worktree, recovery, and evidence rules. This file is
 the volatile state of Lab 3 and must be refreshed before and after long jobs and
@@ -51,7 +51,7 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Twenty-five hash-locked control migrations and seven versioned
   server/XE/security assets now apply idempotently. `npm run doctor` passes all
   required probes; `npm run test:sql` passes 8/8 integration cases;
-  `npm run check` passes 14 test files and 39 unit tests. The capture-specific
+  `npm run check` passes 16 test files and 44 unit tests. The capture-specific
   XE predicate excludes agent/ingest traffic.
 - Development schedule `smoke-v1` injected ten safe scenarios; all ten cleanup
   gates and all required XE/ERRORLOG evidence rules passed. Capture verification
@@ -94,7 +94,7 @@ and its effect on the evidence ceiling must be recorded append-only in
   positive and eleven negative least-privilege cases. Direct evaluator, snapshot,
   runbook-table, queue, ingestion, DDL, server-DMV, and `msdb` backup-table
   bypasses are denied. Receipt:
-  `a7d1cd7484dd8dd1a510307c32e3e36274588dc7bb64294ef5b695b91a63a0ae`;
+  `f5965e712ba2edfe542ca767f042ecc29d81d985af3b85f8bdb6cb2e80de48cf`;
   registry hash:
   `25c79c34cd382bba6bb1f9139401aac8bfea2f603bd83d137b0eb209ddfac6bb`.
   The registry remains marked building/unfrozen until standard runbooks close.
@@ -141,11 +141,18 @@ and its effect on the evidence ceiling must be recorded append-only in
 - Current doctor snapshot:
   `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe`
   (`PASS`); SQL integration receipt:
-  `8310ac0f46310d125926e12aa05a44a5aa065c44de0292b9860f329fd6c8b215`
+  `0334583c0d376b53776a0e65b2892d0ef6d4d372d2d22f8b4bae262908a151d2`
   (8/8).
-- Next incomplete milestone: merge and validate the user-supplied
-  `aidataapps-logwarden-mac`/Foundry/report commits, then build Qwen embeddings,
-  hybrid retrieval, and the bounded agent loop. A small embedding or
+- The five user-supplied Mac/Foundry/report commits through `725cdae` are
+  merged. Their platform-separated Foundry/MLX registry, Apple Silicon
+  Docker/Rosetta setup, 16-episode dev harness, six-model retained results, and
+  report generator coexist with the Colab path. Colab Compose validation,
+  doctor, SQL, security, backup/restore, and all 44 unit tests pass; the
+  committed 6 x 16 HTML report rebuilds byte-for-byte from retained data and
+  its template. Foundry is absent on this Linux VM and, by user direction,
+  remains a post-governed-model validation lane with non-comparable results.
+- Next incomplete milestone: build Qwen embeddings, hybrid retrieval, and the
+  bounded agent loop. A small embedding or
   qwen-smoke service may then load for the remaining real `/metrics` gate; no
   long chat campaign may load until that gate passes. Foundry model validation
   is deliberately deferred until after the governed local models.
@@ -209,12 +216,12 @@ The inherited Lab 1/2 directories and their branches are read-only inputs.
   and mirrored; recurring watch is not running because no long job exists
 - SQL backup: both databases passed COPY_ONLY/CHECKSUM backup, VERIFYONLY,
   full disposable restore, physical CHECKDB, and teardown; latest restore-test
-  receipt `cfec5d3bc7a9d52a16c69a9ff0645be5c3d9ea6f21972c7a2fd138bfd34ad2a4`
+  receipt `20a92098906ac63588ce951ce15e21d3ec932ca10f4d81beb504cffbfc4a9a18`
 - Active run ID: `logwarden-smoke-20260823T031714Z`
 - Capability snapshot: `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe` (`PASS`)
-- SQL integration receipt: `8310ac0f46310d125926e12aa05a44a5aa065c44de0292b9860f329fd6c8b215` (8/8 passed)
-- Last durable Git checkpoint: `2987b41` (governed scenario catalog); the real
-  injector/XE/correlation checkpoint is being committed now
+- SQL integration receipt: `0334583c0d376b53776a0e65b2892d0ef6d4d372d2d22f8b4bae262908a151d2` (8/8 passed)
+- Last durable Git checkpoint: `b659af7` (governed real injectors); the
+  Mac/Foundry/report integration merge is being validated and committed now
 - Last durable Drive checkpoint: this file
 
 Before the first job expected to exceed 20 minutes, launch the tested
@@ -238,8 +245,8 @@ nvidia-smi
 
 Then inspect the newest `EXPERIMENT_LOG.md`, active run pointer, watchdog log,
 SQL job state, and Drive checkpoint before launching anything. The next work at
-this checkpoint is the fetched Mac/Foundry/report branch merge, followed by
-Qwen embeddings and the bounded tool gateway/agent loop; do not load a
+this checkpoint is Qwen embeddings and the bounded tool gateway/agent loop;
+do not load a
 long-running model until the remaining real-service observability gate can run.
 If `docker info` fails,
 rerun `./scripts/colab-host-init.sh` or launch the rootless daemon in a retained

@@ -62,7 +62,11 @@ services:
     volumes:
       - huggingface-cache:/root/.cache/huggingface
       - vllm-cache:/root/.cache/vllm
-    gpus: all
+    # Long-form gpus syntax: the `gpus: all` shorthand fails compose config
+    # validation on older compose releases (observed on Docker Desktop v2.32).
+    gpus:
+      - driver: nvidia
+        count: all
     ipc: host
     restart: unless-stopped
 
@@ -95,7 +99,11 @@ services:
     volumes:
       - huggingface-cache:/root/.cache/huggingface
       - vllm-cache:/root/.cache/vllm
-    gpus: all
+    # Long-form gpus syntax: the `gpus: all` shorthand fails compose config
+    # validation on older compose releases (observed on Docker Desktop v2.32).
+    gpus:
+      - driver: nvidia
+        count: all
     ipc: host
     restart: unless-stopped
 

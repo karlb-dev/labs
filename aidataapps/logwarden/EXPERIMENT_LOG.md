@@ -421,3 +421,71 @@ place and receive a later disposition.
   39 unit tests in 14 files, and telemetry reconciliation over 252 journal
   records plus 66 raw artifacts
   `8ffc7bd73a43d50d64113cabfe8fc9f0e70db105b0271acd308230cc6c89c505`.
+
+- 2026-08-23T04:10:28.290Z — LW-0 run initialized: logwarden-smoke-20260823T041027Z; manifest=dfa2aa4cb8ae5cfacc50e8eeb7b000068be080ff9d1114f376a66ccb1c00e979.
+
+- 2026-08-23T04:20:00.000Z — Mac profile established on branch
+  `aidataapps-logwarden-mac` (docs/MAC_PROFILE.md). Foundation reproduced on
+  Apple Silicon (M4 Max, 48 GB): SQL Server 2025 FTS image (17.0.4075.5) built
+  and healthy under Docker Desktop Rosetta amd64 emulation with
+  MSSQL_MEMORY_LIMIT_MB=4096; run logwarden-smoke-20260823T041027Z reached
+  doctor disposition PASS (exact vector, full-text, XE session, Query Store,
+  two-principal permission matrix) and 8/8 SQL integration tests. Serving
+  plane: Azure Foundry Local 0.10.3 pinned to :8010; qwen3-4b-generic-gpu:2
+  passed a deterministic decision canary (~60 tok/s warm, think_strip repair);
+  qwen3-embedding-0.6b-generic-gpu:1 returned 1024-dimension embeddings.
+  Deviations recorded in docs/MAC_PROFILE.md; base compose.yaml gpus stanza
+  rewritten to long-form list syntax for older compose validators (semantics
+  unchanged). Mac-plane evidence is never comparable to the frozen campaign.
+
+- 2026-08-23T05:35:00.000Z — Mac-plane model bench completed over the frozen
+  16-episode mac-eval-v1 set (npm run mac:eval; rows and metrics in run
+  logwarden-smoke-20260823T041027Z). Six models, three runtimes, all
+  disclosed: Foundry ONNX (qwen2.5-0.5b, qwen3-4b, qwen3-8b, olmo-3-7b),
+  the Muse Glimmer 30B INT4 bundle via custom cache, and Gemma 4 E4B
+  (mlx-community OptiQ 4-bit) via mlx_lm.server after the Foundry catalog
+  proved to carry no Gemma. Headlines: Muse 87.5% exact-triple with 100%
+  class and 100% action at 16.4 tok/s under the §A-8 max-tokens override
+  (512-token budget ablation retained: 3/16 decisions); Gemma 4 E4B 75%
+  triple with 100% first-pass contract at 71.1 tok/s but dismissed the
+  unknown-signal abstention episode; qwen3-8b 50%, olmo-3-7b 37.5% (100%
+  first-pass), qwen3-4b 25%, qwen2.5-0.5b unusable. Transport findings for
+  the runtime: Qwen3 /no_think must ride every user turn; Muse needs
+  final-channel (to=user) extraction; catalog models over-escalate against
+  the action rubric. Gemma 4 12B blocked: all MLX conversions declare
+  gemma4_unified, unsupported by mlx-lm 0.31.3. Mac-plane development
+  evidence only; never comparable to the frozen campaign.
+
+- 2026-08-23T05:55:00.000Z — Merged Colab commits through 2987b41 (runbook
+  corpus, scenario catalog, read-only tool boundary with msdb signed proxy)
+  into the mac branch and revalidated the mac plane: npm run check 38/38,
+  migrations 017–023 and server 002–006 applied, doctor PASS, SQL
+  integration 8/8, tool-security gate PASS (7 tools, 9 positive, 11
+  negative; gate needed one seeded LogWardenWorkload backup for its
+  msdb-history positive case). Two mac fixes: models-mac test updated for
+  the -mlx profile keys, and database-checkpoint falls back to docker cp
+  when the volume mountpoint is not host-visible (Docker Desktop);
+  backup + restore-test round-trip passes with DBCC CHECKDB on both
+  databases.
+- 2026-08-23T06:15:20Z — Merged the five Mac/Foundry/report commits through
+  `725cdae` into the Colab working branch after the injector checkpoint. The
+  merge preserves the platform-separated Foundry/MLX registry, Apple Silicon
+  Docker/Rosetta profile, 16-episode development harness, six-model retained
+  rows, and row-derived HTML report. Colab validation passes Compose config,
+  16 test files/44 tests, doctor, SQL integration 8/8, and the 9-positive/
+  11-negative tool gate. The doctor, SQL, and tool receipts are
+  `802aadaa2bd16872a2b3a5c6dddcac65149a92575c7a79ba3a2515ff6a0b25fe`,
+  `0334583c0d376b53776a0e65b2892d0ef6d4d372d2d22f8b4bae262908a151d2`,
+  and `f5965e712ba2edfe542ca767f042ecc29d81d985af3b85f8bdb6cb2e80de48cf`.
+  The committed report rebuilds byte-for-byte from its
+  retained data plus template and contains the full 6 x 16 grid. A first
+  backup invocation lacked the rootless `DOCKER_HOST` because the isolated
+  shell had not sourced `scripts/runtime-env.sh`; it changed no database and
+  produced no receipt. The documented invocation then passed backup and full
+  restore/CHECKDB with receipt
+  `20a92098906ac63588ce951ce15e21d3ec932ca10f4d81beb504cffbfc4a9a18`.
+  Foundry Local is not installed on this Linux VM and was intentionally not
+  installed or benchmarked now: per the user-directed ordering, any Foundry
+  canary follows the governed local-model campaign and remains a distinct,
+  non-comparable development plane. Before such a run, its harness must meet
+  the same raw-response and phase telemetry gate as vLLM.
