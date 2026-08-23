@@ -26,6 +26,8 @@ export interface ModelCallContext {
   jobId?: number;
   episodeId?: string;
   attemptId?: number;
+  traceId?: string;
+  parentSpanId?: string;
 }
 
 export interface GatewayCallOptions {
@@ -35,6 +37,7 @@ export interface GatewayCallOptions {
   decode: Record<string, unknown>;
   toolRegistry?: unknown;
   responseSchema?: unknown;
+  responseFormat?: unknown;
   journal: FileTelemetryJournal;
   runDirectory: string;
   context?: ModelCallContext;
@@ -58,7 +61,7 @@ export interface GatewayAttemptEvidence {
   metadataPath: string;
   endpoint: string;
   startedAtUtc: string;
-  requestWriteFinishedAtUtc: null;
+  requestWriteFinishedAtUtc: string | null;
   responseHeadersAtUtc: string | null;
   firstContentAtUtc: string | null;
   bodyFinishedAtUtc: string | null;
@@ -147,7 +150,7 @@ export async function callOpenAiCompatibleModel(options: GatewayCallOptions): Pr
         model: options.model,
         messages: options.messages,
         stream: false,
-        response_format: { type: "json_object" },
+        ...(options.responseFormat === undefined ? {} : { response_format: options.responseFormat }),
         ...options.decode,
       };
       const requestBody = Buffer.from(canonicalJson(requestObject));
@@ -156,6 +159,7 @@ export async function callOpenAiCompatibleModel(options: GatewayCallOptions): Pr
       const responsePath = `${rawBase}/response.bin`;
       const metadataPath = `${rawBase}/metadata.json`;
       await atomicWrite(requestPath, requestBody);
+      const requestWriteFinishedAtUtc = new Date().toISOString();
       await options.journal.record("point", "model.request.durable", {
         ...context, traceId: root.traceId, parentSpanId: root.spanId,
       }, { operationId, clientRequestId, retryOrdinal, path: requestPath, bytes: requestBody.length, sha256: sha256(requestBody) });
@@ -173,6 +177,7 @@ export async function callOpenAiCompatibleModel(options: GatewayCallOptions): Pr
         retryOrdinal,
         clientRequestId,
         spanId: attemptSpan.spanId,
+        requestWriteFinishedAtUtc,
         timeoutMs,
         maxResponseBytes,
         fetchImpl,
@@ -258,6 +263,7 @@ async function executeAttempt(input: {
   retryOrdinal: number;
   clientRequestId: string;
   spanId: string;
+  requestWriteFinishedAtUtc: string;
   timeoutMs: number;
   maxResponseBytes: number;
   fetchImpl: typeof fetch;
@@ -377,7 +383,7 @@ async function executeAttempt(input: {
     metadataPath: input.metadataPath,
     endpoint: input.endpoint,
     startedAtUtc,
-    requestWriteFinishedAtUtc: null,
+    requestWriteFinishedAtUtc: input.requestWriteFinishedAtUtc,
     responseHeadersAtUtc: headersAtUtc,
     firstContentAtUtc,
     bodyFinishedAtUtc,

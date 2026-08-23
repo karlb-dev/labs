@@ -207,6 +207,23 @@ async function seedControlMetadata(pool: sql.ConnectionPool, run: RunManifest): 
         VALUES('primary-json-v1', @hash, @json);
     `);
 
+  const primaryDecode = {
+    temperature: 0,
+    top_p: 1,
+    seed: 0,
+    max_tokens: 900,
+    stream: false,
+    transport: "structured_json",
+  };
+  await pool.request()
+    .input("hash", sql.Char(64), hashJson(primaryDecode))
+    .input("json", sql.NVarChar(sql.MAX), canonicalJson(primaryDecode))
+    .query(`
+      IF NOT EXISTS (SELECT 1 FROM control.decode_configs WHERE decode_config_id = 'primary-json-v2')
+        INSERT control.decode_configs(decode_config_id, decode_hash, requested_json)
+        VALUES('primary-json-v2', @hash, @json);
+    `);
+
   const campaignIdentity = {
     name: "logwarden-tier1-building",
     tier: run.campaign,

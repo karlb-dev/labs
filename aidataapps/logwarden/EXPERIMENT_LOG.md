@@ -603,3 +603,58 @@ place and receive a later disposition.
   SQL 8/8 `64e45aa7f64b7caf466d92182ced84c4954eda6e68b16ec985b10f6959297911`,
   and tool security 9 positive/11 negative
   `c463035983b16e85e4da6e8d1f43efe30d99b492b18a6c8ea5aae06508f218a5`.
+- 2026-08-23T07:26:00Z — Implemented the Tier-1 bounded multi-turn agent loop
+  and evidence schema. Migration 028
+  (`2635473a5e87e59a0093a767c0889d6583cfa70bee7d4eb0149ff9958283d657`)
+  adds immutable loop budgets/counters plus full/transmitted tool-result
+  provenance and retrieval linkage. The primary contract is user-turn-only,
+  omits both the OpenAI `tools` field and guided `response_format`, uses four
+  model turns/four tools/two same-tool calls/4,000 characters per result/12,000
+  total/180 seconds, and commits no SQL transaction across inference. Prompt,
+  model/retry, registry, argument, policy, tool, cache, snapshot, retrieval,
+  decision-validation, and decision-persistence phases now exist in both the
+  hash-chained journal and SQL; all action rows remain non-executing proposals.
+  The governed 900-token decode is a new `primary-json-v2` row, leaving the
+  earlier 512-token development identity immutable. Future standard packets
+  expose all seven registry tools; replay resolves absent argument-keyed
+  snapshots as scored deterministic misses.
+- 2026-08-23T07:26:00Z — The first agent-loop attempt stopped before model
+  traffic because `READPAST` is invalid with the control database's RCSI mode
+  unless a locking read is explicit (failure receipt
+  `9319b01b3c4fa0b673ee649687cab668ae190eb6a17cb7b33a3831bf07c2de87`).
+  Migration 029
+  (`e1cce5a645db7acb5dc451ee8f8859c729468bf70a5487700b81b18040ec2af8`)
+  added `READCOMMITTEDLOCK`. A second pre-model attempt then exposed that a
+  pooled connection retains SERIALIZABLE after an earlier evidence transaction
+  (failure receipt
+  `b63f397a76a62b55d21d67c3665236389a0eee554e1cd19fd57cbd9cca4a7afd`).
+  Migration 030
+  (`a4ca4fef03aa8da19abebf460464c5ff181785af38821a0968f0d54df6ac7fee`)
+  makes the claim procedure normalize itself to READ COMMITTED. The queue
+  concurrency/recovery integration cases then passed. Impact: both failures
+  occurred before inference; the adjustments remove connection-history
+  dependence without changing queue order, lease semantics, or scientific
+  inputs.
+- 2026-08-23T07:26:00Z — The first post-queue loop completed its three-turn
+  hybrid/cache path, but the administrative audit incorrectly compared the
+  UTF-8 application tool hash with SQL `HASHBYTES` over `nvarchar` UTF-16
+  (failure receipt
+  `67761af37bfee0685654597e2dfa3a3844d6212d9796c49e81856e21c252a8dd`).
+  The audit now reloads every raw tool file and rehashes raw/transmitted bytes
+  in JavaScript. The strengthened eight-route gate passes with receipt
+  `8449a07300d761fdac156962f8c9b7056f48f8bd5c96d825745b82ce3ddc10b8`:
+  17 model turns, 13 tool calls, three safe decisions, exact repeated-call
+  cache behavior, one deliberate snapshot miss, unknown-tool/invalid-argument/
+  invalid-contract/same-tool/model-turn rejection, zero live actions, zero
+  leases left, and closed/link-complete traces. Its two uncached hybrid calls
+  produced exactly two real CUDA embedding requests, two successes, 17 prompt
+  tokens, two latency observations, zero errors, and zero preemptions. All
+  19 test files/64 tests pass; SQL is 8/8
+  (`407d3147ac4fe8898475928f7debb83e878bb0f0500a267ac579192db31ad3b2`),
+  tool security is 9 positive/11 negative
+  (`fca0eaa2e865c00082141f98527c85b9e6f83f77caeae10a2254c0f4a879126f`),
+  and doctor is PASS
+  (`2a6f74acb8e0c1a35c06faa437e3565b13df1be26d934823a84ca50bd6466548`).
+  Before/after whole-system samples are
+  `e4216028fa649ead431ba759f815c46160cdd929af20ba3cd0b92e508b383872`
+  and `fc17f756b3268d579923bb153326e4519637e602921c6d4fea1403c315b6afef`.

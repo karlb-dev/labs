@@ -25,6 +25,7 @@ const schemas = {
 } as const;
 
 export type ToolName = keyof typeof schemas;
+export const toolNames = Object.freeze(Object.keys(schemas).sort() as ToolName[]);
 
 const registryToolSchema = z.object({
   procedure: z.string().regex(/^(?:agent|kb|ops)\.[A-Za-z][A-Za-z0-9_]*$/),
@@ -45,7 +46,7 @@ const defaultPath = fileURLToPath(new URL("../config/tools.json", import.meta.ur
 
 export function loadToolRegistry(path = defaultPath): ToolRegistry {
   const registry = registrySchema.parse(JSON.parse(readFileSync(path, "utf8")));
-  const expected = Object.keys(schemas).sort();
+  const expected = [...toolNames];
   const actual = Object.keys(registry.tools).sort();
   if (canonicalJson(expected) !== canonicalJson(actual)) throw new Error(`Tool registry/schema mismatch: expected ${expected.join(",")}; got ${actual.join(",")}`);
   for (const name of expected as ToolName[]) {
@@ -56,6 +57,25 @@ export function loadToolRegistry(path = defaultPath): ToolRegistry {
     }
   }
   return registry;
+}
+
+export function isToolName(value: string): value is ToolName {
+  return Object.hasOwn(schemas, value);
+}
+
+export function promptToolSchemas(
+  registry = loadToolRegistry(),
+  allowed: readonly ToolName[] = toolNames,
+): Array<{ name: ToolName; arguments: string[]; modes: string[]; mutates: false }> {
+  const allowedSet = new Set(allowed);
+  return toolNames
+    .filter((name) => allowedSet.has(name))
+    .map((name) => ({
+      name,
+      arguments: [...registry.tools[name]!.arguments],
+      modes: [...registry.tools[name]!.modes],
+      mutates: false as const,
+    }));
 }
 
 export function canonicalToolArguments(name: ToolName, input: unknown): Record<string, unknown> {

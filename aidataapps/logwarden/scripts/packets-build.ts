@@ -5,6 +5,7 @@ import { canonicalJson, hashJson } from "../src/hash.js";
 import { buildIncidentPacket, packetLeakageFindings, type PacketSourceEvent } from "../src/packets.js";
 import { connect } from "../src/repository.js";
 import { atomicWrite, resolveRunDirectory } from "../src/run.js";
+import { loadToolRegistry, toolNames, toolRegistrySha256 } from "../src/tools.js";
 
 interface RunManifest { runId: string }
 interface EpisodeRow {
@@ -40,6 +41,7 @@ const config = loadConfig();
 const runDirectory = resolveRunDirectory();
 const run = JSON.parse(await readFile(`${runDirectory}/run.json`, "utf8")) as RunManifest;
 const scheduleName = argument("--schedule") ?? "smoke-v1";
+const toolRegistry = loadToolRegistry();
 const pool = await connect(config.databases.lab, config.databases.controlName);
 const episodes = await pool.request()
   .input("run", sql.VarChar(120), run.runId)
@@ -87,7 +89,7 @@ try {
       clientAppName: event.client_app_name,
       fingerprint: event.event_fingerprint,
     }));
-    const availableTools = ["get_recent_incident_counts", "runbook_search"];
+    const availableTools = [...toolNames];
     const packet = buildIncidentPacket({
       episodeId: episode.episode_id,
       correlationToken: request.correlationToken,
@@ -109,7 +111,12 @@ try {
       canonicalEventIds: sourceEvents.map((event) => event.canonicalEventId),
       sourceSetSha256: packet.hashes.sourceSetSha256,
     };
-    const toolManifest = { schemaVersion: 1, registryVersion: "tools-v1-building", availableTools };
+    const toolManifest = {
+      schemaVersion: 1,
+      registryVersion: toolRegistry.registryVersion,
+      registrySha256: toolRegistrySha256(toolRegistry),
+      availableTools,
+    };
     const priorPacket = await pool.request()
       .input("episode", sql.VarChar(120), episode.episode_id)
       .query<{ packet_sha256: string }>("SELECT packet_sha256 FROM ingest.incident_packets WHERE episode_id=@episode;");

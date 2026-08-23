@@ -92,6 +92,22 @@ stores raw tool output before validation and retains query text/hash/vector,
 component ranks, candidate and returned counts, RRF score, SQL latency, and
 trace identity in both SQL and the file journal.
 
+The bounded agent loop likewise claims and commits queue work before inference
+and uses no SQL transaction across a model, embedding, or tool request. The
+primary transport has no system message, no OpenAI `tools` parameter, and no
+guided `response_format`; the byte-identical operating contract and remaining
+budget are in user turns. Prompt assembly, each model operation and retry,
+tool policy/canonicalization/execution/cache result, snapshot hit or miss,
+decision validation, and decision persistence are closed trace spans and
+ordered `agent.agent_steps`. Request/response bodies and full tool results are
+durable before parsing or validation; transmitted tool JSON is separately
+hashed and capped at 4,000 characters, with 12,000 characters total. SQL stores
+the raw artifact path/hash/size, transmitted hash/size, retrieval identity,
+cache flag, snapshot-miss flag, validation rows, loop counters, budget, and
+terminal disposition. Queue claims normalize to locking READ COMMITTED under
+RCSI, so pooled sessions left at SERIALIZABLE by evidence transactions cannot
+invalidate `READPAST` or create a hidden dependence on connection history.
+
 ## Agent and tool evidence
 
 Every semantic operation is an `agent.agent_steps` row and a trace span. Raw
