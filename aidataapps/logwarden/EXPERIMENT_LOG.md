@@ -1042,3 +1042,15 @@ place and receive a later disposition.
   only; no service setting, model output, prompt, packet, decode, arm,
   threshold, or score changed. The false-positive canaries remain retained and
   the required warm port gate will be rerun.
+- 2026-08-23T11:47:46Z — Muse warm port validation passed twice on the exact
+  frozen service identity. Each pass completed 9/9 requests with 9 stop
+  finishes, zero length/error/preemption outcomes, 6,738 prompt tokens, 2,331
+  generation tokens, six of six identical repeated content hashes
+  (`0e8149ae6f969b65ca9a18c9adb860806469809e98b82fe390939ad3d5343255`),
+  and 81,722 MiB resident GPU memory. Explicit fatal-log signatures were empty
+  and the post-log container inspection remained running. Gate receipts:
+  `4fd5df4af5c5fe6a3d73cfa759bb2de372e59e027687ad144b88f15952a6ad56`
+  and
+  `4fa35f3fd6dba3cf83d3cdf07b087e753e72e2040beedfe6ecce623af2ac16b3`.
+  The cold-start result remains the separately retained pre-request tokenizer
+  race; the settled-cache repeat establishes the usable governed residency.
