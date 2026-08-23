@@ -1,6 +1,6 @@
 # Lab 02 ModelPrint — GPU-to-CPU handoff
 
-Updated: 2026-08-23 15:15 UTC
+Updated: 2026-08-23 16:31 UTC
 
 This is the authoritative transfer guide for continuing Lab 02 without the
 GPU VM. Read `/content/labs/aidataapps/resume.md` first when operating in
@@ -18,12 +18,15 @@ complete. No chat-model or embedding-model server is needed for the remaining
 work because all required vectors and likelihoods are persisted in SQL and the
 run artifacts.
 
-The clean-stop snapshot at the end of this document will record how many of
-the 13 attribution-probe representations and five chunking variants completed before
-the VM checkpoint. Every completed probe representation has an atomic
+The VM stopped at a clean, verified boundary. All five chunking variants are
+complete. Four of 13 attribution-probe representations are complete (Qwen
+raw/masked and BGE raw/masked), leaving nine for CPU. Every completed probe representation has an atomic
 `manifests/probe-result-*.pkl` checkpoint; `--resume-completed` validates its
-inputs/configuration before skipping it. ANN was deliberately not started at
-the CPU handoff boundary because its full matrix should run uninterrupted.
+inputs/configuration before skipping it. The probe process exited while starting
+the fifth representation, before another result checkpoint, and left no
+temporary artifact. OOD and ANN were deliberately not started; ANN's full
+matrix should run uninterrupted. There are no active evaluation/search jobs,
+and all chat/embedding GPU services are stopped.
 
 ## Authoritative identifiers
 
@@ -57,13 +60,15 @@ Do not download the entire Drive run mirror. Download:
    The run-state archive includes raw governed JSONL, manifests, atomic probe
    checkpoints, tables, metrics, reports, figures, environment evidence, and
    logs; it excludes database exports and redundant watchdog checkpoints.
-2. Exactly one native backup and its adjacent `.sha256` and `.json` sidecars
-   from `MyDrive/aidataapps/lab02/runs/modelprint-full-20260822T230728Z/database/`.
-   Use the exact filename recorded in `DATABASE_FILES.json` in the compact
-   handoff folder. Do not download the older `.bak` files.
-3. Optionally, download the one BACPAC and its `.sha256`/`.json` sidecars named
-   in `DATABASE_FILES.json`. The native backup is the preferred full-fidelity
-   continuation artifact; the BACPAC is a portability fallback.
+2. Exactly these three native-backup files from
+   `MyDrive/aidataapps/lab02/runs/modelprint-full-20260822T230728Z/database/`:
+   `modelprint-full-20260822T230728Z-20260823T155623Z.bak`, its `.sha256`, and
+   its `.json`. Do not download the older `.bak` files.
+3. Optionally, download `ModelPrint-20260823T155430Z.bacpac` and its `.sha256`
+   and `.json` sidecars from that same database directory. The native backup
+   is the preferred full-fidelity artifact; the BACPAC is a tested portability
+   fallback. `DATABASE_FILES.json` repeats these exact names, byte counts, and
+   hashes so the transfer can be checked without relying on this prose.
 
 Prefer cloning the GitHub branch. `repository.bundle` in the compact handoff
 is an offline fallback, not an additional requirement when GitHub is reachable.
@@ -174,6 +179,12 @@ Alternatively, from the Mac, import the BACPAC into an empty target database:
 npm run db:import-bacpac -- --bacpac /path/to/the-recorded-file.bacpac
 ```
 
+The import wrapper verifies the BACPAC checksum, imports only into a safe new
+database name, then explicitly sets compatibility level 170 and
+`PREVIEW_FEATURES=ON` before validation. This matters because BACPAC does not
+carry that database-scoped preview setting. This exact BACPAC was test-imported
+on the VM; the resulting migrations, campaigns, and key row counts all passed.
+
 The native restore script intentionally refuses to replace an existing
 `ModelPrint` database. The BACPAC import also expects an empty/nonexistent
 target. Keep the downloaded database export until the final reproduction gate
@@ -198,23 +209,14 @@ CPU stages:
    npm run evaluate:probes -- --jobs "$(sysctl -n hw.logicalcpu 2>/dev/null || getconf _NPROCESSORS_ONLN)" --resume-completed
    ```
 
-2. Run chunk evaluation only if `metrics/chunk-retrieval.json` is absent. This
-   evaluator currently commits SQL results per segmenter but writes its final
-   aggregate artifacts only after all five segmenters, so prefer the clean
-   completed chunk snapshot transferred from this VM.
-
-   ```bash
-   npm run evaluate:chunks -- --workers 3
-   ```
-
-3. After probes finish, run OOD. It consumes persisted controls/vectors and
+2. After probes finish, run OOD. It consumes persisted controls/vectors and
    probe checkpoints; no inference server is required.
 
    ```bash
    npm run evaluate:ood
    ```
 
-4. Run the full ANN benchmark after chunks, without another SQL-heavy job in
+3. Run the full ANN benchmark without another SQL-heavy job in
    parallel. It sweeps both frozen spaces, all governed corpus prefixes, 1,000
    queries, `k=1,5,10,20`, and oversampling `1,2,5,10`. It is not checkpointed
    within a prefix sweep, so let it finish uninterrupted.
@@ -223,7 +225,7 @@ CPU stages:
    npm run ann:benchmark
    ```
 
-5. Generate reports, verify the API/build/tests, create final exports, and
+4. Generate reports, verify the API/build/tests, create final exports, and
    archive/mirror. `run:archive` regenerates the inventory after all outputs
    exist.
 
@@ -238,7 +240,7 @@ CPU stages:
    npm run repro
    ```
 
-6. `npm run repro` verifies the artifact inventory, reconstructs prediction
+5. `npm run repro` verifies the artifact inventory, reconstructs prediction
    metrics, restores the checksum-valid native backup to a temporary database,
    regenerates the headline report against that restore, byte-diffs it, and
    removes the temporary database. Commit/push and create the final result tag
@@ -249,21 +251,50 @@ permutations, bootstraps, query count, prefixes, representations, or suites
 merely to shorten a local run. Wall time on a laptop with fewer than 48 logical
 CPUs can be several times longer than the Colab timings.
 
+Chunk evaluation is already complete and must not be rerun. Its final aggregate
+artifacts and SQL rows are present in both the run-state archive and database.
+
 ## Clean-stop state and exact transfer files
 
-This section is refreshed after the active probe and chunk evaluators reach
-their clean boundary and after the final backup/BACPAC/checksum cycle. Until it
-contains exact filenames and hashes, use `inprogress_lab2.md` only for live
-monitoring and do not begin the transfer.
+This is the exact durable boundary. `TRANSFER_MANIFEST.json` in the compact
+handoff records the final Git tip and run-state archive checksum, avoiding a
+self-referential hash inside the archive itself.
 
-- Git head: pending final CPU-handoff milestone
-- completed probe result checkpoints: pending clean stop
-- chunk status: pending clean stop
-- ANN status: intentionally pending
-- OOD status: pending
-- native backup: pending final clean-stop export
-- BACPAC: pending clean-stop export
-- compact handoff manifest: pending
+- probes: 4/13 representations complete; nine remain. Atomic result-checkpoint
+  SHA-256 values are Qwen raw
+  `70dc4d5fcfbc3bfea87725532c450d96b31f2646224caf17919265147940ede2`,
+  Qwen masked
+  `d8e1fd15890372d022167467346beeaa394a4c1cb2cd39c93bd9f65320a5e7e3`,
+  BGE raw
+  `684bc24914a83b9e6d4fc56da4a3248a64090c5c1ecd0ea0a0d5d8193602e4fa`,
+  and BGE masked
+  `48ded96bc7ee7199fc25e5ff29b53e6ad974f2f2c12612fe953ebadf24024dbb`.
+- chunks: 5/5 complete, 13,584 predictions and 287,470 neighbors. Metrics,
+  predictions, and neighbors SHA-256 values are
+  `0aabf33a4d1800bb6cb0d9e9127fbbd3f8f3b4c6b9227f78a8dc3f7e6b6c4ba8`,
+  `a572fae5bc3f564f0a07ac98a0916ff8f1b916215a7c20f051e256d5948b10b3`,
+  and `3e500b8c68734b2c93ef6166d3fa38b4db9965533ab855da6e9d6f377366152f`.
+- ANN: intentionally pending, zero benchmark runs; OOD: pending.
+- SQL state: no active search run, 132 metric rows, 21 search runs, 113
+  prediction runs, and zero attribution models (probe SQL persistence occurs
+  after all representations finish).
+- native backup: `modelprint-full-20260822T230728Z-20260823T155623Z.bak`,
+  4,264,128,512 bytes, SHA-256
+  `a315c1b3d81e9650d45250d3b84e90a2606b628c0e07844782cedb7734eb4278`.
+  It passed checksum validation, `RESTORE ... WITH CHECKSUM` into a fresh
+  database, and the full handoff validator; the temporary database was dropped.
+- BACPAC: `ModelPrint-20260823T155430Z.bacpac`, 5,188,484,189 bytes, SHA-256
+  `1dddedcc8211717e6a831dfe82b5eb5777002260ef441622ba728bcb9c9d8bfd`.
+  It passed checksum and full ZIP/BCP integrity checks, imported into a fresh
+  database in 3:14, passed validation after the required preview setup, and the
+  temporary database was dropped.
+- migration/schema gate: PASS. A fresh five-migration database matches live
+  across 57 tables, 454 columns, 139 index-column records, 37 foreign-key
+  records, and 61 constraints with no differences.
+- compact handoff:
+  `MyDrive/aidataapps/lab02/cpu-handoff/modelprint-full-20260822T230728Z/`.
+  Verify its contents with `TRANSFER_SHA256.txt`; exact archive size/hash and
+  Git head are in `TRANSFER_MANIFEST.json`.
 
 ## Proven completed evidence that must remain unchanged
 

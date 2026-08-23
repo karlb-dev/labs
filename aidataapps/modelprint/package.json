@@ -43,6 +43,7 @@
     "reports": "./scripts/python.sh analysis/build_reports.py",
     "db:backup": "./scripts/export-database.sh backup",
     "db:verify-handoff": "node --import tsx scripts/verify-handoff-database.ts",
+    "db:prepare-handoff": "node --import tsx scripts/prepare-handoff-database.ts",
     "db:audit-schema": "./scripts/audit-schema-parity.sh",
     "db:restore-handoff": "./scripts/restore-handoff.sh",
     "db:import-bacpac": "./scripts/import-bacpac.sh",

@@ -32,7 +32,14 @@ if [[ -z "$expected_sha" && -f "$backup.sha256" ]]; then expected_sha="$(awk 'NR
 sql_container="${SQL_CONTAINER_NAME:-}"
 if [[ -z "$sql_container" ]]; then sql_container="$(docker compose ps -q sqlserver)"; fi
 [[ -n "$sql_container" ]] || { echo "SQL Server container is not running; start it with docker compose up -d sqlserver." >&2; exit 3; }
-docker inspect "$sql_container" >/dev/null
+if [[ "${CONTAINER_RUNTIME_PROFILE:-}" == "colab-rootless" ]]; then
+  # The nested daemon can occasionally leave the container-inspect endpoint
+  # waiting even while SQL and the volume are healthy. Rootless copies already
+  # rely on the persisted mount metadata, so validate that exact mapping here.
+  container_mount_source "$sql_container" /var/opt/mssql >/dev/null
+else
+  docker inspect "$sql_container" >/dev/null
+fi
 container_backup="/var/opt/mssql/data/modelprint-handoff-${actual_sha:0:16}.bak"
 copy_to_container_file "$backup" "$sql_container" "$container_backup"
 cleanup() { remove_container_file "$sql_container" "$container_backup" >/dev/null 2>&1 || true; }

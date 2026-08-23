@@ -32,4 +32,5 @@ if [[ -z "$expected_sha" && -f "$bacpac.sha256" ]]; then expected_sha="$(awk 'NR
   /TargetServerName:"${SQLSERVER_HOST:-127.0.0.1},${SQLSERVER_PORT:-1433}" /TargetDatabaseName:"$target" \
   /TargetUser:sa /TargetPassword:"$MSSQL_SA_PASSWORD" /TargetEncryptConnection:False /TargetTrustServerCertificate:True \
   /p:CommandTimeout=3600 /p:LongRunningCommandTimeout=0
+MSSQL_DATABASE="$target" npm run db:prepare-handoff
 MSSQL_DATABASE="$target" MODELPRINT_GIT_HEAD="$(git rev-parse HEAD)" npm run db:verify-handoff

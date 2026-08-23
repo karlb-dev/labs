@@ -1,5 +1,6 @@
 import { basename } from "node:path";
 import { readFile, readdir, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
@@ -11,6 +12,10 @@ type ReconciliationRow = { migration_id: string; recorded_sha256: string; source
 
 const runDirectory = resolveRunDirectory();
 const runId = basename(runDirectory);
+const gitHead = process.env.MODELPRINT_GIT_HEAD ?? (() => {
+  try { return execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(); }
+  catch { return null; }
+})();
 const migrationsDirectory = fileURLToPath(new URL("../db/migrations/", import.meta.url));
 const migrationNames = (await readdir(migrationsDirectory)).filter((name) => name.endsWith(".sql")).sort();
 const sourceMigrations = new Map<string, string>();
@@ -30,6 +35,11 @@ try {
     CONVERT(varchar(128),SERVERPROPERTY('Edition')) edition,d.compatibility_level,
     (SELECT value FROM sys.database_scoped_configurations WHERE name='PREVIEW_FEATURES') preview_features
     FROM sys.databases d WHERE d.name=DB_NAME()`);
+  const serverState = server.recordset[0] as { product_version: string; compatibility_level: number; preview_features: boolean };
+  const serverMajor = Number(serverState.product_version.split(".")[0]);
+  if (!Number.isInteger(serverMajor) || serverMajor < 17) failures.push(`SQL Server 2025 or newer is required; found ${serverState.product_version}`);
+  if (Number(serverState.compatibility_level) !== 170) failures.push(`database compatibility level must be 170; found ${serverState.compatibility_level}`);
+  if (serverState.preview_features !== true) failures.push("database PREVIEW_FEATURES must be enabled for the governed ANN continuation");
   const recorded = await pool.request().query<MigrationRow>("SELECT migration_id,migration_sha256 FROM dbo.schema_migrations ORDER BY migration_id");
   const hasReconciliations = await pool.request().query<{ present: number }>("SELECT CASE WHEN OBJECT_ID(N'dbo.schema_migration_reconciliations',N'U') IS NULL THEN 0 ELSE 1 END present");
   const reconciliations = hasReconciliations.recordset[0]?.present
@@ -77,7 +87,7 @@ try {
   if (Number(runState.active_search_runs) !== 0) failures.push(`${runState.active_search_runs} search run(s) are still active`);
 
   const result = { schemaVersion: 1, checkedAt: new Date().toISOString(), status: failures.length ? "FAIL" : "PASS", runId,
-    gitHead: process.env.MODELPRINT_GIT_HEAD ?? null, server: server.recordset[0], migrations: migrationAudit, campaigns, runState, failures };
+    gitHead, server: server.recordset[0], migrations: migrationAudit, campaigns, runState, failures };
   await writeFile(`${runDirectory}/environment/database-handoff-validation.json`, `${JSON.stringify(result, null, 2)}\n`);
   console.log(JSON.stringify(result, null, 2));
   if (failures.length) process.exitCode = 2;
