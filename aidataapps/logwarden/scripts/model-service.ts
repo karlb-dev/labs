@@ -15,7 +15,8 @@ const selectedKey = valueAfter("--profile") ?? process.env.MODEL_PROFILE ?? regi
 const project = process.env.COMPOSE_PROJECT_NAME ?? "aidataapps-logwarden";
 const nested = process.env.CONTAINER_RUNTIME_PROFILE === "colab-rootless";
 if (nested && !process.env.DOCKER_HOST) process.env.DOCKER_HOST = "unix:///run/user/1000/docker.sock";
-const port = Number(process.env.CHAT_PORT ?? new URL(process.env.CHAT_BASE_URL ?? "http://127.0.0.1:8010/v1").port ?? 8010);
+const configuredUrlPort = new URL(process.env.CHAT_BASE_URL ?? "http://127.0.0.1:8010/v1").port;
+const port = Number(process.env.CHAT_PORT ?? (configuredUrlPort === "" ? "8010" : configuredUrlPort));
 const maxNumSeqs = Number(process.env.LOGWARDEN_CHAT_MAX_NUM_SEQS ?? "64");
 const containerName = process.env.CHAT_CONTAINER_NAME ?? chatContainerName(project);
 const runtime: ChatRuntimeIdentity = {

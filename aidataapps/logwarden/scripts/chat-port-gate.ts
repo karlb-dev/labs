@@ -88,7 +88,8 @@ try {
     if (!effectiveSamplingParamsLine.includes(expected)) throw new Error(`Effective SamplingParams does not contain ${expected}`);
   }
 
-  const contentHashes = calls.slice(packets.length - 1).map((result) => sha256(result.attempts.at(-1)!.content!));
+  const repeatedCalls = [calls[0]!, ...calls.slice(packets.length)];
+  const contentHashes = repeatedCalls.map((result) => sha256(result.attempts.at(-1)!.content!));
   const exactMatches = contentHashes.filter((hash) => hash === contentHashes[0]).length;
   const exactMatchRate = exactMatches / contentHashes.length;
   await created.journal.record("point", "state.chat_port_gate_passed", {
