@@ -67,8 +67,8 @@ try {
     rawDirectory,
     telemetryJournalPath: created.path,
     service: result.service,
-    health: result.health,
-    models: result.models,
+    health: endpointSnapshotForReceipt(result.health),
+    models: endpointSnapshotForReceipt(result.models),
     gpu: result.gpu,
     metrics: result.metrics,
     metricDelta: result.metricDelta,
@@ -78,7 +78,9 @@ try {
     disposition: "PASS",
   };
   const receipt = { ...receiptBody, receiptSha256: hashJson(receiptBody) };
-  await atomicWrite(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+  const serializedReceipt = `${JSON.stringify(receipt, null, 2)}\n`;
+  await atomicWrite(`${rawDirectory}/receipt.json`, serializedReceipt);
+  await atomicWrite(receiptPath, serializedReceipt);
   console.log(JSON.stringify({
     runId: run.runId,
     gateId,
@@ -317,6 +319,11 @@ function validateHealthAndModels(
   if (ids.length !== 1 || ids[0] !== profile.modelId) {
     throw new Error(`Embedding models endpoint did not expose exactly ${profile.modelId}`);
   }
+}
+
+function endpointSnapshotForReceipt<T extends { body: Buffer }>(snapshot: T): Omit<T, "body"> {
+  const { body: _body, ...evidence } = snapshot;
+  return evidence;
 }
 
 async function retainMetricSnapshot(

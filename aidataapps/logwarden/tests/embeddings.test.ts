@@ -84,6 +84,11 @@ describe("instrumented OpenAI-compatible embedding client", () => {
       data: [{ index: 0, embedding: [1, "NaN", 0] }],
       usage: { prompt_tokens: 2, total_tokens: 2 },
     }), 1, 3)).toThrow(/non-finite/);
+    expect(() => parseEmbeddingResponse(JSON.stringify({
+      model: "unexpected-model",
+      data: [{ index: 0, embedding: [1, 0, 0] }],
+      usage: { prompt_tokens: 2, total_tokens: 2 },
+    }), 1, 3, "expected-model")).toThrow(/response model/);
   });
 });
 

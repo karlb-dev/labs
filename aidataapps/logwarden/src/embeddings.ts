@@ -226,7 +226,7 @@ export async function callOpenAiCompatibleEmbeddings(options: EmbeddingCallOptio
         const parseStarted = performance.now();
         parseStartedAtUtc = new Date().toISOString();
         try {
-          const parsed = parseEmbeddingResponse(responseBody, options.inputs.length, options.dimensions);
+          const parsed = parseEmbeddingResponse(responseBody, options.inputs.length, options.dimensions, options.model);
           vectors = parsed.vectors;
           usage = parsed.usage;
         } catch (error) {
@@ -352,6 +352,7 @@ export function parseEmbeddingResponse(
   responseBody: Buffer | string,
   expectedCount: number,
   expectedDimensions: number,
+  expectedModel?: string,
 ): ParsedEmbeddingEnvelope {
   let envelope: EmbeddingEnvelope;
   try {
@@ -361,6 +362,9 @@ export function parseEmbeddingResponse(
   }
   if (!Array.isArray(envelope.data)) {
     throw new EmbeddingResponseError("response_envelope_invalid", "Embedding response is missing a data array");
+  }
+  if (expectedModel !== undefined && envelope.model !== expectedModel) {
+    throw new EmbeddingResponseError("response_envelope_invalid", `Embedding response model does not match ${expectedModel}`);
   }
   if (envelope.data.length !== expectedCount) {
     throw new EmbeddingResponseError("count_mismatch", `Expected ${expectedCount} embeddings, received ${envelope.data.length}`);

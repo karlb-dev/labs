@@ -44,6 +44,8 @@
     "gate:model-client": "vitest run tests/model-gateway.test.ts",
     "gate:model-client-sql": "node --import tsx scripts/model-client-gate.ts",
     "gate:embedding-port": "node --import tsx scripts/embedding-port-gate.ts",
+    "embeddings:build": "node --import tsx scripts/build-embeddings.ts",
+    "gate:retrieval": "node --import tsx scripts/retrieval-gate.ts",
     "secrets:rotate": "node --import tsx scripts/rotate-local-secrets.ts",
     "checkpoint:once": "./scripts/checkpoint-watchdog.sh --once",
     "checkpoint:watch": "./scripts/checkpoint-watchdog.sh --interval-seconds 1200",

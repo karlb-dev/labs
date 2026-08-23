@@ -522,3 +522,67 @@ place and receive a later disposition.
   gate journal records were hash-validated and inserted into SQL. The full
   suite now passes 17 files and 57 tests. This gate authorizes the bounded
   Qwen corpus embedding build, not a long chat-model campaign.
+- 2026-08-23T06:57:00Z — Strengthened the successful embedding port receipt
+  after the corpus preflight correctly found that an in-memory `Buffer` in the
+  health/model evidence did not rehash after JSON serialization. No corpus
+  request or SQL vector existed at that refusal. Raw bodies now remain only in
+  their hash-addressed files, while the receipt stores paths, sizes, and
+  hashes; an immutable copy also lives under the gate's raw directory. The
+  independently reloaded replacement receipt is
+  `d9f7b756c907a4aa9516a1c47875dec2a5e7d932b4bc4a721c93bb3e93492323`
+  and supersedes `90e15a999165c2848e000d25069884b9f453d0a416bd667ba344c9423140e36b`
+  as the corpus authorization. Impact: service results are unchanged; the
+  evidence envelope is now independently verifiable.
+- 2026-08-23T06:57:00Z — Added transactional migration 026
+  (`498e007b5b26ff8d25202c1a4be886a24411239154b24f077b7fe63a6ad5b99d`)
+  for per-vector input/request/response/operation/batch/run provenance. Its
+  first application compiled constraints in the same batch as new columns;
+  SQL Server rejected the not-yet-visible names and the whole migration rolled
+  back. Splitting column DDL from constraints with `GO` applied cleanly; no
+  partial schema or data existed. The 480 primary chunks were then embedded in
+  15 batches using frozen `chunk-content-v1` inputs and committed only after
+  raw response durability. Generation deltas are exactly 15 HTTP requests,
+  480 successful items, 23,736 prompt tokens, 480 latency observations, zero
+  errors, and zero preemptions.
+- 2026-08-23T06:57:00Z — Corpus verification deliberately stopped after all
+  rows committed when it first compared the service-vector hash to SQL's
+  float32 textual round trip (failure receipt
+  `d11fe35c33b40176b346db1239e2d791fc0fde86d5d05120e2eb21142fce05a8`).
+  A resume then exposed upper-case SQL `uniqueidentifier` rendering in a raw
+  metadata path (failure receipt
+  `76502bfdabebaaa6a0c5475752a7af097dff42a1c21ea69c6dffe4bc509e966b`).
+  The verifier now normalizes UUID presentation, preserves distinct source and
+  SQL-storage hashes, reloads all 15 request/response/metadata and batch
+  receipts, and measures conversion rather than requiring the two
+  serializations to hash alike. Final receipt
+  `bca6706cf683f265f61bff8e7f7abe0531bf8722afb36f479d29c66f7feca1aa`
+  validates 480 vectors/491,520 components. Worst float32 component delta is
+  `4.995651239902976e-9`, minimum cosine is
+  `0.9999999999999969`, and request latency p50/p95 is 36.843/41.932 ms.
+  Ordered input, service-vector, and SQL-storage set hashes are respectively
+  `eb3559f43fa413bc70d514924c57ea044b25ab2a0c1e97ee91593144216099fc`,
+  `012daefc3106442687f0842bf442e3ec1f37c1558e6f07dd354165034af54aa5`,
+  and `f8a929f0bc3f87ddf8a2edc4fe6406e52900da7f2759d2169800188817cf3d31`.
+  Impact: no vectors were regenerated or silently rewritten; the distinction
+  between service precision and SQL storage is explicit and bounded.
+- 2026-08-23T06:57:00Z — Added SQL full-text/exact-vector/hybrid RRF retrieval
+  with frozen candidate k=50 and RRF k=60, app-owned query embeddings, raw
+  result durability, and complete `kb.retrieval_runs/results` component-rank
+  evidence. Migration 027 hash is
+  `d4b803e4478322bab6fbef6011ac82723927698226450ac50613fe0d7a40e66c`.
+  The first 33-call gate completed but its administrative query grouped by a
+  vector column, which SQL forbids; read-only verification failed with receipt
+  `50e9b95aeb6d4d4392ecf65fa431300641b202d7718064e0f47e0346a45194b6`.
+  Aggregating by retrieval ID before joining the vector row fixed only the
+  audit. The replacement gate passed 11 queries across lexical, vector, and
+  hybrid with receipt
+  `f6a3b4aefbca5214beee3272566f5f01d696f4be3dcb922a9660db2ea86d1dfd`:
+  all three reached recall@5=1 and MRR=1 on these easy development canaries;
+  SQL p50 was 14.074, 72.502, and 75.022 ms respectively. This proves
+  mechanics, not hybrid lift; held-out packet evaluation remains required.
+  SQL retained 33 runs and 1,814 component rows; 192 telemetry records were
+  ingested. Regressions pass 18 files/60 tests, doctor
+  `c3cc8ced060215850572d50927d21cc02055159ac3bd0815335e8c9683a9316f`,
+  SQL 8/8 `64e45aa7f64b7caf466d92182ced84c4954eda6e68b16ec985b10f6959297911`,
+  and tool security 9 positive/11 negative
+  `c463035983b16e85e4da6e8d1f43efe30d99b492b18a6c8ea5aae06508f218a5`.

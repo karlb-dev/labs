@@ -80,6 +80,18 @@ warmed requests for the same input must match byte-for-byte. The corpus build
 may start only after request, successful-item, prompt-token, and latency
 counters advance consistently with zero error and preemption deltas.
 
+Corpus embedding never holds a SQL transaction open across inference. Each
+bounded response is durable first, then its vector batch commits atomically
+with input format/hash, request and response hashes, embedding operation ID,
+batch position and token count, artifact paths, latency, and generating run.
+Resume skips only rows whose complete provenance matches. Final verification
+reloads every raw request, response, metadata file, batch receipt, and SQL
+vector; distinguishes the service-vector hash from the SQL float32 storage
+hash; and bounds conversion drift over every component. Retrieval similarly
+stores raw tool output before validation and retains query text/hash/vector,
+component ranks, candidate and returned counts, RRF score, SQL latency, and
+trace identity in both SQL and the file journal.
+
 ## Agent and tool evidence
 
 Every semantic operation is an `agent.agent_steps` row and a trace span. Raw
