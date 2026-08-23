@@ -86,8 +86,10 @@ try {
   for (let offset = 0; offset < query.recordset.length; offset += checkpointSize) {
     const jobs = query.recordset.slice(offset, offset + checkpointSize);
     const outcomes = await mapConcurrent(jobs, concurrency, async (job) => {
-      try { const [prompted, unprompted] = await Promise.all([score(job, true), score(job, false)]); return { job, scores: [prompted, unprompted], error: null }; }
-      catch (error) { return { job, scores: [], error: error instanceof Error ? error.message : String(error) }; }
+      const channels = await Promise.allSettled([score(job, true), score(job, false)]);
+      const scores = channels.flatMap((value) => value.status === "fulfilled" ? [value.value] : []);
+      const errors = channels.flatMap((value) => value.status === "rejected" ? [value.reason instanceof Error ? value.reason.message : String(value.reason)] : []);
+      return { job, scores, error: errors.length ? errors.join("; ") : null };
     });
     await appendFile(rawPath, `${outcomes.map((row) => JSON.stringify({ schemaVersion: 1, scorer: scorerKey, ...row, scoredAt: new Date().toISOString() })).join("\n")}\n`);
     const scores = outcomes.flatMap((row) => row.scores.map((score) => ({ generationId: row.job.generation_id, scorer: scorerKey, prompted: score.prompted,

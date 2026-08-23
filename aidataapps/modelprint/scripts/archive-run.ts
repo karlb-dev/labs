@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { readdir, stat, writeFile } from "node:fs/promises";
+import { readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { basename, relative } from "node:path";
 import sql from "mssql";
 import { loadConfig } from "../src/config.js";
@@ -31,8 +31,12 @@ try {
     MERGE dbo.run_artifacts AS target USING OPENJSON(@rows) WITH(relative_path nvarchar(500) '$.path',artifact_kind varchar(80) '$.kind',byte_count bigint '$.bytes',sha256 char(64) '$.sha256') source
     ON target.run_id=@run AND target.relative_path=source.relative_path WHEN MATCHED THEN UPDATE SET artifact_kind=source.artifact_kind,byte_count=source.byte_count,sha256=source.sha256,created_at=SYSUTCDATETIME()
     WHEN NOT MATCHED THEN INSERT(run_id,relative_path,artifact_kind,byte_count,sha256) VALUES(@run,source.relative_path,source.artifact_kind,source.byte_count,source.sha256);`);
+  const primary=JSON.parse(await readFile(`${runDirectory}/manifests/campaign-freeze.json`,"utf8")) as {campaignId:number};
+  const robustness=await readFile(`${runDirectory}/manifests/robustness-freeze.json`,"utf8").then((value)=>JSON.parse(value) as {campaignId:number}).catch(()=>null);
+  const campaignIds=[Number(primary.campaignId),...(robustness?[Number(robustness.campaignId)]:[])];
+  if (!campaignIds.every(Number.isSafeInteger)) throw new Error("Invalid campaign IDs in run manifests");
   const status=await pool.request().query<{ campaign_id:number; model_profile_id:string; status:string; rows:number }>(`SELECT j.campaign_id,j.model_profile_id,j.status,COUNT(*) rows FROM dbo.generation_jobs j
-    JOIN dbo.campaigns c ON c.campaign_id=j.campaign_id WHERE c.run_id='${runId.replaceAll("'","''")}' GROUP BY j.campaign_id,j.model_profile_id,j.status ORDER BY j.campaign_id,j.model_profile_id,j.status;`);
+    WHERE j.campaign_id IN(${campaignIds.join(",")}) GROUP BY j.campaign_id,j.model_profile_id,j.status ORDER BY j.campaign_id,j.model_profile_id,j.status;`);
   const lines=["# ModelPrint Resume Record","",`- Run: \`${runId}\``,`- Run directory: \`${runDirectory}\``,`- Generated: \`${new Date().toISOString()}\``,"","## Generation status","","| Profile | Status | Rows |","|---|---:|---:|",
     ...status.recordset.map((row)=>`| campaign ${row.campaign_id}: ${row.model_profile_id} | ${row.status} | ${row.rows} |`),"","## Resume","","```bash",`cd ${process.cwd()}`,"source scripts/runtime-env.sh",
     `export MODELPRINT_RUN_DIR=${runDirectory}`,"npm run doctor","# Resume the next incomplete residency using config/models.json, then:","npm run features:build","npm run derived:build","npm run evaluate:probes","npm run reports","npm run db:bacpac","```","",

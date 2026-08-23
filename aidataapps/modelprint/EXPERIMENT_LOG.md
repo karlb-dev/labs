@@ -45,3 +45,5 @@ Append-only operator record.
 - 2026-08-23T00:20:10.114Z — MP-4 generation invocation completed for qwen-3.8-27b; selected=9096; completed=9096; failed=0.
 
 - 2026-08-23T00:22:02.548Z — MP-4 robustness generation completed for qwen-3.8-27b; selected=500; completed=500; failed=0.
+
+- 2026-08-23T00:38:31.712Z — MP-4 likelihood checkpoint for qwen-3.8-27b: decoded-character assistant-span slicing replaced unsafe separately-tokenized prefix slicing after 267 junction-merge failures were observed. The retained selective rerun recovered every prompted score (8,001/8,001 det/nat target and robustness rows). Unprompted echo scoring is explicitly unavailable for 17 one-token outputs because vLLM returns a null first-token log probability; those rows remain missing rather than receiving an invented likelihood.

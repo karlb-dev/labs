@@ -168,5 +168,46 @@ export class SqlServerRepository {
       WHERE r.prediction_run_id=@id GROUP BY r.prediction_run_id,r.run_id,r.suite,r.representation_id,r.method,r.config_json,r.created_at;`);
     return result.recordset[0] ?? null;
   }
+  async campaigns(id?: number): Promise<Record<string, unknown>[]> {
+    const request=this.pool.request().input("id",sql.BigInt,id ?? null);
+    const result=await request.query<Record<string,unknown>>(`SELECT c.campaign_id,c.campaign_name,c.tier,c.campaign_hash,MAX(f.freeze_hash) freeze_hash,COUNT(j.generation_job_id) expected_jobs,c.status,c.created_at,
+      SUM(CASE WHEN j.status='complete' THEN 1 ELSE 0 END) complete_jobs,SUM(CASE WHEN j.status='failed' THEN 1 ELSE 0 END) failed_jobs
+      FROM dbo.campaigns c LEFT JOIN dbo.campaign_freezes f ON f.campaign_id=c.campaign_id LEFT JOIN dbo.generation_jobs j ON j.campaign_id=c.campaign_id WHERE (@id IS NULL OR c.campaign_id=@id)
+      GROUP BY c.campaign_id,c.campaign_name,c.tier,c.campaign_hash,c.status,c.created_at ORDER BY c.campaign_id DESC;`);
+    return result.recordset;
+  }
+  async indexStatus(): Promise<Record<string, unknown>> {
+    const indexes=await this.pool.request().query<Record<string,unknown>>(`SELECT OBJECT_NAME(i.object_id) table_name,i.name index_name,i.type_desc,
+      JSON_VALUE(v.build_parameters,'$.Version') index_version,v.vector_index_type,v.distance_metric,v.build_parameters
+      FROM sys.vector_indexes v JOIN sys.indexes i ON i.object_id=v.object_id AND i.index_id=v.index_id ORDER BY table_name,index_name;`);
+    const counts=await this.pool.request().query<Record<string,unknown>>(`SELECT 'search_semantic_train' table_name,COUNT_BIG(*) rows FROM dbo.search_semantic_train UNION ALL
+      SELECT 'search_segment_train',COUNT_BIG(*) FROM dbo.search_segment_train UNION ALL SELECT 'search_style_train',COUNT_BIG(*) FROM dbo.search_style_train UNION ALL
+      SELECT 'search_fingerprint_train',COUNT_BIG(*) FROM dbo.search_fingerprint_train UNION ALL SELECT 'search_residual_train',COUNT_BIG(*) FROM dbo.search_residual_train;`);
+    return { indexes:indexes.recordset,corpora:counts.recordset,defaultMode:"exact",reason:"ANN is enabled only after retained benchmark and plan evidence pass" };
+  }
+  async cluster(id: number): Promise<Record<string, unknown> | null> {
+    const run=await this.pool.request().input("id",sql.BigInt,id).query<Record<string,unknown>>(`SELECT cluster_run_id,run_id,representation_id,algorithm,labels_hidden,config_json,created_at FROM dbo.cluster_runs WHERE cluster_run_id=@id;`);
+    if (!run.recordset[0]) return null;
+    const assignments=await this.pool.request().input("id",sql.BigInt,id).query<Record<string,unknown>>(`SELECT TOP(5000) a.generation_id,a.cluster_label,p.x,p.y,p.method
+      FROM dbo.cluster_assignments a LEFT JOIN dbo.projection_coordinates p ON p.cluster_run_id=a.cluster_run_id AND p.generation_id=a.generation_id WHERE a.cluster_run_id=@id ORDER BY a.generation_id;`);
+    return {...run.recordset[0],assignments:assignments.recordset};
+  }
+  async knownGenerationNeighbors(id: number,k=20): Promise<Record<string, unknown> | null> {
+    const result=await this.pool.request().input("id",sql.BigInt,id).input("k",sql.Int,Math.max(1,Math.min(k,50))).query<Record<string,unknown>>(`WITH query_row AS
+      (SELECT TOP(1) g.generation_id,v.prompt_group_id,s.embedding FROM dbo.generations g JOIN dbo.prompt_variants v ON v.prompt_variant_id=g.prompt_variant_id
+       JOIN dbo.generation_text_artifacts m ON m.generation_id=g.generation_id JOIN dbo.text_artifacts t ON t.text_artifact_id=m.text_artifact_id AND t.text_view_id='raw-final-v1'
+       JOIN dbo.semantic_vectors s ON s.text_artifact_id=t.text_artifact_id AND s.embedding_profile_id='qwen3-embedding-0.6b' AND s.representation_id='whole-raw-final-v1' WHERE g.generation_id=@id), candidates AS
+      (SELECT TOP(500) c.vector_id,c.model_profile_id,c.prompt_group_id,c.text_artifact_id,VECTOR_DISTANCE('cosine',c.embedding,q.embedding) distance FROM dbo.search_semantic_train c CROSS JOIN query_row q
+       WHERE c.embedding_profile_id='qwen3-embedding-0.6b' AND c.text_view_id='raw-final-v1' AND c.prompt_group_id<>q.prompt_group_id ORDER BY distance,c.vector_id), ranked AS
+      (SELECT *,ROW_NUMBER() OVER(PARTITION BY prompt_group_id ORDER BY distance,vector_id) rp,ROW_NUMBER() OVER(PARTITION BY text_artifact_id ORDER BY distance,vector_id) rt FROM candidates)
+      SELECT TOP(@k) vector_id,model_profile_id,prompt_group_id,text_artifact_id,distance FROM ranked WHERE rp=1 AND rt=1 ORDER BY distance,vector_id;`);
+    return result.recordset.length ? {generationId:id,actualSearchMode:"exact",neighbors:result.recordset} : null;
+  }
+  async fieldGuide(): Promise<Record<string, unknown>[]> {
+    const result=await this.pool.request().query<Record<string,unknown>>(`WITH ranked AS (SELECT s.model_profile_id,d.phrase,s.log_odds,s.z_score,
+      ROW_NUMBER() OVER(PARTITION BY s.model_profile_id ORDER BY ABS(s.z_score) DESC,d.phrase) rank FROM dbo.model_phrase_stats s JOIN dbo.phrase_dictionary d ON d.phrase_id=s.phrase_id)
+      SELECT model_profile_id,phrase,log_odds,z_score,rank FROM ranked WHERE rank<=15 ORDER BY model_profile_id,rank;`);
+    return result.recordset;
+  }
   async close(): Promise<void> { await this.pool.close(); }
 }

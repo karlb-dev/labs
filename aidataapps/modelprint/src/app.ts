@@ -71,5 +71,19 @@ export async function buildApp(config: AppConfig) {
     const id = Number.parseInt((request.params as { id: string }).id, 10); if (!Number.isInteger(id)) return reply.code(400).send({ error: "invalid id" });
     const row = await repository.evaluation(id); return row ?? reply.code(404).send({ error: "not found" });
   });
+  app.get("/api/campaigns/:id", async (request, reply) => {
+    const id=Number.parseInt((request.params as {id:string}).id,10);if (!Number.isInteger(id)) return reply.code(400).send({error:"invalid id"});
+    const rows=await repository.campaigns(id);return rows[0] ?? reply.code(404).send({error:"not found"});
+  });
+  app.get("/api/index/status",async()=>repository.indexStatus());
+  app.get("/api/clusters/:id",async(request,reply)=>{
+    const id=Number.parseInt((request.params as {id:string}).id,10);if (!Number.isInteger(id)) return reply.code(400).send({error:"invalid id"});
+    return await repository.cluster(id) ?? reply.code(404).send({error:"not found"});
+  });
+  app.get("/api/generations/:id/neighbors",async(request,reply)=>{
+    const id=Number.parseInt((request.params as {id:string}).id,10);if (!Number.isInteger(id)) return reply.code(400).send({error:"invalid id"});
+    return await repository.knownGenerationNeighbors(id) ?? reply.code(404).send({error:"generation or frozen vector not found"});
+  });
+  app.get("/api/field-guide",async()=>({scope:"frequency-evidence-not-signatures",phrases:await repository.fieldGuide()}));
   return app;
 }
