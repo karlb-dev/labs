@@ -222,3 +222,15 @@
   product this profile is SLO-incompatible on a fifth of the workload
   regardless of answer quality, and that becomes the headline claim for
   this profile rather than exact-match.
+
+- 2026-08-24 — Gemma 26B thinking-off canary (prompted by Karl's find of
+  the documented MLX termination bug + chat-template switch). One call
+  with chat_template_kwargs {"enable_thinking": false}: clean content
+  ("SELECT OrderId FROM dbo.Orders"), finish=stop, 8 completion tokens,
+  no reasoning field. Conclusion: the REASONING_UNBOUNDED result is a
+  property of the thinking-ON serving configuration; the switch works in
+  this MLX stack when passed (we had only applied it to Qwen). New
+  registry profile gemma-4-26b-a4b-nothink-mlx added as a separate
+  campaign cell in the registry, DOCUMENTED ONLY: its campaign is
+  deferred pending Karl's review (host memory pressure; Karl 2026-08-24).
+  Active sequence stays OLMo -> Muse -> done.

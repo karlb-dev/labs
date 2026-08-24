@@ -84,6 +84,21 @@
         "note": "GT-7 dev evidence: mlx_lm.server 0.32.1 splits the channel (registry previously guessed inline); reasoning never enters insertText."
       },
       "reasoningAllowanceTokens": 1280
+    },
+    "gemma-4-26b-a4b-nothink-mlx": {
+      "family": "gemma",
+      "baseModelId": "google/gemma-4-26B-A4B-it",
+      "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
+      "baseUrl": "http://127.0.0.1:8020/v1",
+      "quantization": "optiq-4bit",
+      "reasoningPolicy": {
+        "chatTemplateKwargs": {
+          "enable_thinking": false
+        },
+        "note": "2026-08-24 canary: enable_thinking=false via chat_template_kwargs yields clean content, finish=stop, no reasoning field. DOCUMENTED ONLY - campaign deferred pending Karl review (memory pressure); not in targetProfiles."
+      },
+      "reasoningAllowanceTokens": 0,
+      "role": "deferred-nothink-variant"
     }
   },
   "embeddingProfiles": {
