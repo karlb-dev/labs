@@ -195,3 +195,16 @@
   attempt-1 numbers will be cited. Harness note: truncation-as-fail
   labeling (GT-7) is what made this visible immediately — an
   abstention-coded harness would have reported 307 phantom abstains.
+
+- 2026-08-24 — Gemma 26B attempt 2 complete (588/588) with a residual
+  truncation tail: at the 3584 allowance, 155 rows STILL exhausted the
+  budget in reasoning (the attempt-1 cut at 1280 had hidden the true
+  need). Valid attempt-2 rows: 34 exact / 228 partial / 53 correct
+  abstains; cursor 31/135 exact; intent 10/352 exact, 235/352 grounded,
+  256 parse-clean; latency is heavy (avg ~28-36s/row — the thinking tax).
+  Per addendum A-6 (replay never enforces deadlines; latency recorded,
+  judged post hoc) the 155 truncated rows get one final retry tier at
+  8192 reasoning tokens, run while the MoE is resident; rows that
+  truncate there are dispositioned REASONING_UNBOUNDED as their terminal
+  state. Request rows for the 155 reset (children wiped); registry note
+  updated with the tier history 1280 -> 3584 -> 8192.
