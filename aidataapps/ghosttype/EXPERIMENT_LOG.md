@@ -234,3 +234,19 @@
   campaign cell in the registry, DOCUMENTED ONLY: its campaign is
   deferred pending Karl's review (host memory pressure; Karl 2026-08-24).
   Active sequence stays OLMo -> Muse -> done.
+
+- 2026-08-24 — Karl's Muse protocol + product framing (pre-registered
+  before the Muse campaign). Muse is expected reasoning-heavy (Lab 03
+  bench observation). Protocol: start with an 8192 reasoning allowance;
+  checkpoint after ~100 rows. If it is drowning (tons of truncations/
+  timeouts at 8K) switch to no-reasoning if the template allows — that
+  datum ("this model can't be used in this use case in this mode") is
+  more useful than a wall of REASONING_UNBOUNDED rows. If it is mid
+  (Gemma-like tail) let reasoning-on complete: reasoning vs non-reasoning
+  on the same model is a wanted comparison because completion classes
+  price latency differently — cursor continuations ("SELECT * FROM ")
+  need near-instant responses (likely all local models are too slow
+  there), while intent prompts ("-- summarize sales in Oct") tolerate
+  much longer waits and correctness dominates, up to user-abandonment.
+  This maps onto addendum A-6 deadline-conditioned quality: latency is
+  recorded in replay and judged per class post hoc.

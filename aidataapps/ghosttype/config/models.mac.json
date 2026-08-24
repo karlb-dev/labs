@@ -45,8 +45,14 @@
         "serverField": "reasoning_content",
         "note": "mlx-vlm 0.6.15 splits the channel; reasoning never enters insertText."
       },
-      "reasoningAllowanceTokens": 1024,
-      "decodeLabel": "non-deterministic-decode (DFlash drafter on, per Karl 2026-08-24)"
+      "reasoningAllowanceTokens": 8192,
+      "decodeLabel": "non-deterministic-decode (DFlash drafter on, per Karl 2026-08-24)",
+      "museProtocol": {
+        "phase1": "run first ~100 rows with 8192 reasoning allowance",
+        "checkpoint": "after ~100 rows inspect truncation/timeout rate",
+        "ifDrowning": "majority truncating/timing out at 8K -> canary chat_template_kwargs enable_thinking:false (or template equivalent); if reasoning can be disabled, switch profile to nothink mode for the campaign \u2014 the usable-config datum matters more",
+        "ifMid": "Gemma-like tail or better -> let the reasoning-on campaign complete; reasoning vs non-reasoning on the same model is a wanted comparison (Karl 2026-08-24)"
+      }
     },
     "gemma-4-26b-a4b-mlx": {
       "family": "gemma",
