@@ -269,3 +269,17 @@
   Same guard as Muse: 100-row checkpoint, stop there if it is failing
   badly. Purpose: thinking-off Gemma 26B vs thinking-off Qwen on the same
   workload (both models with reasoning disabled via chat template).
+
+- 2026-08-24 — Muse phase-1 checkpoint (100 rows, pre-registered
+  protocol): ZERO truncations, zero timeouts at the 8192 allowance (max
+  observed reasoning ~24.1k chars ≈ 6.9k tokens; avg ~7.2k chars ≈ 2k).
+  Slice outcomes: 17 exact / 21 partial / 13 abstain_correct /
+  30 abstain_wrong / 19 fail — best first-100 of any profile, with
+  over-abstention (not rumination) as the visible flaw, consistent with
+  the conservative port-gate canaries. Decision per protocol: MINORITY
+  branch — reasoning-on campaign continues to all 588. Cost recorded:
+  avg 58.4s/row, max 208s (DFlash drafter on) — the latency datum is
+  part of the wanted reasoning-mode record; deadline-conditioned scoring
+  happens post hoc per class. One HTTP-failed request re-queues on
+  relaunch. Prefix caveat: first 100 rows are cursor-heavy (alphabetical
+  order); no extrapolation to intent rows (E4B lesson).
