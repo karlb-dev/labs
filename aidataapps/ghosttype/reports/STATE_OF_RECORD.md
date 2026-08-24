@@ -1,6 +1,6 @@
 # GhostType STATE_OF_RECORD (Tier 1, mac campaign)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T14:26:51.421Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T16:09:28.978Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
@@ -45,6 +45,7 @@ run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T14:26:51.421Z 
 | GT-8 | PASS | `gt8-metrics:705f96216c398016` | 2026-08-24T01:14:09.528Z |
 | GT-8 | PASS | `gt8-metrics:6e5de2021951df1a` | 2026-08-24T09:01:53.801Z |
 | GT-8 | PASS | `gt8-metrics:e77d5083d66dd7fc` | 2026-08-24T14:26:37.944Z |
+| GT-8 | PASS | `gt8-metrics:12ca5f88d16e42c7` | 2026-08-24T16:09:28.515Z |
 
 ## Inherited scars honored
 

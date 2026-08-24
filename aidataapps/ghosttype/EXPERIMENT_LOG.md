@@ -250,3 +250,16 @@
   much longer waits and correctness dominates, up to user-abandonment.
   This maps onto addendum A-6 deadline-conditioned quality: latency is
   recorded in replay and judged per class post hoc.
+
+- 2026-08-24 — OLMo campaign complete (olmo-3.1-32b-mlx, 588/588, 0
+  request failures, 0 truncations — the direct-answerer serving is
+  operationally the cleanest of the four). Quality is the weakest:
+  overall exact 3.9% (cursor 16/135 = 11.9%, below E4B; intent 4/352);
+  highest parse-error rate of any profile (75 offered candidates
+  introduce structural parse errors: 39 cursor + 36 intent); abstention
+  discipline near zero — answered 98/101 traps including all 78
+  intent-mode traps (3 correct abstains). Latency good: ~6.6s cursor /
+  ~12.2s intent. Pattern echoes Lab 03 (OLMo needed guided decoding to
+  recover contract behavior); here raw-text transport is the frozen
+  primary and OLMo's unconstrained behavior costs it. H1 clearly not
+  supported; metrics/claims regenerating.

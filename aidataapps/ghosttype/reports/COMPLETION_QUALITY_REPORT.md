@@ -1,6 +1,6 @@
 # GhostType COMPLETION_QUALITY_REPORT (Tier 1, mac campaign)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T14:26:51.421Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T16:09:28.978Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
@@ -17,6 +17,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B4-template | 588 | 0 | 47 | 37 | 0 | 92 | 412 |
 | gemma-4-26b-a4b-mlx | M1-packaged | 588 | 36 | 246 | 211 | 7 | 54 | 34 |
 | gemma-4-e4b-mlx | M1-packaged | 588 | 35 | 259 | 198 | 0 | 63 | 33 |
+| olmo-3.1-32b-mlx | M1-packaged | 588 | 18 | 199 | 367 | 0 | 3 | 1 |
 | qwen-3.8-27b-mlx | M1-packaged | 588 | 56 | 280 | 219 | 0 | 25 | 8 |
 
 ## Aggregate metrics (suite agg-all)
@@ -30,6 +31,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B4-template | 15.6% | 15.6% | 70.1% | 0.0% | 98.7% | — | — |
 | gemma-4-26b-a4b-mlx | M1-packaged | 18.2% | 15.3% | 5.8% | 1.2% | 99.1% | 23636 | 115763 |
 | gemma-4-e4b-mlx | M1-packaged | 17.5% | 16.7% | 5.6% | 0.0% | 93.8% | 5592 | 13355 |
+| olmo-3.1-32b-mlx | M1-packaged | 3.9% | 3.6% | 0.2% | 0.0% | 84.6% | 8174 | 21484 |
 | qwen-3.8-27b-mlx | M1-packaged | 14.3% | 13.8% | 1.4% | 0.0% | 96.2% | 10253 | 19549 |
 
 ## Paired comparisons (exact McNemar on normalized_exact)
@@ -40,5 +42,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | gemma-4-26b-a4b-mlx | M1-packaged | B2-catalog | 39 | 37 | 9.09e-1 | provisional-adequate |
 | gemma-4-e4b-mlx | M1-packaged | B0-empty | 40 | 38 | 9.10e-1 | provisional-adequate |
 | gemma-4-e4b-mlx | M1-packaged | B2-catalog | 40 | 42 | 9.12e-1 | provisional-adequate |
+| olmo-3.1-32b-mlx | M1-packaged | B0-empty | 20 | 98 | 1.53e-13 | provisional-adequate |
+| olmo-3.1-32b-mlx | M1-packaged | B2-catalog | 19 | 101 | 1.08e-14 | provisional-adequate |
 | qwen-3.8-27b-mlx | M1-packaged | B0-empty | 59 | 76 | 1.68e-1 | provisional-adequate |
 | qwen-3.8-27b-mlx | M1-packaged | B2-catalog | 58 | 79 | 8.71e-2 | provisional-adequate |
