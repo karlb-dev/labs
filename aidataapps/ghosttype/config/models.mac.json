@@ -56,9 +56,9 @@
       "quantization": "optiq-4bit",
       "reasoningPolicy": {
         "serverField": "reasoning",
-        "note": "mlx_lm.server splits the MoE reasoning channel."
+        "note": "mlx_lm.server splits the MoE reasoning channel. Campaign evidence 2026-08-24: finished rows use up to ~1950 reasoning tokens; 1280 truncated 307/588 rows -> allowance 3584."
       },
-      "reasoningAllowanceTokens": 1280
+      "reasoningAllowanceTokens": 3584
     },
     "olmo-3.1-32b-mlx": {
       "family": "olmo",

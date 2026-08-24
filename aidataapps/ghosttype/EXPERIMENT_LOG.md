@@ -181,3 +181,17 @@
   computed as a secondary suite at scoring close; abstention-conditioned
   metrics are the design lesson feeding the confidence/abstention gate
   (addendum A-3).
+
+- 2026-08-24 — Gemma 26B MoE campaign attempt 1 INVALIDATED and re-run.
+  588/588 requests completed but 307 rows were reasoning-channel
+  truncations (finish_reason=length with empty content): the 1280-token
+  allowance calibrated on E4B is far too small for the 26B MoE, whose
+  FINISHED rows used up to ~1950 reasoning tokens (max 6830 chars; means
+  2.5-3.2k chars). Those 307 rows measure the harness budget, not the
+  model. Disposition: allowance raised to 3584 (≈1.8x observed finished
+  max), profile campaign rows wiped (raw responses included — they carry
+  no valid quality signal), full re-run launched. Non-truncated attempt-1
+  rows showed 25 exact / 153 partial / 44 correct abstains, but no
+  attempt-1 numbers will be cited. Harness note: truncation-as-fail
+  labeling (GT-7) is what made this visible immediately — an
+  abstention-coded harness would have reported 307 phantom abstains.
