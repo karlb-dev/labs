@@ -283,3 +283,18 @@
   happens post hoc per class. One HTTP-failed request re-queues on
   relaunch. Prefix caveat: first 100 rows are cursor-heavy (alphabetical
   order); no extrapolation to intent rows (E4B lesson).
+
+- 2026-08-24 — Karl decision: conditional Muse no-thinking pass appended
+  as the TRUE final slot (after gemma-nothink). Rationale: Muse latency
+  is ~95% reasoning (~2k thinking tokens at ~37 tok/s ≈ 55s of its 58s
+  rows), so a working thinking-off switch could put the quality leader
+  into the 5-15s range — "get the latency down without hurting results."
+  Gates before running: (1) Muse reasoning-on final numbers must hold up
+  as overall quality leader (exact-per-offer + trap behavior) once the
+  intent-heavy tail is scored — if mid-pack, skip; (2) canary :8021 with
+  chat_template_kwargs {"enable_thinking": false} (and template
+  equivalents) — if the serving has no working switch, document and
+  skip. If both pass: profile muse-glimmer-30b-nothink-mlx, port gate,
+  100-row checkpoint, stop-if-failing, full 588 otherwise. Either
+  outcome is informative: quality held = thinking was overhead; quality
+  collapsed = measured value of reasoning on the same model.
