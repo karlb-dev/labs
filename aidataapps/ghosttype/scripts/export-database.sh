@@ -29,6 +29,12 @@ case "${1:-}" in
     docker exec "$CONTAINER" rm -f "$IN_CONTAINER"        # keep the VM disk lean
     shasum -a 256 "$OUT_DIR/${DB}_${STAMP}.bak" | tee "$OUT_DIR/${DB}_${STAMP}.bak.sha256"
     echo "[backup] $OUT_DIR/${DB}_${STAMP}.bak"
+    # Retention (Karl 2026-08-24): keep only the two most recent backups —
+    # they exist for recovery/latest-results analysis, not history.
+    ls -1t "$OUT_DIR"/${DB}_*.bak | tail -n +3 | while read -r old; do
+      rm -f "$old" "$old.sha256"
+      echo "[backup] pruned $(basename "$old")"
+    done
     ;;
   restore)
     BAK="${2:?usage: export-database.sh restore <local .bak>}"
