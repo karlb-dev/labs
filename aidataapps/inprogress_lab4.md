@@ -32,7 +32,7 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 | GT-5 deterministic baselines | DONE — B0–B4 scored in eval.row_scores; H1 floor: max 4/487 exact |
 | GT-7 replay runner + extraction | DONE — E4B campaign complete 588/588 (H1 not supported for 4B vehicle; see EXPERIMENT_LOG 2026-08-24) |
 | Port gates (4 MLX profiles) | RUNNING (background; canaries + determinism per profile) |
-| Mac quality campaign (4 profiles × eligible rows) | NEXT — order: qwen, gemma-26b, olmo, muse; each resumable |
+| Mac quality campaign | IN PROGRESS — e4b DONE, qwen DONE, gemma-26b DONE (thinking-on; 18% reasoning-unbounded), olmo RUNNING, muse next under the pre-registered protocol (EXPERIMENT_LOG 2026-08-24: 8K allowance, 100-row checkpoint, switch to nothink only if majority truncate); gemma-nothink DEFERRED for Karl review |
 | Scoring + reports + repro | TOOLING DONE — metrics:compute, reports (7 Tier-1 docs), repro.sh rows, db:backup all live; final numbers land as campaigns complete |
 
 ## Next command
