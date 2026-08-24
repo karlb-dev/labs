@@ -101,10 +101,10 @@
         "chatTemplateKwargs": {
           "enable_thinking": false
         },
-        "note": "2026-08-24 canary: enable_thinking=false via chat_template_kwargs yields clean content, finish=stop, no reasoning field. DOCUMENTED ONLY - campaign deferred pending Karl review (memory pressure); not in targetProfiles."
+        "note": "2026-08-24 canary: enable_thinking=false via chat_template_kwargs yields clean content, finish=stop, no reasoning field. Karl 2026-08-24: run this campaign LAST (after Muse and all other planned work), 100-row checkpoint \u2014 if it is failing badly at 100, stop there. Purpose: compare thinking-off Gemma 26B against the Qwen thinking-off numbers."
       },
       "reasoningAllowanceTokens": 0,
-      "role": "deferred-nothink-variant"
+      "role": "target-nothink-final-slot"
     }
   },
   "embeddingProfiles": {

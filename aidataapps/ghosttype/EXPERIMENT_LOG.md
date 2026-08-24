@@ -263,3 +263,9 @@
   recover contract behavior); here raw-text transport is the frozen
   primary and OLMo's unconstrained behavior costs it. H1 clearly not
   supported; metrics/claims regenerating.
+
+- 2026-08-24 — Karl decision: the gemma-4-26b-a4b-nothink-mlx campaign is
+  un-deferred and scheduled LAST — after Muse and all other planned work.
+  Same guard as Muse: 100-row checkpoint, stop there if it is failing
+  badly. Purpose: thinking-off Gemma 26B vs thinking-off Qwen on the same
+  workload (both models with reasoning disabled via chat template).
