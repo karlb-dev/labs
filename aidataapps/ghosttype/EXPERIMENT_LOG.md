@@ -164,3 +164,20 @@
   output, so no point not to use it"). The GT-11 WARN stands as a label
   only: Muse rows are non-deterministic-decode; do not disable the drafter
   to chase exact repeatability.
+
+- 2026-08-24 — Qwen campaign complete (qwen-3.8-27b-mlx, M1-packaged,
+  mac-quality, 588/588 terminal, 0 request failures, enable_thinking=false).
+  Overall normalized_exact 14.3% — numerically BELOW the B2 floor, but the
+  decomposition shows why the headline misleads: Qwen is the strongest
+  cursor completer so far — 46/135 exact (34.1%, vs E4B 25.9% and B2's
+  floor) with 126/127 offered candidates parse-clean — and on intent rows
+  13/352 exact / 231 partial / 288 grounded / 335 parse-clean. The collapse
+  is abstention discipline: 25/101 correct abstains; on intent-mode trap
+  rows it answered 72 of 78 (vs E4B's 33) — it essentially never returns
+  empty when the schema context is insufficient, and B0 collects those 101
+  rows for free. Latency p50 ~8s cursor / ~12.6s intent. H1 vs B2 on
+  overall exact: not supported (p=0.087, direction NEGATIVE — baselineOnly
+  79 > modelOnly 58). The per-class contrast (cursor-only H1) will be
+  computed as a secondary suite at scoring close; abstention-conditioned
+  metrics are the design lesson feeding the confidence/abstention gate
+  (addendum A-3).
