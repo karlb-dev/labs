@@ -1,6 +1,6 @@
 # GhostType SAFETY_REPORT (Tier 1)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T01:14:42.204Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T14:26:51.421Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 

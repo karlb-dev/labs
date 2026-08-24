@@ -208,3 +208,17 @@
   truncate there are dispositioned REASONING_UNBOUNDED as their terminal
   state. Request rows for the 155 reset (children wiped); registry note
   updated with the tier history 1280 -> 3584 -> 8192.
+
+- 2026-08-24 — Gemma 26B campaign CLOSED, 588/588 terminal. Retry tier
+  8192 resolved 52 of the 155 truncated rows to real outcomes (2 exact,
+  18 partial, others fails-with-content); 103 rows truncated even at
+  8192 -> REASONING_UNBOUNDED terminal disposition; 4 rows exceeded the
+  600s HTTP timeout mid-decode -> REASONING_UNBOUNDED_TIMEOUT (terminal
+  rows written directly; their requests stay status=failed and must not
+  be re-queued). Final: exact 18.2% overall (36 answerable exact),
+  cursor 31+2/135, H1 vs B2 p=0.91 — not supported. The distinctive
+  finding is the reasoning-cost profile: 107/588 rows (18%) cannot
+  complete within 8192 thinking tokens or 600s — for a ghost-text
+  product this profile is SLO-incompatible on a fifth of the workload
+  regardless of answer quality, and that becomes the headline claim for
+  this profile rather than exact-match.
