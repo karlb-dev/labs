@@ -1,12 +1,13 @@
 # GhostType CLAIMS_TABLE (Tier 1)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:52:50.401Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
 | RQ | tag | taxonomy | supported | power | rationale |
 |---|---|---|---|---|---|
 | H1 | NOT_SUPPORTED | quality/normalized-exact-vs-B2 | no | provisional-adequate | gemma-4-26b-a4b-mlx/M1-packaged vs B2-catalog on normalized_exact: model-only 39, baseline-only 37, exact McNemar p=9.09e-1; power label provisional until E-1 simulation. |
+| H1 | NOT_SUPPORTED | quality/normalized-exact-vs-B2 | no | provisional-adequate | gemma-4-26b-a4b-nothink-mlx/M1-packaged vs B2-catalog on normalized_exact: model-only 43, baseline-only 90, exact McNemar p=5.63e-5; power label provisional until E-1 simulation. |
 | H1 | NOT_SUPPORTED | quality/normalized-exact-vs-B2 | no | provisional-adequate | gemma-4-e4b-mlx/M1-packaged vs B2-catalog on normalized_exact: model-only 40, baseline-only 42, exact McNemar p=9.12e-1; power label provisional until E-1 simulation. |
 | H1 | SUPPORTED | quality/normalized-exact-vs-B2 | yes | provisional-adequate | muse-glimmer-30b-mlx/M1-packaged vs B2-catalog on normalized_exact: model-only 43, baseline-only 9, exact McNemar p=2.04e-6; power label provisional until E-1 simulation. |
 | H1 | NOT_SUPPORTED | quality/normalized-exact-vs-B2 | no | provisional-adequate | olmo-3.1-32b-mlx/M1-packaged vs B2-catalog on normalized_exact: model-only 19, baseline-only 101, exact McNemar p=1.08e-14; power label provisional until E-1 simulation. |

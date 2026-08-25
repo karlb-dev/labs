@@ -323,3 +323,18 @@
   Healthy (Muse scored 17 exact on the same cursor-heavy slice at ~6x the
   latency; thinking-on Gemma never cleanly finished this slice at 1280).
   Continuing to full 588 per protocol.
+
+- 2026-08-24 — Gemma nothink campaign CLOSED (gemma-4-26b-a4b-nothink-mlx,
+  588/588, 0 request failures, 0 truncations). Final: 40 exact / 302
+  partial / 13 of 101 traps correct / 2 wrong abstains. Latency is the
+  headline: avg 1.45s cursor / 2.51s intent — fastest profile by 4x
+  (E4B 6.4s, Qwen 11.1s), 20-30x faster than its own thinking-on run.
+  Same-model reasoning comparison (the wanted datum): thinking bought
+  ~nothing on answer quality (cursor exact 32 vs 35 nothink; intent 11
+  vs 10; partials 223 vs 241) while costing 42s/row average and the 18%
+  REASONING_UNBOUNDED pathology — BUT thinking did buy abstention
+  discipline: 54/101 traps correct with thinking vs 13/101 without.
+  vs Qwen (both thinking-off): Qwen still leads completion quality
+  (cursor per-offer 36.2% vs 26.3%) at 5x the latency; both have weak
+  trap behavior. Product read: Gemma-nothink is the only profile in
+  plausible ghost-text latency range (1.5-2.5s) on this hardware.

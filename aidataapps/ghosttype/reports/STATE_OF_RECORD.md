@@ -1,6 +1,6 @@
 # GhostType STATE_OF_RECORD (Tier 1, mac campaign)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:52:50.401Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
@@ -17,6 +17,7 @@ run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z 
 | profile | served model | port gate |
 |---|---|---|
 | gemma-4-26b-a4b-mlx | mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit | PASS |
+| gemma-4-26b-a4b-nothink-mlx | mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit | PASS |
 | gemma-4-e4b-mlx | mlx-community/gemma-4-e4b-it-OptiQ-4bit | PASS |
 | muse-glimmer-30b-mlx | mlx-community/Muse-Glimmer-30B-4bit | WARN |
 | olmo-3.1-32b-mlx | lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit | PASS |
@@ -47,6 +48,8 @@ run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z 
 | GT-8 | PASS | `gt8-metrics:e77d5083d66dd7fc` | 2026-08-24T14:26:37.944Z |
 | GT-8 | PASS | `gt8-metrics:12ca5f88d16e42c7` | 2026-08-24T16:09:28.515Z |
 | GT-8 | PASS | `gt8-metrics:47e72b1c5c515ed4` | 2026-08-25T02:28:14.128Z |
+| GT-11 | PASS | `gt11-port-gate:1db0e287fd496bf3` | 2026-08-25T02:29:49.881Z |
+| GT-8 | PASS | `gt8-metrics:8a8b0f353c92de8a` | 2026-08-25T02:52:49.947Z |
 
 ## Inherited scars honored
 

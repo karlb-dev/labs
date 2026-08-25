@@ -1,6 +1,6 @@
 # GhostType COMPLETION_QUALITY_REPORT (Tier 1, mac campaign)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:52:50.401Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
@@ -16,6 +16,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B3-history | 588 | 0 | 14 | 14 | 0 | 101 | 459 |
 | baseline-deterministic | B4-template | 588 | 0 | 47 | 37 | 0 | 92 | 412 |
 | gemma-4-26b-a4b-mlx | M1-packaged | 588 | 36 | 246 | 211 | 7 | 54 | 34 |
+| gemma-4-26b-a4b-nothink-mlx | M1-packaged | 588 | 40 | 302 | 229 | 2 | 13 | 2 |
 | gemma-4-e4b-mlx | M1-packaged | 588 | 35 | 259 | 198 | 0 | 63 | 33 |
 | muse-glimmer-30b-mlx | M1-packaged | 588 | 42 | 232 | 74 | 0 | 93 | 147 |
 | olmo-3.1-32b-mlx | M1-packaged | 588 | 18 | 199 | 367 | 0 | 3 | 1 |
@@ -31,6 +32,7 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 | baseline-deterministic | B3-history | 17.2% | 17.2% | 78.1% | 0.0% | 100.0% | — | — |
 | baseline-deterministic | B4-template | 15.6% | 15.6% | 70.1% | 0.0% | 98.7% | — | — |
 | gemma-4-26b-a4b-mlx | M1-packaged | 18.2% | 15.3% | 5.8% | 1.2% | 99.1% | 23636 | 115763 |
+| gemma-4-26b-a4b-nothink-mlx | M1-packaged | 9.9% | 9.0% | 0.3% | 0.3% | 96.1% | 2018 | 4085 |
 | gemma-4-e4b-mlx | M1-packaged | 17.5% | 16.7% | 5.6% | 0.0% | 93.8% | 5592 | 13355 |
 | muse-glimmer-30b-mlx | M1-packaged | 23.6% | 23.0% | 25.0% | 0.0% | 100.0% | 57635 | 112389 |
 | olmo-3.1-32b-mlx | M1-packaged | 3.9% | 3.6% | 0.2% | 0.0% | 84.6% | 8174 | 21484 |
@@ -42,6 +44,8 @@ All rows use the frozen rules: raw-text transport, candidate-extract-v1, normali
 |---|---|---|---|---|---|---|
 | gemma-4-26b-a4b-mlx | M1-packaged | B0-empty | 43 | 37 | 5.76e-1 | provisional-adequate |
 | gemma-4-26b-a4b-mlx | M1-packaged | B2-catalog | 39 | 37 | 9.09e-1 | provisional-adequate |
+| gemma-4-26b-a4b-nothink-mlx | M1-packaged | B0-empty | 45 | 88 | 2.42e-4 | provisional-adequate |
+| gemma-4-26b-a4b-nothink-mlx | M1-packaged | B2-catalog | 43 | 90 | 5.63e-5 | provisional-adequate |
 | gemma-4-e4b-mlx | M1-packaged | B0-empty | 40 | 38 | 9.10e-1 | provisional-adequate |
 | gemma-4-e4b-mlx | M1-packaged | B2-catalog | 40 | 42 | 9.12e-1 | provisional-adequate |
 | muse-glimmer-30b-mlx | M1-packaged | B0-empty | 46 | 8 | 1.38e-7 | provisional-adequate |
