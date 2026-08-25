@@ -317,3 +317,9 @@
   Muse-nothink pass SKIPPED per pre-registration; a thinking-off Muse
   would need template surgery or a different serving — logged as Tier-2
   candidate, not run here.
+
+- 2026-08-24 — Gemma nothink checkpoint (100 rows): 19 exact / 39 partial
+  / 37 fail / 5 abstain_correct, zero truncations, zero request failures.
+  Healthy (Muse scored 17 exact on the same cursor-heavy slice at ~6x the
+  latency; thinking-on Gemma never cleanly finished this slice at 1280).
+  Continuing to full 588 per protocol.
