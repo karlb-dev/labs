@@ -1,0 +1,4113 @@
+<title>GhostType Tier-1 Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+:root{
+  --paper:#F4F6F8; --panel:#FFFFFF; --ink:#1B242E; --muted:#5C6B7A; --ghost:#8595A6;
+  --line:#D8DFE6; --accent:#0E7C86; --accent-soft:#0E7C861A;
+  --good:#2E7D4F; --good-soft:#2E7D4F17; --warn:#A8730F; --warn-soft:#A8730F17;
+  --bad:#B23E38; --bad-soft:#B23E3817; --abst:#5B5EA6; --abst-soft:#5B5EA617;
+  --code-bg:#EDF1F4; --sel:#0E7C8626;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12171D; --panel:#1A2129; --ink:#E4EAF0; --muted:#93A2B1; --ghost:#66788A;
+    --line:#2A3441; --accent:#3FB2BC; --accent-soft:#3FB2BC22;
+    --good:#5CB985; --good-soft:#5CB98520; --warn:#D9A24A; --warn-soft:#D9A24A20;
+    --bad:#E07A72; --bad-soft:#E07A7220; --abst:#9A9DE0; --abst-soft:#9A9DE020;
+    --code-bg:#141B22; --sel:#3FB2BC33;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12171D; --panel:#1A2129; --ink:#E4EAF0; --muted:#93A2B1; --ghost:#66788A;
+  --line:#2A3441; --accent:#3FB2BC; --accent-soft:#3FB2BC22;
+  --good:#5CB985; --good-soft:#5CB98520; --warn:#D9A24A; --warn-soft:#D9A24A20;
+  --bad:#E07A72; --bad-soft:#E07A7220; --abst:#9A9DE0; --abst-soft:#9A9DE020;
+  --code-bg:#141B22; --sel:#3FB2BC33;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;
+  margin:0;line-height:1.55;font-size:15px}
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px 96px}
+a{color:var(--accent)}
+h1,h2,h3{text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(30px,4.5vw,44px);font-weight:800;letter-spacing:-.02em;margin:.2em 0 .1em}
+h2{font-size:22px;font-weight:700;margin:2.6em 0 .6em;letter-spacing:-.01em}
+h3{font-size:15px;font-weight:600;margin:1.4em 0 .5em}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin-top:44px}
+.sub{color:var(--muted);max-width:68ch}
+.identity{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+.identity span{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);
+  background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 11px}
+mono,.mono{font-family:'JetBrains Mono',monospace}
+.num{font-variant-numeric:tabular-nums;font-family:'JetBrains Mono',monospace}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tablecard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:6px 10px}
+.bar{position:relative;height:6px;background:var(--code-bg);border-radius:3px;min-width:64px;margin-top:5px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--accent)}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  border-radius:5px;padding:2px 8px;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.abst{background:var(--abst-soft);color:var(--abst)}
+.chip.dim{background:var(--code-bg);color:var(--muted)}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.card h3{margin-top:0}
+.kpis{display:flex;flex-wrap:wrap;gap:26px;margin:10px 0 2px}
+.kpi .v{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+/* editor-style sample rendering — the ghost-text motif */
+.editor{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;white-space:pre-wrap;
+  word-break:break-word;overflow-x:auto}
+.editor .caret{display:inline-block;width:2px;height:1.15em;background:var(--accent);
+  vertical-align:text-bottom;margin:0 1px;animation:blink 1.2s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.editor .caret{animation:none}}
+@keyframes blink{50%{opacity:0}}
+.editor .ghosttext{color:var(--ghost);font-style:italic}
+.editor .ghosttext.ok{color:var(--good);font-style:normal}
+.editor .ghosttext.bad{color:var(--bad)}
+.editor .empty{color:var(--ghost);font-style:italic}
+.editor .lbl{display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-style:normal;margin-bottom:4px}
+/* explorer */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.filters select{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);
+  background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+.fchip{font-family:'JetBrains Mono',monospace;font-size:11.5px;border:1px solid var(--line);
+  background:var(--panel);color:var(--muted);border-radius:99px;padding:5px 12px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.fchip:focus-visible,.rowitem:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.explorer{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start}
+@media(max-width:840px){.explorer{grid-template-columns:1fr}}
+.rowlist{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  max-height:640px;overflow-y:auto;padding:6px}
+.rowitem{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;
+  padding:9px 11px;cursor:pointer;color:var(--ink);font-family:'Archivo',sans-serif}
+.rowitem:hover{background:var(--code-bg)}
+.rowitem.sel{background:var(--sel)}
+.rowitem .cid{font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.rowitem .prev{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-height:300px}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.scatterbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.scatterbox svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend b{font-weight:600;color:var(--ink)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+.note{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 8px 8px 0;
+  padding:12px 16px;margin:10px 0;font-size:14px}
+.gatelog{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+.gatelog td{padding:5px 10px}
+footer{margin-top:70px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+.pairbars{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:12.5px}
+.pairbars .pb{height:16px;border-radius:3px;display:flex;align-items:center}
+.pairbars .pb i{height:100%;border-radius:3px}
+.pairbars .pb span{font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:6px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow" style="margin-top:52px">aidataapps · lab 04 · tier-1 mac campaign</div>
+  <h1>GhostType Tier-1 Bench</h1>
+  <p class="sub">Six local model servings replay 588 frozen SQL ghost-text episodes — cursor continuations and
+  intent-comment completions — under one frozen contract: raw-text transport, deterministic decode, pinned
+  ScriptDom parse oracle, and empty output as a first-class abstention. Every number regenerates from the
+  campaign database; every sample below is a real request from the run.</p>
+  <div class="identity" id="identity"></div>
+
+  <div class="eyebrow">verdict</div>
+  <h2 style="margin-top:.2em">Scoreboard</h2>
+  <div class="tablecard"><table id="scoreboard"></table></div>
+  <p class="sub" style="font-size:13.5px;margin-top:10px"><b>Exact / offer</b> counts a completion only when the model actually
+  offered one — abstentions are scored separately as trap behavior (101 of 588 episodes are traps where the schema
+  cannot answer the request and the correct output is nothing). No profile beat the deterministic floor on the
+  <i>bundled</i> headline metric; the per-offer and trap columns are where the models separate.</p>
+
+  <div class="eyebrow">thesis</div>
+  <h2 style="margin-top:.2em">Quality is priced in seconds</h2>
+  <div class="scatterbox">
+    <div id="scatter"></div>
+    <div class="legend" id="scatterlegend"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <h3>Same model, thinking on vs off — Gemma 4 26B-A4B</h3>
+      <div class="pairbars" id="gemmapair"></div>
+      <p class="sub" style="font-size:13px;margin-bottom:0">Reasoning bought no answer quality and cost 20–30×
+      latency plus an unbounded-reasoning pathology on 18% of rows — but it did buy abstention discipline.
+      On this workload, thinking is a <i>trust</i> feature, not a competence feature.</p>
+    </div>
+    <div class="card">
+      <h3>Trap discipline — 101 should-abstain episodes</h3>
+      <div class="pairbars" id="trapbars"></div>
+      <p class="sub" style="font-size:13px;margin-bottom:0">A ghost-text engine that invents SQL when the schema
+      can't answer is worse than one that stays silent. Muse is the only profile that reliably holds its tongue.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">profiles</div>
+  <h2 style="margin-top:.2em">Per-profile detail</h2>
+  <div class="grid2" id="profilecards"></div>
+
+  <div class="eyebrow">evidence</div>
+  <h2 style="margin-top:.2em">Sample explorer — real inputs, real outputs</h2>
+  <p class="sub">Curated evenly across profiles and outcome categories, straight from the campaign database.
+  The editor pane shows what the user had typed (▎ marks the cursor), the model's completion as ghost text,
+  and the gold answer beneath it.</p>
+  <div class="filters" id="filters"></div>
+  <div class="explorer">
+    <div class="rowlist" id="rowlist" role="listbox" aria-label="samples"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:40px">
+    <div class="card">
+      <h3>Deterministic baselines (H1 floor)</h3>
+      <div style="overflow-x:auto"><table id="baselines"></table></div>
+      <p class="sub" style="font-size:13px">Best lookup engine: 4 of 487 answerable episodes exact.
+      The dataset cannot be gamed by retrieval — model wins are real work.</p>
+    </div>
+    <div class="card">
+      <h3>Paired tests vs the B2 grammar-aware baseline</h3>
+      <div style="overflow-x:auto"><table id="paired"></table></div>
+      <p class="sub" style="font-size:13px">Exact McNemar on normalized-exact, all 588 rows. Power labels are
+      provisional pending the E-1 simulation.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">provenance</div>
+  <h2 style="margin-top:.2em">Dataset, gates, and scars</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Dataset v2 · 588 episodes</h3>
+      <div style="overflow-x:auto"><table id="roles"></table></div>
+      <h3>Package defects caught by the gates</h3>
+      <ul class="sub" style="font-size:13px;padding-left:18px" id="defects"></ul>
+    </div>
+    <div class="card">
+      <h3>Evidence event log</h3>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table class="gatelog" id="gates"></table></div>
+    </div>
+  </div>
+
+  <div id="notes"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const D = {
+ "schemaVersion": 1,
+ "generatedAtUtc": "2026-08-25T04:17:50.924Z",
+ "lab": "aidataapps/ghosttype",
+ "campaign": {
+  "runId": "ghosttype-cpu-dev-20260823T213801Z",
+  "platform": "Karl's MacBook Pro (M4 Max, 48 GB) — mlx_lm.server :8020 / mlx_vlm.server :8021, single resident model",
+  "sqlHost": "SQL Server 2025 CU8 under Rosetta emulation (all SQL timings DEV-tier)",
+  "parser": "Microsoft.SqlServer.TransactSql.ScriptDom [170.191.0] (TSql170Parser)",
+  "frozenRules": [
+   "raw-text transport",
+   "candidate-extract-v1",
+   "normalize-v1 (case-sensitive)",
+   "recompose-v1",
+   "deterministic reference decode T=0 (Muse: DFlash drafter, non-deterministic label)"
+  ],
+  "dataset": "ghosttype_dataset_v2 — 588 cases (430 intent_query, 158 cursor_fragment; 101 expect-empty traps), 14 catalogs, hash-verified"
+ },
+ "profileOrder": [
+  "muse-glimmer-30b-mlx",
+  "qwen-3.8-27b-mlx",
+  "gemma-4-26b-a4b-nothink-mlx",
+  "gemma-4-e4b-mlx",
+  "gemma-4-26b-a4b-mlx",
+  "olmo-3.1-32b-mlx"
+ ],
+ "profiles": {
+  "baseline-deterministic": {
+   "profileId": "baseline-deterministic",
+   "arm": "B0-empty",
+   "servedModelId": "baseline-deterministic",
+   "quantization": null,
+   "portGate": null,
+   "decodeLabel": "deterministic",
+   "reasoningMode": "none",
+   "totalRows": 2940,
+   "outcomes": {
+    "abstain_wrong": 2308,
+    "fail": 62,
+    "partial": 70,
+    "abstain_correct": 496,
+    "success": 4
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 675,
+     "offered": 94,
+     "exact": 4,
+     "exactPerOffer": 0.0425531914893617,
+     "partial": 56,
+     "grounded": 225,
+     "parseClean": 89,
+     "parseBad": 5,
+     "latencyP50": null,
+     "latencyP95": null
+    },
+    "intent_query": {
+     "rows": 1760,
+     "offered": 33,
+     "exact": 0,
+     "exactPerOffer": 0,
+     "partial": 14,
+     "grounded": 235,
+     "parseClean": 33,
+     "parseBad": 0,
+     "latencyP50": null,
+     "latencyP95": null
+    }
+   },
+   "traps": {
+    "total": 505,
+    "correct": 496
+   },
+   "truncations": 0,
+   "latencyP50": null,
+   "latencyP95": null,
+   "tokensPerSecondMedian": null,
+   "reasoningCharsMedian": null
+  },
+  "gemma-4-26b-a4b-mlx": {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
+   "quantization": "optiq-4bit",
+   "portGate": "PASS",
+   "decodeLabel": "deterministic-reference",
+   "reasoningMode": "on (allowance 8192)",
+   "totalRows": 588,
+   "outcomes": {
+    "abstain_wrong": 34,
+    "fail": 211,
+    "success": 36,
+    "partial": 246,
+    "abstain_correct": 54,
+    "format_fail": 7
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 128,
+     "exact": 32,
+     "exactPerOffer": 0.25,
+     "partial": 23,
+     "grounded": 51,
+     "parseClean": 68,
+     "parseBad": 0,
+     "latencyP50": 39199,
+     "latencyP95": 115645
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 325,
+     "exact": 11,
+     "exactPerOffer": 0.033846153846153845,
+     "partial": 223,
+     "grounded": 253,
+     "parseClean": 279,
+     "parseBad": 3,
+     "latencyP50": 22550,
+     "latencyP95": 115811
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 54
+   },
+   "truncations": 107,
+   "latencyP50": 23636,
+   "latencyP95": 115763,
+   "tokensPerSecondMedian": 72,
+   "reasoningCharsMedian": 5828
+  },
+  "gemma-4-26b-a4b-nothink-mlx": {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "mlx-community/gemma-4-26B-A4B-it-OptiQ-4bit",
+   "quantization": "optiq-4bit",
+   "portGate": "PASS",
+   "decodeLabel": "deterministic-reference",
+   "reasoningMode": "disabled-by-template",
+   "totalRows": 588,
+   "outcomes": {
+    "fail": 229,
+    "success": 40,
+    "partial": 302,
+    "abstain_correct": 13,
+    "format_fail": 2,
+    "abstain_wrong": 2
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 133,
+     "exact": 35,
+     "exactPerOffer": 0.2631578947368421,
+     "partial": 61,
+     "grounded": 57,
+     "parseClean": 128,
+     "parseBad": 5,
+     "latencyP50": 1080,
+     "latencyP95": 3018
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 352,
+     "exact": 10,
+     "exactPerOffer": 0.028409090909090908,
+     "partial": 241,
+     "grounded": 278,
+     "parseClean": 336,
+     "parseBad": 14,
+     "latencyP50": 2646,
+     "latencyP95": 4221
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 13
+   },
+   "truncations": 0,
+   "latencyP50": 2018,
+   "latencyP95": 4085,
+   "tokensPerSecondMedian": 15,
+   "reasoningCharsMedian": null
+  },
+  "gemma-4-e4b-mlx": {
+   "profileId": "gemma-4-e4b-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+   "quantization": "optiq-4bit",
+   "portGate": "PASS",
+   "decodeLabel": "deterministic-reference",
+   "reasoningMode": "on (allowance 1280)",
+   "totalRows": 588,
+   "outcomes": {
+    "fail": 198,
+    "success": 35,
+    "partial": 259,
+    "abstain_correct": 63,
+    "abstain_wrong": 33
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 126,
+     "exact": 35,
+     "exactPerOffer": 0.2777777777777778,
+     "partial": 58,
+     "grounded": 53,
+     "parseClean": 119,
+     "parseBad": 7,
+     "latencyP50": 4598,
+     "latencyP95": 9866
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 328,
+     "exact": 5,
+     "exactPerOffer": 0.01524390243902439,
+     "partial": 201,
+     "grounded": 261,
+     "parseClean": 306,
+     "parseBad": 21,
+     "latencyP50": 6197,
+     "latencyP95": 14478
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 63
+   },
+   "truncations": 1,
+   "latencyP50": 5592,
+   "latencyP95": 13355,
+   "tokensPerSecondMedian": 64,
+   "reasoningCharsMedian": 1233
+  },
+  "muse-glimmer-30b-mlx": {
+   "profileId": "muse-glimmer-30b-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "mlx-community/Muse-Glimmer-30B-4bit",
+   "quantization": "mlx-4bit",
+   "portGate": "WARN",
+   "decodeLabel": "non-deterministic-decode (DFlash drafter on, per Karl 2026-08-24)",
+   "reasoningMode": "on (allowance 8192)",
+   "totalRows": 588,
+   "outcomes": {
+    "abstain_wrong": 147,
+    "fail": 74,
+    "success": 42,
+    "abstain_correct": 93,
+    "partial": 232
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 77,
+     "exact": 33,
+     "exactPerOffer": 0.42857142857142855,
+     "partial": 32,
+     "grounded": 52,
+     "parseClean": 77,
+     "parseBad": 0,
+     "latencyP50": 52917,
+     "latencyP95": 101484
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 263,
+     "exact": 13,
+     "exactPerOffer": 0.049429657794676805,
+     "partial": 200,
+     "grounded": 237,
+     "parseClean": 262,
+     "parseBad": 0,
+     "latencyP50": 62441,
+     "latencyP95": 119351
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 93
+   },
+   "truncations": 1,
+   "latencyP50": 57635,
+   "latencyP95": 112389,
+   "tokensPerSecondMedian": 25,
+   "reasoningCharsMedian": 6380
+  },
+  "olmo-3.1-32b-mlx": {
+   "profileId": "olmo-3.1-32b-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "lmstudio-community/Olmo-3.1-32B-Instruct-MLX-4bit",
+   "quantization": "mlx-4bit",
+   "portGate": "PASS",
+   "decodeLabel": "deterministic-reference",
+   "reasoningMode": "none",
+   "totalRows": 588,
+   "outcomes": {
+    "fail": 367,
+    "success": 18,
+    "partial": 199,
+    "abstain_wrong": 1,
+    "abstain_correct": 3
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 135,
+     "exact": 16,
+     "exactPerOffer": 0.11851851851851852,
+     "partial": 52,
+     "grounded": 53,
+     "parseClean": 96,
+     "parseBad": 39,
+     "latencyP50": 3208,
+     "latencyP95": 17070
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 351,
+     "exact": 4,
+     "exactPerOffer": 0.011396011396011397,
+     "partial": 147,
+     "grounded": 229,
+     "parseClean": 315,
+     "parseBad": 36,
+     "latencyP50": 11912,
+     "latencyP95": 23945
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 3
+   },
+   "truncations": 0,
+   "latencyP50": 8174,
+   "latencyP95": 21484,
+   "tokensPerSecondMedian": 4,
+   "reasoningCharsMedian": null
+  },
+  "qwen-3.8-27b-mlx": {
+   "profileId": "qwen-3.8-27b-mlx",
+   "arm": "M1-packaged",
+   "servedModelId": "mlx-community/Qwen3.8-27B-4bit",
+   "quantization": "mlx-4bit",
+   "portGate": "PASS",
+   "decodeLabel": "deterministic-reference",
+   "reasoningMode": "disabled-by-template",
+   "totalRows": 588,
+   "outcomes": {
+    "fail": 219,
+    "success": 56,
+    "abstain_wrong": 8,
+    "abstain_correct": 25,
+    "partial": 280
+   },
+   "classes": {
+    "cursor_fragment": {
+     "rows": 135,
+     "offered": 127,
+     "exact": 46,
+     "exactPerOffer": 0.36220472440944884,
+     "partial": 49,
+     "grounded": 55,
+     "parseClean": 126,
+     "parseBad": 1,
+     "latencyP50": 6758,
+     "latencyP95": 16354
+    },
+    "intent_query": {
+     "rows": 352,
+     "offered": 352,
+     "exact": 13,
+     "exactPerOffer": 0.036931818181818184,
+     "partial": 231,
+     "grounded": 288,
+     "parseClean": 335,
+     "parseBad": 17,
+     "latencyP50": 12620,
+     "latencyP95": 20281
+    }
+   },
+   "traps": {
+    "total": 101,
+    "correct": 25
+   },
+   "truncations": 0,
+   "latencyP50": 10253,
+   "latencyP95": 19549,
+   "tokensPerSecondMedian": 3,
+   "reasoningCharsMedian": null
+  }
+ },
+ "baselines": {
+  "B0-empty": {
+   "abstain_wrong": 487,
+   "abstain_correct": 101
+  },
+  "B1-keyword": {
+   "abstain_wrong": 487,
+   "abstain_correct": 101
+  },
+  "B2-catalog": {
+   "abstain_wrong": 463,
+   "partial": 9,
+   "abstain_correct": 101,
+   "fail": 11,
+   "success": 4
+  },
+  "B3-history": {
+   "abstain_wrong": 459,
+   "partial": 14,
+   "abstain_correct": 101,
+   "fail": 14
+  },
+  "B4-template": {
+   "fail": 37,
+   "partial": 47,
+   "abstain_wrong": 412,
+   "abstain_correct": 92
+  }
+ },
+ "paired": [
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "versus": "B0-empty",
+   "p": 0.5764306261883931,
+   "modelOnly": 43,
+   "baselineOnly": 37,
+   "both": 64,
+   "neither": 444,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "versus": "B2-catalog",
+   "p": 0.9087769252754921,
+   "modelOnly": 39,
+   "baselineOnly": 37,
+   "both": 68,
+   "neither": 444,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "versus": "B0-empty",
+   "p": 0.0002416957402281946,
+   "modelOnly": 45,
+   "baselineOnly": 88,
+   "both": 13,
+   "neither": 442,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "versus": "B2-catalog",
+   "p": 0.00005632966571164219,
+   "modelOnly": 43,
+   "baselineOnly": 90,
+   "both": 15,
+   "neither": 440,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "versus": "B0-empty",
+   "p": 0.9099464518745244,
+   "modelOnly": 40,
+   "baselineOnly": 38,
+   "both": 63,
+   "neither": 447,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "versus": "B2-catalog",
+   "p": 0.9121566075526032,
+   "modelOnly": 40,
+   "baselineOnly": 42,
+   "both": 63,
+   "neither": 443,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "versus": "B0-empty",
+   "p": 1.3843354973452904e-7,
+   "modelOnly": 46,
+   "baselineOnly": 8,
+   "both": 93,
+   "neither": 441,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "versus": "B2-catalog",
+   "p": 0.0000020377698612961126,
+   "modelOnly": 43,
+   "baselineOnly": 9,
+   "both": 96,
+   "neither": 440,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "versus": "B0-empty",
+   "p": 1.5349117001661822e-13,
+   "modelOnly": 20,
+   "baselineOnly": 98,
+   "both": 3,
+   "neither": 467,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "versus": "B2-catalog",
+   "p": 1.0754075870962743e-14,
+   "modelOnly": 19,
+   "baselineOnly": 101,
+   "both": 4,
+   "neither": 464,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "versus": "B0-empty",
+   "p": 0.16825920465992444,
+   "modelOnly": 59,
+   "baselineOnly": 76,
+   "both": 25,
+   "neither": 428,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "versus": "B2-catalog",
+   "p": 0.08713322647534702,
+   "modelOnly": 58,
+   "baselineOnly": 79,
+   "both": 26,
+   "neither": 425,
+   "complete": true,
+   "powerLabel": "provisional-adequate"
+  }
+ ],
+ "dataset": {
+  "roles": [
+   {
+    "data_role": "test_id",
+    "n": 335
+   },
+   {
+    "data_role": "train",
+    "n": 110
+   },
+   {
+    "data_role": "calibration",
+    "n": 44
+   },
+   {
+    "data_role": "test_template_holdout",
+    "n": 26
+   },
+   {
+    "data_role": "test_suffix_holdout",
+    "n": 25
+   },
+   {
+    "data_role": "test_schema_holdout",
+    "n": 20
+   },
+   {
+    "data_role": "test_sparse_catalog",
+    "n": 18
+   },
+   {
+    "data_role": "test_capability",
+    "n": 10
+   }
+  ],
+  "oracles": [
+   {
+    "oracle": "parse",
+    "status": "fail",
+    "n": 8
+   },
+   {
+    "oracle": "parse",
+    "status": "not_applicable",
+    "n": 101
+   },
+   {
+    "oracle": "parser_generation",
+    "status": "not_applicable",
+    "n": 101
+   },
+   {
+    "oracle": "parse",
+    "status": "pass",
+    "n": 479
+   },
+   {
+    "oracle": "parser_generation",
+    "status": "pass",
+    "n": 487
+   }
+  ],
+  "defects": [
+   "2 split groups spanned roles (governed to most-held-out role; dispositions in config/dataset-dispositions.json)",
+   "3 golds are syntactically invalid T-SQL (gt-cur-case-03/-04 simple-vs-searched CASE; gt-edge-proc-05 EXEC expression argument)",
+   "5 cursor-placement defects: whole statement emitted as prefix, gold lands after the terminator (gt-sparse-alias-01..04, gt-edge-cont-05)"
+  ]
+ },
+ "gates": [
+  {
+   "stage": "GT-1",
+   "disposition": "FAIL",
+   "key": "gt1-dataset-validate:75be363a4414c201",
+   "at": "2026-08-23T21:39:21.614Z"
+  },
+  {
+   "stage": "GT-1",
+   "disposition": "FAIL",
+   "key": "gt1-dataset-validate:027453ccf01318f7",
+   "at": "2026-08-23T21:41:01.146Z"
+  },
+  {
+   "stage": "GT-1",
+   "disposition": "FAIL",
+   "key": "gt1-dataset-validate:9e5d3c26446269b3",
+   "at": "2026-08-23T21:41:17.398Z"
+  },
+  {
+   "stage": "GT-1",
+   "disposition": "PASS",
+   "key": "gt1-dataset-validate:d1399207086c3132",
+   "at": "2026-08-23T21:41:51.577Z"
+  },
+  {
+   "stage": "GT-3",
+   "disposition": "PASS_WITH_FINDINGS",
+   "key": "gt3-parse-oracle:1de942e577350310",
+   "at": "2026-08-23T21:47:46.753Z"
+  },
+  {
+   "stage": "GT-3",
+   "disposition": "PASS_WITH_FINDINGS",
+   "key": "gt3-parse-oracle:963a3bb9dc2ab366",
+   "at": "2026-08-23T21:50:59.218Z"
+  },
+  {
+   "stage": "GT-3",
+   "disposition": "PASS_WITH_FINDINGS",
+   "key": "gt3-parse-oracle:08f605c2620a5d1c",
+   "at": "2026-08-23T21:52:39.364Z"
+  },
+  {
+   "stage": "GT-2",
+   "disposition": "PASS",
+   "key": "gt2-catalog-snapshot:7d63ef3c32cf8d18",
+   "at": "2026-08-23T21:57:09.720Z"
+  },
+  {
+   "stage": "GT-2",
+   "disposition": "PASS",
+   "key": "gt2-catalog-snapshot:ff6b58fa84380389",
+   "at": "2026-08-23T21:57:40.489Z"
+  },
+  {
+   "stage": "GT-2",
+   "disposition": "PASS",
+   "key": "gt2-catalog-snapshot:4827a14de9dfc904",
+   "at": "2026-08-23T21:57:57.257Z"
+  },
+  {
+   "stage": "GT-5",
+   "disposition": "PASS",
+   "key": "gt5-baselines:bf76f6cf8ed1a38b",
+   "at": "2026-08-23T22:01:47.508Z"
+  },
+  {
+   "stage": "GT-5",
+   "disposition": "PASS",
+   "key": "gt5-baselines:bf561057459b3240",
+   "at": "2026-08-23T22:02:17.281Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:88d1d5d17a9b2105",
+   "at": "2026-08-23T22:11:36.808Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:83d7a36e82a19ed6",
+   "at": "2026-08-23T23:11:37.122Z"
+  },
+  {
+   "stage": "GT-11",
+   "disposition": "PASS_WITH_FINDINGS",
+   "key": "gt11-port-gate:45a624ad4a3b934b",
+   "at": "2026-08-23T23:21:25.222Z"
+  },
+  {
+   "stage": "GT-11",
+   "disposition": "PASS",
+   "key": "gt11-port-gate:deaa2184eb9b4872",
+   "at": "2026-08-23T23:24:41.331Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:705f96216c398016",
+   "at": "2026-08-24T01:14:09.528Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:6e5de2021951df1a",
+   "at": "2026-08-24T09:01:53.801Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:e77d5083d66dd7fc",
+   "at": "2026-08-24T14:26:37.944Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:12ca5f88d16e42c7",
+   "at": "2026-08-24T16:09:28.515Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:47e72b1c5c515ed4",
+   "at": "2026-08-25T02:28:14.128Z"
+  },
+  {
+   "stage": "GT-11",
+   "disposition": "PASS",
+   "key": "gt11-port-gate:1db0e287fd496bf3",
+   "at": "2026-08-25T02:29:49.881Z"
+  },
+  {
+   "stage": "GT-8",
+   "disposition": "PASS",
+   "key": "gt8-metrics:8a8b0f353c92de8a",
+   "at": "2026-08-25T02:52:49.947Z"
+  }
+ ],
+ "notes": [
+  "H1 (beat the grammar-aware deterministic baseline on overall normalized-exact) is unsupported for every profile: the headline metric bundles abstention discipline with generation quality — per-offer and per-class suites carry the real signal.",
+  "Gemma 26B measured in BOTH modes: thinking bought no answer quality (32 vs 35 cursor exact) at 20-30x latency and an 18% unbounded-reasoning pathology, but did buy abstention discipline (54 vs 13 traps correct).",
+  "Muse: quality/trust leader (42.9% cursor exact-per-offer, 92% traps, 0 parse errors) at 6x median latency; over-abstains ~30% of answerable rows. No working thinking-off switch in mlx_vlm 0.6.15.",
+  "Gemma 26B nothink is the only profile in plausible ghost-text latency range on this hardware (p50 ~1.5s cursor / ~2.5s intent)."
+ ],
+ "samples": [
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-cur-cte-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RegionalCustomers AS (\n    SELECT * FROM dbo.Customers\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RegionalCustomers",
+   "model": "RegionalCustomers",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 11887,
+   "completionTokens": 814,
+   "reasoningChars": 2908
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-cur-where-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Products AS p\nWHERE p.",
+   "suffix": "",
+   "gold": "ProductId",
+   "model": "ProductId",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 23059,
+   "completionTokens": 1713,
+   "reasoningChars": 6007
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn-cont-007",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    qs.execution_count,\n    st.text\nFROM sys.dm_exec_query_stats AS qs\nCROSS APPLY sys.",
+   "suffix": "",
+   "gold": "dm_exec_sql_text(qs.sql_handle) AS st",
+   "model": "dm_exec_sql_text(qs.sql_handle) AS st",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 10624,
+   "completionTokens": 692,
+   "reasoningChars": 2010
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn2-ansi-002",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- workout categories that are not also meal categories",
+   "suffix": "",
+   "gold": "SELECT category\nFROM dbo.Workouts\nEXCEPT\nSELECT category\nFROM dbo.Meals;",
+   "model": "SELECT\n    category\nFROM dbo.Workouts\nEXCEPT\nSELECT\n    category\nFROM dbo.Meals;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 17888,
+   "completionTokens": 1203,
+   "reasoningChars": 4205
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-cur-delete-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "DELETE FROM dbo.Orders\nWHERE ",
+   "suffix": "",
+   "gold": "Status = 'Cancelled'",
+   "model": "OrderId = @OrderId",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 60819,
+   "completionTokens": 4483,
+   "reasoningChars": 15792
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-temp-audit-02",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- recent StateChanged audit events for Subscription",
+   "suffix": "",
+   "gold": "SELECT TOP (100)\n    AuditEventId,\n    EntityId,\n    EventType,\n    EventAt,\n    DetailJson\nFROM dbo.AuditEvents\nWHERE EntityType = N'Subscription'\n  AND EventType = N'StateChanged'\nORDER BY\n    EventAt DESC;",
+   "model": "SELECT\n    AuditEventId,\n    EntityType,\n    EntityId,\n    EventType,\n    EventAt,\n    DetailJson\nFROM dbo.AuditEvents\nWHERE EntityType = 'Subscription'\nAND EventType = 'StateChanged'\nORDER BY EventAt DESC;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 17168,
+   "completionTokens": 1252,
+   "reasoningChars": 4339
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn-intent-fa-011",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- count users by gender",
+   "suffix": "",
+   "gold": "SELECT\n    gender,\n    COUNT(*) AS user_count\nFROM dbo.Users\nGROUP BY\n    gender\nORDER BY\n    user_count DESC;",
+   "model": "SELECT\n    gender,\n    COUNT(*) AS user_count\nFROM dbo.Users\nGROUP BY\n    gender;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 9426,
+   "completionTokens": 550,
+   "reasoningChars": 1802
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn2-adv-008",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- rank products by revenue within each category",
+   "suffix": "",
+   "gold": "SELECT\n    pc.Name AS category_name,\n    p.Name AS product_name,\n    SUM(sod.LineTotal) AS revenue,\n    RANK() OVER (\n        PARTITION BY pc.Name\n        ORDER BY SUM(sod.LineTotal) DESC\n    ) AS revenue_rank\nFROM SalesLT.SalesOrderDetail AS sod\nINNER JOIN SalesLT.Product AS p\n    ON p.ProductID = sod.ProductID\nINNER JOIN SalesLT.ProductCategory AS pc\n    O…",
+   "model": "SELECT\n  pc.Name AS CategoryName,\n  p.Name AS ProductName,\n  SUM(sod.LineTotal) AS TotalRevenue,\n  RANK() OVER (PARTITION BY pc.Name ORDER BY SUM(sod.LineTotal) DESC) AS ProductRank\nFROM SalesLT.ProductCategory AS pc\nJOIN SalesLT.Product AS p\n  ON pc.ProductCategoryID = p.ProductCategoryID\nJOIN SalesLT.SalesOrderDetail AS sod\n  ON p.ProductID = sod.ProductID…",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 23199,
+   "completionTokens": 1604,
+   "reasoningChars": 5052
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-cur-case-02",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE IsActive ",
+   "suffix": "",
+   "gold": "WHEN 1 THEN 'Active' ELSE 'Inactive' END",
+   "model": "WHEN 1 THEN 'Active' ELSE 'Inactive' END",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 22808,
+   "completionTokens": 1694,
+   "reasoningChars": 5614
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-edge-proc-01",
+   "outcome": "fail",
+   "failureStage": "truncation",
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_suffix_holdout",
+   "prefix": "EXEC dbo.[usp Process Order] ",
+   "suffix": "",
+   "gold": "@OrderId = 1",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 113071,
+   "completionTokens": 8384,
+   "reasoningChars": 25977
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-temp-periodmeta-03",
+   "outcome": "fail",
+   "failureStage": "truncation",
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "metadata",
+   "dataRole": "test_id",
+   "prefix": "-- inspect the temporal period column dbo.Subscriptions.ValidFrom",
+   "suffix": "",
+   "gold": "SELECT\n    c.name AS period_column,\n    c.generated_always_type_desc\nFROM sys.tables AS t\nINNER JOIN sys.columns AS c\n    ON c.object_id = t.object_id\nWHERE SCHEMA_NAME(t.schema_id) = N'dbo'\n  AND t.name = N'Subscriptions'\n  AND c.name = N'ValidFrom';",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 115985,
+   "completionTokens": 8576,
+   "reasoningChars": 30117
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn-intent-fa-004",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- total completed payments per user",
+   "suffix": "",
+   "gold": "SELECT\n    u.user_id,\n    u.full_name,\n    u.email,\n    SUM(p.amount) AS total_paid\nFROM dbo.Users AS u\nINNER JOIN dbo.Payments AS p\n    ON p.user_id = u.user_id\nWHERE p.payment_status = N'completed'\nGROUP BY\n    u.user_id,\n    u.full_name,\n    u.email\nORDER BY\n    total_paid DESC;",
+   "model": "SELECT\n  u.full_name,\n  COUNT(p.payment_id) AS total_completed_payments\nFROM dbo.Users AS u\nJOIN dbo.Payments AS p\n  ON u.user_id = p.user_id\nWHERE p.payment_status = 'Completed'\nGROUP BY\n  u.user_id,\n  u.full_name;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": false,
+   "latencyMs": 40218,
+   "completionTokens": 2878,
+   "reasoningChars": 8854
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-edge-tablevar-02",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_sparse_catalog",
+   "prefix": "SELECT Name\nFROM @names\nWHERE ",
+   "suffix": "",
+   "gold": "Name IS NOT NULL",
+   "model": "```sql\n\n```",
+   "rawExcerpt": "```sql\n\n```",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 30391,
+   "completionTokens": 2276,
+   "reasoningChars": 7946
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-edge-tablevar-03",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_sparse_catalog",
+   "prefix": "SELECT OrderId\nFROM @orders\nWHERE ",
+   "suffix": "",
+   "gold": "OrderId IS NOT NULL",
+   "model": "```sql\n\n```",
+   "rawExcerpt": "```sql\n\n```",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 39199,
+   "completionTokens": 2946,
+   "reasoningChars": 10369
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-ops-indexusage-02",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- indexes with most scans",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    OBJECT_SCHEMA_NAME(i.object_id) AS schema_name,\n    OBJECT_NAME(i.object_id) AS table_name,\n    i.name AS index_name,\n    u.user_seeks,\n    u.user_scans,\n    u.user_updates,\n    u.last_user_seek,\n    u.last_user_scan\nFROM sys.indexes AS i\nLEFT JOIN sys.dm_db_index_usage_stats AS u\n    ON u.database_id = DB_ID()\n   AND u.object_id = i.obje…",
+   "model": "```sql\n```",
+   "rawExcerpt": "```sql\n```",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 76966,
+   "completionTokens": 5751,
+   "reasoningChars": 19633
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-ops-waits-03",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- lock waits in this Azure database",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nWHERE wait_type LIKE N'LCK%'\nORDER BY\n    wait_time_ms DESC;",
+   "model": "```sql\n\n```",
+   "rawExcerpt": "```sql\n\n```",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 46837,
+   "completionTokens": 3525,
+   "reasoningChars": 11901
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 22121,
+   "completionTokens": 1628,
+   "reasoningChars": 5991
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-edge-unicode-02",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_suffix_holdout",
+   "prefix": "-- filter dbo.[User Profile] with a Unicode-safe predicate",
+   "suffix": "",
+   "gold": "SELECT *\nFROM dbo.[User Profile]\nWHERE [First Name] = N'Zoë';",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 37194,
+   "completionTokens": 2792,
+   "reasoningChars": 10038
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-ops-forced-06",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- show plans for one query",
+   "suffix": "",
+   "gold": "SELECT\n    plan_id,\n    query_id,\n    is_forced_plan,\n    force_failure_count,\n    last_force_failure_reason\nFROM sys.query_store_plan\nWHERE query_id = @QueryId\nORDER BY\n    query_id,\n    plan_id;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 63451,
+   "completionTokens": 4758,
+   "reasoningChars": 16854
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-ops-waits-02",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- most tasks in this Azure database",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nORDER BY\n    waiting_tasks_count DESC;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 29958,
+   "completionTokens": 2238,
+   "reasoningChars": 8507
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-edge-go-02",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_capability",
+   "prefix": "-- continue after the batch boundary",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 28873,
+   "completionTokens": 2156,
+   "reasoningChars": 8359
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-sparse-crossdb-04",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- query tempdb files",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 8557,
+   "completionTokens": 598,
+   "reasoningChars": 2381
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "gt-sparse-names-only-04",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- show Revenue from reporting.ProductMix",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 7117,
+   "completionTokens": 488,
+   "reasoningChars": 1905
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-mlx",
+   "caseId": "syn-empty-013",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- sales by category from the sales by category view with category name and sales",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 14769,
+   "completionTokens": 925,
+   "reasoningChars": 3551
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-cur-cte-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RecentOrders AS (\n    SELECT * FROM dbo.Orders\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RecentOrders",
+   "model": "RecentOrders",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 974,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-cur-join-target-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT *\nFROM dbo.OrderItems AS oi\nINNER JOIN dbo.",
+   "suffix": "",
+   "gold": "Products",
+   "model": "Products",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 1045,
+   "completionTokens": 2,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-sparse-qualified-04",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- show current customer synonym",
+   "suffix": "",
+   "gold": "SELECT *\nFROM reporting.CurrentCustomers;",
+   "model": "SELECT *\nFROM reporting.CurrentCustomers;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 1022,
+   "completionTokens": 10,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "syn2-adv-012",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- delete order detail rows with zero quantity",
+   "suffix": "",
+   "gold": "DELETE FROM SalesLT.SalesOrderDetail\nWHERE OrderQty = 0;",
+   "model": "DELETE FROM SalesLT.SalesOrderDetail\nWHERE OrderQty = 0;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 2581,
+   "completionTokens": 15,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-cur-cte-04",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH StaffTree AS (\n    SELECT * FROM dbo.Employees\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "StaffTree",
+   "model": "StaffTree;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 980,
+   "completionTokens": 4,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-ops-waits-04",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- page IO latch waits in this Azure database",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nWHERE wait_type LIKE N'PAGEIOLATCH%'\nORDER BY\n    wait_time_ms DESC;",
+   "model": "SELECT\n    wait_type,\n    wait_time_ms,\n    signal_wait_time_ms,\n    wait_time_ms - signal_wait_time_ms AS resource_wait_time_ms,\n    waiting_tasks_count\nFROM sys.dm_db_wait_stats\nWHERE wait_type = 'PAGEIOLATCH%';",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 1927,
+   "completionTokens": 80,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-vector-meta-04",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "metadata",
+   "dataRole": "calibration",
+   "prefix": "-- inspect the type metadata for dbo.Documents.MetadataJson",
+   "suffix": "",
+   "gold": "SELECT\n    c.name AS column_name,\n    t.name AS type_name,\n    c.max_length\nFROM sys.columns AS c\nINNER JOIN sys.tables AS tb\n    ON tb.object_id = c.object_id\nINNER JOIN sys.types AS t\n    ON t.user_type_id = c.user_type_id\nWHERE SCHEMA_NAME(tb.schema_id) = N'dbo'\n  AND tb.name = N'Documents'\n  AND c.name = N'MetadataJson';",
+   "model": "SELECT\n    t.name AS TableName,\n    c.name AS ColumnName,\n    ty.name AS DataType,\n    c.max_length,\n    c.precision,\n    c.scale,\n    c.is_nullable\nFROM sys.tables AS t\nJOIN sys.columns AS c\n    ON t.object_id = c.object_id\nJOIN sys.types AS ty\n    ON c.user_type_id = ty.user_type_id\nWHERE\n    t.name = 'Documents'\n    AND c.name = 'MetadataJson';",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 2730,
+   "completionTokens": 129,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "syn-intent-sys-015",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- disabled server principals",
+   "suffix": "",
+   "gold": "SELECT\n    principal_id,\n    name,\n    type_desc,\n    is_disabled,\n    create_date,\n    default_database_name\nFROM sys.server_principals\nWHERE is_disabled = 1\nORDER BY\n    name;",
+   "model": "SELECT\n    name,\n    type_desc,\n    is_disabled,\n    create_date,\n    modify_date\nFROM sys.server_principals\nWHERE is_disabled = 1;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 2552,
+   "completionTokens": 46,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "WHEN WHEN 'Shipped' THEN 'Completed' WHEN 'Pending' THEN 'In Progress' ELSE 'Other' END",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": false,
+   "constraintPass": true,
+   "latencyMs": 1559,
+   "completionTokens": 25,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-ops-unsupported-04",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- list all database files from master",
+   "suffix": "",
+   "gold": "",
+   "model": "SELECT *\nFROM sys.master_files;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 1012,
+   "completionTokens": 11,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-vector-distance-04",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "SELECT VECTOR_DISTANCE('cosine', Embedding, ",
+   "suffix": "",
+   "gold": "CAST(@search_vector AS vector(1024))",
+   "model": "@query_embedding) AS distance",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": false,
+   "latencyMs": 242,
+   "completionTokens": 8,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "syn-intent-fa-009",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_id",
+   "prefix": "-- average calories burned per user across workout sessions",
+   "suffix": "",
+   "gold": "SELECT\n    u.user_id,\n    u.full_name,\n    AVG(ws.calories_burned) AS avg_calories_burned,\n    COUNT(*) AS session_count\nFROM dbo.Users AS u\nINNER JOIN dbo.User_Workouts AS uw\n    ON uw.user_id = u.user_id\nINNER JOIN dbo.Workout_Sessions AS ws\n    ON ws.user_workout_id = uw.user_workout_id\nGROUP BY\n    u.user_id,\n    u.full_name\nORDER BY\n    avg_calories_bur…",
+   "model": "SELECT\n    uw.user_id,\n    AVG(ws.calories_burned) AS average_calories_burned\nFROM dbo.User_Workouts AS uw\nJOIN dbo.Workout_Sessions AS ws\n    ON uw.user_workout_id = ws.user_workout_id\nGROUP BY\n    uw.user_id;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3450,
+   "completionTokens": 74,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-ops-requests-03",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- waiting requests",
+   "suffix": "",
+   "gold": "SELECT\n    session_id,\n    status,\n    command,\n    blocking_session_id,\n    wait_type,\n    total_elapsed_time\nFROM sys.dm_exec_requests\nWHERE wait_type IS NOT NULL\nORDER BY\n    total_elapsed_time DESC;",
+   "model": "```sql\n```",
+   "rawExcerpt": "```sql\n```",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 919,
+   "completionTokens": 5,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "trace-intent-009",
+   "outcome": "format_fail",
+   "failureStage": "extraction",
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- what is the best snippet to handle resolving deadlocks and retries",
+   "suffix": "",
+   "gold": "DECLARE @RetryCount INT = 0;\nDECLARE @MaxRetries INT = 5;\nDECLARE @Success BIT = 0;\n\nWHILE @RetryCount < @MaxRetries AND @Success = 0\nBEGIN\n    BEGIN TRY\n        BEGIN TRANSACTION;\n\n        -- Place transactional work here.\n\n        COMMIT TRANSACTION;\n        SET @Success = 1;\n    END TRY\n    BEGIN CATCH\n        IF @@TRANCOUNT > 0\n            ROLLBACK TRANS…",
+   "model": "```sql\nDECLARE @retry_count INT = 0;\nDECLARE @max_retries INT = 3;\nDECLARE @success BIT = 0;\n\nWHILE @retry_count < @max_retries AND @success = 0\nBEGIN\n    BEGIN TRY\n        BEGIN TRANSACTION;\n\n        -- Your SQL logic goes here\n        -- Example: UPDATE dbo.Products SET UnitsInStock = UnitsInStock - 1 WHERE ProductID = 1;\n\n        COMMIT TRANSACTION;\n     …",
+   "rawExcerpt": "```sql\nDECLARE @retry_count INT = 0;\nDECLARE @max_retries INT = 3;\nDECLARE @success BIT = 0;\n\nWHILE @retry_count < @max_retries AND @success = 0\nBEGIN\n    BEGIN TRY\n        BEGIN TRANSACTION;\n\n       …",
+   "formatFailure": "markdown_fence",
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 7049,
+   "completionTokens": 299,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "syn2-msdb-021",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "devops",
+   "dataRole": "test_id",
+   "prefix": "SELECT database_name, backup_finish_date\nFROM dbo.backup",
+   "suffix": "",
+   "gold": "set",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 2620,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "trace-cont-006",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "select *\n  from sys.data",
+   "suffix": "",
+   "gold": "bases",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 2057,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-cur-empty-01",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Orders AS o\nORDER BY o.OrderDate DESC",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 947,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-edge-comment-empty-01",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_sparse_catalog",
+   "prefix": "SELECT N'FROM dbo.[Order]' AS text_value -- not a FROM clause\n",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 929,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "gt-sparse-cont-empty-02",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM reporting.DailyPipeline WHERE ",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 863,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-26b-a4b-nothink-mlx",
+   "caseId": "syn2-fab-028",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT f.OrderNumber, f.TotalAmount\nFROM dbo.FactSales AS f\nWHERE f.TotalAmount > 100\nORDER BY ",
+   "suffix": "f.TotalAmount DESC",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 18,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 1896,
+   "completionTokens": 6,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-cte-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RecentOrders AS (\n    SELECT * FROM dbo.Orders\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RecentOrders",
+   "model": "RecentOrders",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 1893,
+   "completionTokens": 142,
+   "reasoningChars": 537
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-group-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "train",
+   "prefix": "SELECT p.ProductName, COUNT(*) AS item_count\nFROM dbo.Products AS p\nGROUP BY ",
+   "suffix": "",
+   "gold": "p.ProductName",
+   "model": "p.ProductName",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3060,
+   "completionTokens": 194,
+   "reasoningChars": 721
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-cont-005",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    name,\n    state_desc\nFROM sys.",
+   "suffix": "",
+   "gold": "databases",
+   "model": "databases",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 7516,
+   "completionTokens": 501,
+   "reasoningChars": 1426
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn2-adv-030",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "WITH revenue AS (\n    SELECT CustomerID, SUM(TotalDue) AS total_due\n    FROM SalesLT.SalesOrderHeader\n    GROUP BY ",
+   "suffix": "",
+   "gold": "CustomerID",
+   "model": "CustomerID",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 5753,
+   "completionTokens": 325,
+   "reasoningChars": 1299
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-delete-03",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "DELETE FROM dbo.Customers\nWHERE ",
+   "suffix": "",
+   "gold": "CustomerId = @CustomerId",
+   "model": "RegionId IS NULL",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 5835,
+   "completionTokens": 421,
+   "reasoningChars": 1678
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-ops-waits-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- highest total wait in this Azure database",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nORDER BY\n    wait_time_ms DESC;",
+   "model": "SELECT TOP 1\n    wait_type,\n    wait_time_ms\nFROM sys.dm_db_wait_stats\nORDER BY wait_time_ms DESC;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 4409,
+   "completionTokens": 307,
+   "reasoningChars": 926
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-cont-011",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    c.CustomerID,\n    c.CompanyName,\n    o.OrderID\nFROM dbo.Customers AS c\nINNER JOIN dbo.Orders AS o\n    ON ",
+   "suffix": "",
+   "gold": "o.CustomerID = c.CustomerID",
+   "model": "c.CustomerID = o.CustomerID",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 5030,
+   "completionTokens": 242,
+   "reasoningChars": 772
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-intent-sys-020",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- os performance counters",
+   "suffix": "",
+   "gold": "SELECT\n    object_name,\n    counter_name,\n    instance_name,\n    cntr_value,\n    cntr_type\nFROM sys.dm_os_performance_counters\nORDER BY\n    object_name,\n    counter_name;",
+   "model": "SELECT\n    object_name,\n    counter_name,\n    instance_name,\n    cntr_value,\n    cntr_type\nFROM\n    sys.dm_os_performance_counters;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3210,
+   "completionTokens": 160,
+   "reasoningChars": 487
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "WHEN Status = 'Delivered' THEN 'Completed'",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": false,
+   "constraintPass": true,
+   "latencyMs": 8042,
+   "completionTokens": 632,
+   "reasoningChars": 2548
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-ops-resource-04",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- recent Azure database workers utilization",
+   "suffix": "",
+   "gold": "SELECT TOP (60)\n    end_time,\n    max_worker_percent\nFROM sys.dm_db_resource_stats\nORDER BY\n    end_time DESC;",
+   "model": "SELECT\n    s.session_id,\n    s.login_name,\n    s.host_name,\n    r.status,\n    r.command,\n    r.wait_type,\n    r.wait_time\nFROM\n    sys.dm_exec_sessions s\nJOIN\n    sys.dm_exec_requests r ON s.session_id = r.session_id\nORDER BY\n    s.session_id;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 7888,
+   "completionTokens": 588,
+   "reasoningChars": 1835
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-vector-distance-06",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "SELECT VECTOR_DISTANCE('cosine', Embedding, ",
+   "suffix": "",
+   "gold": "CAST(@embedding AS vector(1024))",
+   "model": "Embedding",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": false,
+   "latencyMs": 9991,
+   "completionTokens": 796,
+   "reasoningChars": 3403
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-intent-nj-015",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- title authors and royalty percent",
+   "suffix": "",
+   "gold": "SELECT\n    a.au_id,\n    a.au_lname,\n    a.au_fname,\n    ta.title_id,\n    ta.au_ord,\n    ta.royaltyper\nFROM dbo.authors AS a\nINNER JOIN dbo.titleauthor AS ta\n    ON ta.au_id = a.au_id\nORDER BY\n    a.au_lname,\n    ta.au_ord;",
+   "model": "SELECT\n    T.title_name,\n    A.au_fname,\n    A.au_lname,\n    TA.royaltyper\nFROM\n    dbo.authors AS A\nINNER JOIN\n    dbo.titleauthor AS TA ON A.au_id = TA.au_id\nINNER JOIN\n    dbo.titles AS T ON TA.title_id = T.title_id;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": false,
+   "latencyMs": 14478,
+   "completionTokens": 976,
+   "reasoningChars": 3104
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-update-03",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "UPDATE dbo.Products\nSET ",
+   "suffix": "",
+   "gold": "IsActive = @IsActive",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 6265,
+   "completionTokens": 396,
+   "reasoningChars": 1642
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-ops-requests-03",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_template_holdout",
+   "prefix": "-- waiting requests",
+   "suffix": "",
+   "gold": "SELECT\n    session_id,\n    status,\n    command,\n    blocking_session_id,\n    wait_type,\n    total_elapsed_time\nFROM sys.dm_exec_requests\nWHERE wait_type IS NOT NULL\nORDER BY\n    total_elapsed_time DESC;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 3378,
+   "completionTokens": 223,
+   "reasoningChars": 858
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-vector-exact-06",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "calibration",
+   "prefix": "-- nearest Documents by cosine distance",
+   "suffix": "",
+   "gold": "SELECT TOP (10)\n    CreatedAt,\n    VECTOR_DISTANCE('cosine', Embedding, CAST(@embedding AS vector(1024))) AS distance\nFROM dbo.Documents\nWHERE Embedding IS NOT NULL\nORDER BY\n    distance;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 10470,
+   "completionTokens": 828,
+   "reasoningChars": 3605
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-intent-sys-001",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_id",
+   "prefix": "-- currently running requests with sql text",
+   "suffix": "",
+   "gold": "SELECT\n    r.session_id,\n    r.status,\n    r.command,\n    r.database_id,\n    r.blocking_session_id,\n    r.wait_type,\n    r.wait_time,\n    r.cpu_time,\n    r.total_elapsed_time,\n    st.text AS query_text\nFROM sys.dm_exec_requests AS r\nCROSS APPLY sys.dm_exec_sql_text(r.sql_handle) AS st\nWHERE r.session_id <> @@SPID\nORDER BY\n    r.total_elapsed_time DESC;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 2457,
+   "completionTokens": 98,
+   "reasoningChars": 434
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-cur-empty-01",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Orders AS o\nORDER BY o.OrderDate DESC",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 6837,
+   "completionTokens": 501,
+   "reasoningChars": 2095
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-ops-unsupported-05",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- change sp_configure",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 3736,
+   "completionTokens": 254,
+   "reasoningChars": 1196
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "gt-sparse-missing-col-02",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- customer phone numbers",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 4265,
+   "completionTokens": 296,
+   "reasoningChars": 1129
+  },
+  {
+   "profileId": "gemma-4-e4b-mlx",
+   "caseId": "syn-empty-010",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "admin",
+   "dataRole": "test_id",
+   "prefix": "-- top queries from query store runtime stats",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 4320,
+   "completionTokens": 188,
+   "reasoningChars": 882
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-cte-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RecentOrders AS (\n    SELECT * FROM dbo.Orders\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RecentOrders",
+   "model": "RecentOrders",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 61716,
+   "completionTokens": 1595,
+   "reasoningChars": 7598
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-join-target-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT *\nFROM dbo.OrderItems AS oi\nINNER JOIN dbo.",
+   "suffix": "",
+   "gold": "Products",
+   "model": "Products",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 22844,
+   "completionTokens": 528,
+   "reasoningChars": 2452
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-temp-cursor-03",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "SELECT *\nFROM dbo.Accounts\nFOR SYSTEM_TIME ",
+   "suffix": "",
+   "gold": "AS OF",
+   "model": "AS OF",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 36957,
+   "completionTokens": 981,
+   "reasoningChars": 4316
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "syn2-adv-011",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- raise list price by 5 percent for discontinued products",
+   "suffix": "",
+   "gold": "UPDATE SalesLT.Product\nSET ListPrice = ListPrice * 1.05\nWHERE DiscontinuedDate IS NOT NULL;",
+   "model": "UPDATE SalesLT.Product\nSET ListPrice = ListPrice * 1.05\nWHERE DiscontinuedDate IS NOT NULL;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 38088,
+   "completionTokens": 666,
+   "reasoningChars": 2917
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-insert-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "INSERT INTO dbo.Customers (",
+   "suffix": "",
+   "gold": "Name, RegionId",
+   "model": "CustomerId, Name, RegionId, CreatedAt",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 77387,
+   "completionTokens": 1981,
+   "reasoningChars": 9330
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-temp-audit-03",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- recent BalanceChanged audit events for Account",
+   "suffix": "",
+   "gold": "SELECT TOP (100)\n    AuditEventId,\n    EntityId,\n    EventType,\n    EventAt,\n    DetailJson\nFROM dbo.AuditEvents\nWHERE EntityType = N'Account'\n  AND EventType = N'BalanceChanged'\nORDER BY\n    EventAt DESC;",
+   "model": "SELECT\n    AuditEventId,\n    EntityType,\n    EntityId,\n    EventType,\n    EventAt,\n    DetailJson\nFROM dbo.AuditEvents\nWHERE EntityType = 'Account'\n  AND EventType = 'BalanceChanged'\nORDER BY EventAt DESC;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 40420,
+   "completionTokens": 1010,
+   "reasoningChars": 4302
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "syn-intent-fa-017",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- users who have paid but have no fitness goals",
+   "suffix": "",
+   "gold": "SELECT\n    u.user_id,\n    u.full_name,\n    u.email\nFROM dbo.Users AS u\nWHERE EXISTS (\n    SELECT 1\n    FROM dbo.Payments AS p\n    WHERE p.user_id = u.user_id\n)\nAND NOT EXISTS (\n    SELECT 1\n    FROM dbo.User_Fitness_Goals AS g\n    WHERE g.user_id = u.user_id\n)\nORDER BY\n    u.full_name;",
+   "model": "SELECT u.user_id, u.full_name, u.email\nFROM dbo.Users u\nWHERE EXISTS (\n    SELECT 1\n    FROM dbo.Payments p\n    WHERE p.user_id = u.user_id\n)\nAND NOT EXISTS (\n    SELECT 1\n    FROM dbo.User_Fitness_Goals g\n    WHERE g.user_id = u.user_id\n);",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 69271,
+   "completionTokens": 1481,
+   "reasoningChars": 6294
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "syn2-adv-007",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- monthly revenue for 2008",
+   "suffix": "",
+   "gold": "SELECT\n    MONTH(OrderDate) AS order_month,\n    SUM(TotalDue) AS revenue\nFROM SalesLT.SalesOrderHeader\nWHERE YEAR(OrderDate) = 2008\nGROUP BY\n    MONTH(OrderDate)\nORDER BY\n    order_month;",
+   "model": "SELECT\n    MONTH(OrderDate) AS Month,\n    SUM(TotalDue) AS Revenue\nFROM SalesLT.SalesOrderHeader\nWHERE OrderDate >= '2008-01-01' AND OrderDate < '2009-01-01'\nGROUP BY MONTH(OrderDate)\nORDER BY Month;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 70867,
+   "completionTokens": 1526,
+   "reasoningChars": 6166
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-case-02",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE IsActive ",
+   "suffix": "",
+   "gold": "WHEN 1 THEN 'Active' ELSE 'Inactive' END",
+   "model": "WHEN 1 THEN 'Active' ELSE 'Inactive' END",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 63818,
+   "completionTokens": 1772,
+   "reasoningChars": 7858
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-edge-select-04",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_suffix_holdout",
+   "prefix": "-- select [📦 ID] and [📦 Count] from dbo.[Emoji📦]",
+   "suffix": "",
+   "gold": "SELECT\n    [📦 ID],\n    [📦 Count]\nFROM dbo.[Emoji📦]\nORDER BY\n    [📦 ID];",
+   "model": "SELECT [📦 ID], [📦 Count]\nFROM dbo.[Emoji📦];",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 69156,
+   "completionTokens": 1861,
+   "reasoningChars": 7993
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-vector-indexmeta-06",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "metadata",
+   "dataRole": "test_id",
+   "prefix": "-- list index names and types",
+   "suffix": "",
+   "gold": "SELECT\n    SCHEMA_NAME(t.schema_id) AS schema_name,\n    t.name AS table_name,\n    i.name AS index_name,\n    i.type_desc\nFROM sys.tables AS t\nINNER JOIN sys.indexes AS i\n    ON i.object_id = t.object_id\nORDER BY\n    schema_name,\n    table_name,\n    index_name;",
+   "model": "SELECT name, type_desc\nFROM sys.indexes;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 57225,
+   "completionTokens": 1497,
+   "reasoningChars": 6825
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "syn-intent-nj-020",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- employee sales by country for 1997",
+   "suffix": "",
+   "gold": "EXEC dbo.[Employee Sales by Country]\n    @Beginning_Date = '19970101',\n    @Ending_Date = '19971231';",
+   "model": "EXEC dbo.[Employee Sales by Country] @Beginning_Date = '1997-01-01', @Ending_Date = '1997-12-31';",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 132624,
+   "completionTokens": 2816,
+   "reasoningChars": 12265
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 38624,
+   "completionTokens": 1208,
+   "reasoningChars": 5879
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-edge-unicode-01",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_suffix_holdout",
+   "prefix": "-- filter dbo.[München Customers] with a Unicode-safe predicate",
+   "suffix": "",
+   "gold": "SELECT *\nFROM dbo.[München Customers]\nWHERE [Straße] LIKE N'%straße%';",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 84473,
+   "completionTokens": 2119,
+   "reasoningChars": 10233
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-temp-asof-03",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- show dbo.Accounts as of a point in time",
+   "suffix": "",
+   "gold": "SELECT *\nFROM dbo.Accounts\nFOR SYSTEM_TIME AS OF @AsOf\nWHERE CustomerId = @Id;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 76121,
+   "completionTokens": 1914,
+   "reasoningChars": 8721
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-vector-openjson-02",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "-- expand metadata owners for every document",
+   "suffix": "",
+   "gold": "SELECT\n    d.DocumentId,\n    j.value AS owner\nFROM dbo.Documents AS d\nCROSS APPLY OPENJSON(d.MetadataJson, '$.owners') WITH (value nvarchar(120) '$') AS j;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 54893,
+   "completionTokens": 1360,
+   "reasoningChars": 6884
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-cur-empty-01",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Orders AS o\nORDER BY o.OrderDate DESC",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 51117,
+   "completionTokens": 1305,
+   "reasoningChars": 6158
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-sparse-crossdb-02",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- join another tenant database",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 28262,
+   "completionTokens": 697,
+   "reasoningChars": 3593
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "gt-temp-unsupported-02",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "analytics",
+   "dataRole": "test_id",
+   "prefix": "-- use CDC functions",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 54486,
+   "completionTokens": 1346,
+   "reasoningChars": 6651
+  },
+  {
+   "profileId": "muse-glimmer-30b-mlx",
+   "caseId": "syn-empty-014",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- employee territories with territory description",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 59545,
+   "completionTokens": 1060,
+   "reasoningChars": 5229
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-cur-cte-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RecentOrders AS (\n    SELECT * FROM dbo.Orders\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RecentOrders",
+   "model": "RecentOrders",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 2961,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-cur-insert-02",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "INSERT INTO dbo.Orders (",
+   "suffix": "",
+   "gold": "CustomerId, OrderDate, Status, TotalAmount",
+   "model": "CustomerId, OrderDate, Status, TotalAmount",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3419,
+   "completionTokens": 11,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-cur-where-04",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Employees AS e\nWHERE e.",
+   "suffix": "",
+   "gold": "EmployeeId",
+   "model": "EmployeeId",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3088,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "syn2-adv-011",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- raise list price by 5 percent for discontinued products",
+   "suffix": "",
+   "gold": "UPDATE SalesLT.Product\nSET ListPrice = ListPrice * 1.05\nWHERE DiscontinuedDate IS NOT NULL;",
+   "model": "UPDATE SalesLT.Product\nSET ListPrice = ListPrice * 1.05\nWHERE DiscontinuedDate IS NOT NULL;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 16149,
+   "completionTokens": 26,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-cur-group-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "analytics",
+   "dataRole": "train",
+   "prefix": "SELECT c.Name, COUNT(*) AS item_count\nFROM dbo.Customers AS c\nGROUP BY ",
+   "suffix": "",
+   "gold": "c.Name",
+   "model": "CustomerID",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 3168,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-ops-indexusage-02",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- indexes with most scans",
+   "suffix": "",
+   "gold": "SELECT TOP (50)\n    OBJECT_SCHEMA_NAME(i.object_id) AS schema_name,\n    OBJECT_NAME(i.object_id) AS table_name,\n    i.name AS index_name,\n    u.user_seeks,\n    u.user_scans,\n    u.user_updates,\n    u.last_user_seek,\n    u.last_user_scan\nFROM sys.indexes AS i\nLEFT JOIN sys.dm_db_index_usage_stats AS u\n    ON u.database_id = DB_ID()\n   AND u.object_id = i.obje…",
+   "model": "SELECT TOP (10) i.name AS IndexName, user_seeks AS ScanCount\nFROM sys.dm_db_index_usage_stats AS ius\nINNER JOIN sys.indexes i ON ius.object_id = i.object_id AND ius.index_id = i.index_id\nWHERE ius.database_id = DB_ID()\nAND user_seeks > 0\nORDER BY user_seeks DESC;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 5854,
+   "completionTokens": 79,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-vector-json-02",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "-- documents where metadata $.tenant is north",
+   "suffix": "",
+   "gold": "SELECT\n    DocumentId,\n    Title,\n    JSON_VALUE(MetadataJson, '$.tenant') AS metadata_value\nFROM dbo.Documents\nWHERE JSON_VALUE(MetadataJson, '$.tenant') = N'north'\nORDER BY\n    DocumentId;",
+   "model": "SELECT d.DocumentId, d.Title, d.Body\nFROM dbo.Documents d\nWHERE ISJSON(d.MetadataJson) = 1\n  AND JSON_VALUE(d.MetadataJson, '$.tenant') = 'north';",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 4215,
+   "completionTokens": 44,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "syn-intent-nj-033",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- employees hired in 1993 or later",
+   "suffix": "",
+   "gold": "SELECT\n    EmployeeID,\n    LastName,\n    FirstName,\n    Title,\n    HireDate,\n    City,\n    Country\nFROM dbo.Employees\nWHERE HireDate >= '19930101'\nORDER BY\n    HireDate,\n    LastName;",
+   "model": "SELECT EmployeeID, LastName, FirstName, HireDate\nFROM dbo.Employees\nWHERE HireDate >= '1993-01-01'",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 18095,
+   "completionTokens": 30,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "WHEN 'Shipped' THEN 'Completed'",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 34907,
+   "completionTokens": 11,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-ops-unsupported-05",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- change sp_configure",
+   "suffix": "",
+   "gold": "",
+   "model": "ALTER PROCEDURE app.sp_configure @param NVARCHAR(100), @value NVARCHAR(4000);",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 3105,
+   "completionTokens": 22,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "gt-vector-hybrid-06",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "-- hybrid lexical and vector search for permissions",
+   "suffix": "",
+   "gold": "WITH lexical AS (\n    SELECT\n        [KEY] AS DocumentId,\n        RANK AS lexical_rank\n    FROM CONTAINSTABLE(dbo.Documents, (Title, Body), N'\"permissions\"')\n), semantic AS (\n    SELECT TOP (50)\n        DocumentId,\n        VECTOR_DISTANCE('cosine', Embedding, CAST(@query_embedding AS vector(1024))) AS semantic_distance\n    FROM dbo.Documents\n    WHERE Embedd…",
+   "model": "WITH VectorSearch AS (\n    SELECT\n        d.DocumentId,\n        d.Title,\n        d.Body,\n        d.Embedding AS DocumentEmbedding,\n        q.QueryEmbedding,\n        VECTOR_DISTANCE('cosine', d.Embedding, q.QueryEmbedding) AS Distance\n    FROM dbo.Documents d\n    CROSS JOIN dbo.SearchQueries q\n)\nSELECT\n    ds.QueryId,\n    ds.ChunkId,\n    ds.Distance,\n    vs.D…",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": false,
+   "constraintPass": false,
+   "latencyMs": 10819,
+   "completionTokens": 188,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "syn-intent-nj-035",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- order details for order 10248",
+   "suffix": "",
+   "gold": "EXEC dbo.CustOrdersDetail @OrderID = 10248;",
+   "model": "SELECT o.OrderID, c.CompanyName, o.OrderDate, o.RequiredDate, o.ShippedDate, p.ProductName, od.Quantity, od.UnitPrice, od.Discount, (od.Quantity * od.UnitPrice * (1 - od.Discount)) AS ExtendedPrice\nFROM dbo.Orders o\nJOIN dbo.Customers c ON o.CustomerID = c.CustomerID\nJOIN dbo.[Order Details] od ON o.OrderID = od.OrderID\nJOIN dbo.Products p ON od.ProductID = …",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": false,
+   "latencyMs": 21324,
+   "completionTokens": 113,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "syn-intent-sys-008",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_id",
+   "prefix": "-- disabled sql logins",
+   "suffix": "",
+   "gold": "SELECT\n    principal_id,\n    name,\n    is_disabled,\n    is_policy_checked,\n    is_expiration_checked,\n    default_database_name\nFROM sys.sql_logins\nWHERE is_disabled = 1\nORDER BY\n    name;",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 10659,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "syn2-fab-028",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT f.OrderNumber, f.TotalAmount\nFROM dbo.FactSales AS f\nWHERE f.TotalAmount > 100\nORDER BY ",
+   "suffix": "f.TotalAmount DESC",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 2,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 9358,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "trace-cont-007",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "select *\n  from sys.data_spaces\n  cross join ",
+   "suffix": "sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL)\nWHERE\n  database_id = DB_ID() AND avg_fragmentation_in_percent > 10\nORDER BY avg_f…",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 4,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 10200,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "olmo-3.1-32b-mlx",
+   "caseId": "trace-cont-010",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 15222,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-cte-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "WITH RecentOrders AS (\n    SELECT * FROM dbo.Orders\n)\nSELECT *\nFROM ",
+   "suffix": "",
+   "gold": "RecentOrders",
+   "model": "RecentOrders",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 5824,
+   "completionTokens": 3,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-join-target-04",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT *\nFROM dbo.Products AS p\nINNER JOIN dbo.",
+   "suffix": "",
+   "gold": "Categories",
+   "model": "Categories",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 6863,
+   "completionTokens": 2,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-sparse-synonym-01",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "metadata",
+   "dataRole": "train",
+   "prefix": "-- explore the current customers synonym",
+   "suffix": "",
+   "gold": "SELECT *\nFROM reporting.CurrentCustomers;",
+   "model": "SELECT *\nFROM reporting.CurrentCustomers;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 6036,
+   "completionTokens": 9,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn2-adv-021",
+   "outcome": "success",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "admin",
+   "dataRole": "test_id",
+   "prefix": "-- wait stats for this database, highest wait time first",
+   "suffix": "",
+   "gold": "SELECT\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nORDER BY\n    wait_time_ms DESC;",
+   "model": "SELECT\n    wait_type,\n    waiting_tasks_count,\n    wait_time_ms,\n    max_wait_time_ms,\n    signal_wait_time_ms\nFROM sys.dm_db_wait_stats\nORDER BY wait_time_ms DESC;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 15399,
+   "completionTokens": 47,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-insert-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "INSERT INTO dbo.Customers (",
+   "suffix": "",
+   "gold": "Name, RegionId",
+   "model": "Name, RegionId, CreatedAt",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 6439,
+   "completionTokens": 8,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-sparse-qualified-01",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "-- show active customers",
+   "suffix": "",
+   "gold": "SELECT *\nFROM sales.Customers\nORDER BY\n    CustomerId;",
+   "model": "SELECT\n    CustomerId,\n    CustomerName,\n    RegionCode\nFROM sales.Customers\nWHERE CustomerName IS NOT NULL;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 7326,
+   "completionTokens": 29,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn-cont-012",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    u.full_name\nFROM dbo.Users AS u\nINNER JOIN dbo.User_Workouts AS uw\n    ON ",
+   "suffix": "",
+   "gold": "uw.user_id = u.user_id",
+   "model": "u.user_id = uw.user_id",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 12522,
+   "completionTokens": 8,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn-intent-sys-019",
+   "outcome": "partial",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "metadata",
+   "dataRole": "test_id",
+   "prefix": "-- procedures and their parameters",
+   "suffix": "",
+   "gold": "SELECT\n    s.name AS schema_name,\n    p.name AS procedure_name,\n    pr.parameter_id,\n    pr.name AS parameter_name,\n    t.name AS type_name,\n    pr.max_length,\n    pr.is_output\nFROM sys.procedures AS p\nINNER JOIN sys.schemas AS s\n    ON s.schema_id = p.schema_id\nLEFT JOIN sys.parameters AS pr\n    ON pr.object_id = p.object_id\nLEFT JOIN sys.types AS t\n    ON …",
+   "model": "SELECT\n    p.name AS procedure_name,\n    par.name AS parameter_name,\n    t.name AS data_type,\n    par.max_length,\n    par.precision,\n    par.scale,\n    par.is_output\nFROM sys.procedures p\nLEFT JOIN sys.parameters par ON p.object_id = par.object_id\nLEFT JOIN sys.types t ON par.user_type_id = t.user_type_id\nORDER BY p.name, par.parameter_id;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 17076,
+   "completionTokens": 93,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-case-01",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT CASE Status ",
+   "suffix": "",
+   "gold": "WHEN 'Open' THEN 1 ELSE 0 END",
+   "model": "WHEN 'Pending' THEN 'Open'\nWHEN 'Shipped' THEN 'In Transit'\nWHEN 'Delivered' THEN 'Closed'\nELSE 'Other'",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 6655,
+   "completionTokens": 38,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-ops-unsupported-04",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": true,
+   "scenario": "admin",
+   "dataRole": "test_schema_holdout",
+   "prefix": "-- list all database files from master",
+   "suffix": "",
+   "gold": "",
+   "model": ";",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5796,
+   "completionTokens": 2,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-vector-distance-05",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "calibration",
+   "prefix": "SELECT VECTOR_DISTANCE('cosine', Embedding, ",
+   "suffix": "",
+   "gold": "CAST(@query_embedding AS vector(1024))",
+   "model": "CAST('0.1,0.2,0.3' AS vector(1024)))",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 1164,
+   "completionTokens": 23,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn-intent-nj-003",
+   "outcome": "fail",
+   "failureStage": null,
+   "completionClass": "intent_query",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "-- orders that have not shipped yet",
+   "suffix": "",
+   "gold": "SELECT\n    o.OrderID,\n    o.CustomerID,\n    c.CompanyName,\n    o.OrderDate,\n    o.RequiredDate,\n    o.ShippedDate,\n    o.Freight,\n    o.ShipCity,\n    o.ShipRegion\nFROM dbo.Orders AS o\nINNER JOIN dbo.Customers AS c\n    ON c.CustomerID = o.CustomerID\nWHERE o.ShippedDate IS NULL\nORDER BY\n    o.RequiredDate;",
+   "model": "SELECT *\nFROM dbo.Orders\nWHERE ShippedDate IS NULL;",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": false,
+   "parsePass": true,
+   "constraintPass": true,
+   "latencyMs": 18116,
+   "completionTokens": 15,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-delete-02",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "DELETE FROM dbo.Products\nWHERE ",
+   "suffix": "",
+   "gold": "IsActive = 0",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5552,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-delete-04",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "DELETE FROM dbo.OrderItems\nWHERE ",
+   "suffix": "",
+   "gold": "OrderId = @OrderId",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": true,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5566,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-edge-temp-01",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_suffix_holdout",
+   "prefix": "SELECT * FROM #RecentOrders WHERE ",
+   "suffix": "",
+   "gold": "1 = 1",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5619,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn-cont-024",
+   "outcome": "abstain_wrong",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": false,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    CompanyName,\n    City,\n    Country\nFROM dbo.Customers",
+   "suffix": "",
+   "gold": "\nWHERE Country = N'USA'",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": false,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": false,
+   "latencyMs": 16295,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-cur-empty-01",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT * FROM dbo.Orders AS o\nORDER BY o.OrderDate DESC",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5399,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-edge-comment-empty-04",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_sparse_catalog",
+   "prefix": "SELECT N'-- WHERE [select] = 1' AS text_value",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5777,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "gt-sparse-cont-empty-03",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "train",
+   "prefix": "SELECT c.Phone FROM sales.Customers AS c WHERE ",
+   "suffix": "",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 5265,
+   "completionTokens": 1,
+   "reasoningChars": null
+  },
+  {
+   "profileId": "qwen-3.8-27b-mlx",
+   "caseId": "syn-cont-020",
+   "outcome": "abstain_correct",
+   "failureStage": null,
+   "completionClass": "cursor_fragment",
+   "expectEmpty": true,
+   "scenario": "developer",
+   "dataRole": "test_id",
+   "prefix": "SELECT\n    challenge_name,\n    start_date,\n    end_date\nFROM dbo.Challenges",
+   "suffix": "\nWHERE end_date >= CAST(GETDATE() AS date);",
+   "gold": "",
+   "model": "",
+   "rawExcerpt": null,
+   "formatFailure": null,
+   "suffixTrimmed": 0,
+   "exact": true,
+   "grounded": null,
+   "parsePass": null,
+   "constraintPass": true,
+   "latencyMs": 12866,
+   "completionTokens": 1,
+   "reasoningChars": null
+  }
+ ]
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = (v) => v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%";
+const secs = (ms) => ms === null || ms === undefined ? "—" : ms >= 10000 ? (ms/1000).toFixed(0) + "s" : (ms/1000).toFixed(1) + "s";
+
+const PCOLORS = {
+  "muse-glimmer-30b-mlx":"#8A5CC0","qwen-3.8-27b-mlx":"#0E7C86","gemma-4-26b-a4b-nothink-mlx":"#2E7D4F",
+  "gemma-4-e4b-mlx":"#7FA3C0","gemma-4-26b-a4b-mlx":"#A8730F","olmo-3.1-32b-mlx":"#B23E38"};
+const PSHORT = {
+  "muse-glimmer-30b-mlx":"Muse 30B +DFlash","qwen-3.8-27b-mlx":"Qwen 3.8-27B (no-think)",
+  "gemma-4-26b-a4b-nothink-mlx":"Gemma 26B (no-think)","gemma-4-e4b-mlx":"Gemma E4B",
+  "gemma-4-26b-a4b-mlx":"Gemma 26B (thinking)","olmo-3.1-32b-mlx":"OLMo 3.1-32B"};
+const short = (p) => PSHORT[p] || p;
+const color = (p) => PCOLORS[p] || "var(--accent)";
+
+// identity
+$("identity").innerHTML = [
+  "run " + D.campaign.runId, D.campaign.parser, D.campaign.platform.split(" — ")[0],
+  ...D.campaign.frozenRules.slice(0,4)
+].map(t => "<span>" + esc(t) + "</span>").join("");
+
+// scoreboard
+{
+  const rows = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    const cur = p.classes.cursor_fragment, int_ = p.classes.intent_query;
+    const curPo = cur.exactPerOffer, intPo = int_.exactPerOffer;
+    const trapPct = p.traps.correct / p.traps.total;
+    const parseBad = cur.parseBad + int_.parseBad;
+    return { pid, p, curPo, intPo, trapPct, parseBad };
+  });
+  const maxPo = Math.max(...rows.map(r => r.curPo || 0));
+  $("scoreboard").innerHTML =
+    "<tr><th>profile</th><th>mode</th><th>cursor exact/offer</th><th>intent exact/offer</th>" +
+    "<th>traps correct</th><th>parse-bad offers</th><th>latency p50 · p95</th><th>truncated</th></tr>" +
+    rows.map(r => {
+      const c = r.p.classes.cursor_fragment, i = r.p.classes.intent_query;
+      return "<tr>" +
+      "<td><span class='dot' style='background:" + color(r.pid) + "'></span><b>" + esc(short(r.pid)) + "</b>" +
+        "<div class='mono' style='font-size:10.5px;color:var(--muted)'>" + esc(r.p.servedModelId) + "</div></td>" +
+      "<td><span class='chip dim'>" + esc(r.p.reasoningMode) + "</span></td>" +
+      "<td class='num'>" + pct(r.curPo) + " <span style='color:var(--muted);font-size:11px'>(" + c.exact + "/" + c.offered + ")</span>" +
+        "<div class='bar'><i style='width:" + (100 * (r.curPo || 0) / maxPo) + "%;background:" + color(r.pid) + "'></i></div></td>" +
+      "<td class='num'>" + pct(r.intPo) + " <span style='color:var(--muted);font-size:11px'>(" + i.exact + "/" + i.offered + ")</span></td>" +
+      "<td class='num'><span class='chip " + (r.trapPct > .8 ? "good" : r.trapPct > .4 ? "warn" : "bad") + "'>" +
+        r.p.traps.correct + "/" + r.p.traps.total + "</span></td>" +
+      "<td class='num'><span class='chip " + (r.parseBad === 0 ? "good" : r.parseBad < 25 ? "warn" : "bad") + "'>" + r.parseBad + "</span></td>" +
+      "<td class='num'>" + secs(r.p.latencyP50) + " · " + secs(r.p.latencyP95) + "</td>" +
+      "<td class='num'>" + (r.p.truncations ? "<span class='chip bad'>" + r.p.truncations + "</span>" : "<span class='chip dim'>0</span>") + "</td>" +
+      "</tr>";
+    }).join("");
+}
+
+// scatter: latency p50 (log x) vs cursor exact-per-offer
+{
+  const pts = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    return { pid, x: p.latencyP50, y: p.classes.cursor_fragment.exactPerOffer || 0 };
+  }).filter(p => p.x);
+  const W = 900, H = 380, L = 56, R = 24, T = 18, B = 46;
+  const xmin = 1000, xmax = 80000;
+  const xs = (v) => L + (Math.log10(v) - 3) / (Math.log10(xmax) - 3) * (W - L - R);
+  const ymax = 0.5;
+  const ys = (v) => T + (1 - v / ymax) * (H - T - B);
+  let svg = "<svg viewBox='0 0 " + W + " " + H + "' role='img' aria-label='latency versus cursor exact rate'>";
+  for (const g of [0, .1, .2, .3, .4, .5]) {
+    svg += "<line x1='" + L + "' x2='" + (W-R) + "' y1='" + ys(g) + "' y2='" + ys(g) + "' stroke='var(--line)' stroke-width='1'/>" +
+      "<text x='" + (L-8) + "' y='" + (ys(g)+4) + "' text-anchor='end' font-size='11' fill='var(--muted)' font-family='JetBrains Mono'>" + (g*100) + "%</text>";
+  }
+  for (const t of [1000, 2000, 5000, 10000, 20000, 60000]) {
+    svg += "<line y1='" + T + "' y2='" + (H-B) + "' x1='" + xs(t) + "' x2='" + xs(t) + "' stroke='var(--line)' stroke-width='1' stroke-dasharray='2 4'/>" +
+      "<text y='" + (H-B+18) + "' x='" + xs(t) + "' text-anchor='middle' font-size='11' fill='var(--muted)' font-family='JetBrains Mono'>" + (t/1000) + "s</text>";
+  }
+  svg += "<rect x='" + L + "' y='" + T + "' width='" + (xs(2500)-L) + "' height='" + (H-T-B) + "' fill='var(--good)' opacity='0.06'/>";
+  svg += "<text x='" + (L+6) + "' y='" + (T+16) + "' font-size='11' fill='var(--good)' font-family='JetBrains Mono'>ghost-text latency range</text>";
+  svg += "<line x1='" + L + "' x2='" + (W-R) + "' y1='" + ys(0.36*0.5/0.5) + "' y2='" + ys(0.36*0)+ "' stroke='none'/>";
+  for (const p of pts) {
+    svg += "<circle cx='" + xs(p.x) + "' cy='" + ys(p.y) + "' r='11' fill='" + color(p.pid) + "' opacity='0.9'/>" +
+      "<text x='" + xs(p.x) + "' y='" + (ys(p.y) - 17) + "' text-anchor='middle' font-size='12' font-weight='600' fill='var(--ink)' font-family='Archivo'>" + esc(short(p.pid)) + "</text>" +
+      "<text x='" + xs(p.x) + "' y='" + (ys(p.y) + 30) + "' text-anchor='middle' font-size='10.5' fill='var(--muted)' font-family='JetBrains Mono'>" + pct(p.y) + " · " + secs(p.x) + "</text>";
+  }
+  svg += "<text x='" + ((L+W-R)/2) + "' y='" + (H-6) + "' text-anchor='middle' font-size='11.5' fill='var(--muted)' font-family='Archivo'>median row latency (log scale) →</text>";
+  svg += "</svg>";
+  $("scatter").innerHTML = svg;
+  $("scatterlegend").innerHTML = "<span><b>Y:</b> exact-match rate when a completion was offered (cursor episodes)</span>" +
+    "<span><b>Shaded:</b> plausibly acceptable while-you-type latency (&le;2.5s) — only Gemma no-think lives there</span>";
+}
+
+// gemma pair + traps
+{
+  const bar = (label, val, max, colorVar, text) =>
+    "<div style='color:var(--muted)'>" + esc(label) + "</div>" +
+    "<div class='pb'><i style='width:" + Math.max(2, 100*val/max) + "%;background:" + colorVar + "'></i><span>" + esc(text) + "</span></div>";
+  const gt = D.profiles["gemma-4-26b-a4b-mlx"], gn = D.profiles["gemma-4-26b-a4b-nothink-mlx"];
+  if (gt && gn) {
+    $("gemmapair").innerHTML =
+      bar("cursor exact — thinking", gt.classes.cursor_fragment.exact, 50, color("gemma-4-26b-a4b-mlx"), gt.classes.cursor_fragment.exact + "") +
+      bar("cursor exact — no-think", gn.classes.cursor_fragment.exact, 50, color("gemma-4-26b-a4b-nothink-mlx"), gn.classes.cursor_fragment.exact + "") +
+      bar("traps correct — thinking", gt.traps.correct, 101, color("gemma-4-26b-a4b-mlx"), gt.traps.correct + "/101") +
+      bar("traps correct — no-think", gn.traps.correct, 101, color("gemma-4-26b-a4b-nothink-mlx"), gn.traps.correct + "/101") +
+      bar("latency p50 — thinking", Math.log10(gt.latencyP50), 5, color("gemma-4-26b-a4b-mlx"), secs(gt.latencyP50)) +
+      bar("latency p50 — no-think", Math.log10(gn.latencyP50), 5, color("gemma-4-26b-a4b-nothink-mlx"), secs(gn.latencyP50)) +
+      bar("unbounded reasoning", gt.truncations, 588, "var(--bad)", gt.truncations + "/588 rows");
+  }
+  $("trapbars").innerHTML = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    return bar(short(pid), p.traps.correct, 101, color(pid), p.traps.correct + "/101");
+  }).join("");
+}
+
+// profile cards
+$("profilecards").innerHTML = D.profileOrder.map(pid => {
+  const p = D.profiles[pid];
+  const c = p.classes.cursor_fragment, i = p.classes.intent_query;
+  const o = p.outcomes;
+  return "<div class='card'>" +
+    "<h3><span class='dot' style='background:" + color(pid) + "'></span>" + esc(short(pid)) + "</h3>" +
+    "<div class='mono' style='font-size:11px;color:var(--muted);margin-top:-6px'>" + esc(p.servedModelId) +
+      " · " + esc(p.quantization || "") + " · port gate " + esc(p.portGate || "—") + " · " + esc(p.decodeLabel) + "</div>" +
+    "<div class='kpis'>" +
+      "<div class='kpi'><div class='v'>" + pct(c.exactPerOffer) + "</div><div class='l'>cursor exact/offer</div></div>" +
+      "<div class='kpi'><div class='v'>" + pct(i.exactPerOffer) + "</div><div class='l'>intent exact/offer</div></div>" +
+      "<div class='kpi'><div class='v'>" + p.traps.correct + "/" + p.traps.total + "</div><div class='l'>traps</div></div>" +
+      "<div class='kpi'><div class='v'>" + secs(p.latencyP50) + "</div><div class='l'>latency p50</div></div>" +
+    "</div>" +
+    "<div class='mchips'>" +
+      "<span class='chip good'>success " + (o.success || 0) + "</span>" +
+      "<span class='chip acc'>partial " + (o.partial || 0) + "</span>" +
+      "<span class='chip abst'>abstain ✓ " + (o.abstain_correct || 0) + "</span>" +
+      "<span class='chip warn'>abstain ✗ " + (o.abstain_wrong || 0) + "</span>" +
+      "<span class='chip bad'>fail " + (o.fail || 0) + "</span>" +
+      (o.format_fail ? "<span class='chip bad'>format " + o.format_fail + "</span>" : "") +
+      (p.truncations ? "<span class='chip bad'>unbounded " + p.truncations + "</span>" : "") +
+    "</div>" +
+    "<div class='mono' style='font-size:11.5px;color:var(--muted)'>grounded (intent) " + i.grounded + "/" + i.rows +
+      " · parse-clean offers " + ((c.parseClean||0)+(i.parseClean||0)) + " vs bad " + (c.parseBad+i.parseBad) +
+      (p.tokensPerSecondMedian ? " · " + p.tokensPerSecondMedian + " tok/s" : "") +
+      (p.reasoningCharsMedian ? " · median reasoning " + p.reasoningCharsMedian + " chars" : "") + "</div>" +
+  "</div>";
+}).join("");
+
+// ---------- explorer ----------
+const state = { profile: "all", outcome: "all", cls: "all", sel: 0 };
+const OUTS = ["success","partial","fail","format_fail","abstain_wrong","abstain_correct"];
+const OUTCLS = { success:"good", partial:"acc", fail:"bad", format_fail:"bad", abstain_wrong:"warn", abstain_correct:"abst" };
+function drawFilters(){
+  $("filters").innerHTML =
+    "<select id='fprofile' aria-label='profile filter'><option value='all'>all profiles</option>" +
+      D.profileOrder.map(p => "<option value='" + p + "'>" + esc(short(p)) + "</option>").join("") + "</select>" +
+    "<select id='fcls' aria-label='class filter'><option value='all'>both classes</option>" +
+      "<option value='cursor_fragment'>cursor fragments</option><option value='intent_query'>intent queries</option></select>" +
+    OUTS.map(o => "<button class='fchip' data-o='" + o + "' aria-pressed='" + (state.outcome === o) + "'>" + o.replace("_"," ") + "</button>").join("");
+  $("fprofile").value = state.profile; $("fcls").value = state.cls;
+  $("fprofile").onchange = e => { state.profile = e.target.value; state.sel = 0; render(); };
+  $("fcls").onchange = e => { state.cls = e.target.value; state.sel = 0; render(); };
+  for (const b of $("filters").querySelectorAll(".fchip")) {
+    b.onclick = () => { state.outcome = state.outcome === b.dataset.o ? "all" : b.dataset.o; state.sel = 0; render(); };
+  }
+}
+function filtered(){
+  return D.samples.filter(s =>
+    (state.profile === "all" || s.profileId === state.profile) &&
+    (state.outcome === "all" || s.outcome === state.outcome) &&
+    (state.cls === "all" || s.completionClass === state.cls));
+}
+function ghostClass(s){
+  if (s.exact) return "ok";
+  if (s.parsePass === false || s.outcome === "fail" || s.outcome === "format_fail") return "bad";
+  return "";
+}
+function render(){
+  drawFilters();
+  const rows = filtered();
+  $("rowlist").innerHTML = rows.length === 0 ? "<div style='padding:14px;color:var(--muted)'>no samples match</div>" :
+    rows.map((s, idx) =>
+      "<button class='rowitem" + (idx === state.sel ? " sel" : "") + "' data-i='" + idx + "' role='option' aria-selected='" + (idx === state.sel) + "'>" +
+      "<span class='dot' style='background:" + color(s.profileId) + "'></span>" +
+      "<span class='cid'>" + esc(s.caseId) + "</span> " +
+      "<span class='chip " + OUTCLS[s.outcome] + "'>" + s.outcome.replace("_"," ") + "</span>" +
+      "<div class='prev'>" + esc((s.prefix || "").split("\n").pop() || s.prefix) + "</div></button>").join("");
+  for (const b of $("rowlist").querySelectorAll(".rowitem")) {
+    b.onclick = () => { state.sel = Number(b.dataset.i); render(); };
+  }
+  const s = rows[state.sel];
+  if (!s) { $("detail").innerHTML = ""; return; }
+  const chips = [
+    ["exact", s.exact, s.exact ? "good" : "dim"],
+    ["grounded", s.grounded, s.grounded === true ? "good" : s.grounded === false ? "bad" : null],
+    ["parse", s.parsePass, s.parsePass === true ? "good" : s.parsePass === false ? "bad" : null],
+    ["constraints", s.constraintPass, s.constraintPass === true ? "good" : s.constraintPass === false ? "bad" : null],
+  ].filter(c => c[2]).map(c => "<span class='chip " + c[2] + "'>" + c[0] + (c[1] === true ? " ✓" : c[1] === false ? " ✗" : "") + "</span>").join("");
+  const stats = [
+    s.latencyMs !== null ? secs(s.latencyMs) : null,
+    s.completionTokens !== null ? s.completionTokens + " out-tok" : null,
+    s.reasoningChars ? (s.reasoningChars) + " reasoning chars" : null,
+    s.suffixTrimmed ? "suffix-trim " + s.suffixTrimmed : null,
+    s.formatFailure ? "MODEL_FORMAT: " + s.formatFailure : null,
+    s.failureStage ? "stage: " + s.failureStage : null,
+  ].filter(Boolean).map(t => "<span class='chip dim'>" + esc(t) + "</span>").join("");
+  const modelGhost = s.model === "" ?
+      "<span class='empty'>∅ model returned nothing" + (s.expectEmpty ? " — correct: this is a trap episode" : "") + "</span>" :
+      "<span class='ghosttext " + ghostClass(s) + "'>" + esc(s.model) + "</span>";
+  $("detail").innerHTML =
+    "<div style='display:flex;flex-wrap:wrap;gap:8px;align-items:center'>" +
+      "<b class='mono'>" + esc(s.caseId) + "</b>" +
+      "<span class='chip dim'>" + esc(short(s.profileId)) + "</span>" +
+      "<span class='chip " + OUTCLS[s.outcome] + "'>" + s.outcome.replace("_"," ") + "</span>" +
+      "<span class='chip dim'>" + esc(s.completionClass.replace("_"," ")) + " · " + esc(s.dataRole) + "</span>" +
+      (s.expectEmpty ? "<span class='chip abst'>trap: correct answer is empty</span>" : "") +
+    "</div>" +
+    "<h3 style='margin-bottom:6px'>What the user had typed → model's ghost text</h3>" +
+    "<div class='editor'>" + esc(s.prefix) + "<span class='caret'></span>" + modelGhost +
+      (s.suffix ? "<span style='color:var(--muted)'>" + esc(s.suffix) + "</span>" : "") + "</div>" +
+    "<h3 style='margin-bottom:6px'>Gold answer</h3>" +
+    "<div class='editor'>" + (s.gold === "" ? "<span class='empty'>∅ expected empty — the schema cannot answer this</span>" :
+      "<span class='lbl'>canonical insertion</span>" + esc(s.gold)) + "</div>" +
+    (s.rawExcerpt ? "<h3 style='margin-bottom:6px'>Raw model output (format failure — never repaired)</h3><div class='editor'><span class='ghosttext bad'>" + esc(s.rawExcerpt) + "</span></div>" : "") +
+    "<div class='mchips'>" + chips + stats + "</div>";
+}
+render();
+
+// baselines
+{
+  const arms = Object.keys(D.baselines);
+  $("baselines").innerHTML = "<tr><th>arm</th><th>exact</th><th>partial</th><th>abstain ✓</th><th>abstain ✗</th><th>fail</th></tr>" +
+    arms.map(a => { const o = D.baselines[a]; return "<tr><td class='mono'>" + esc(a) + "</td>" +
+      "<td class='num'>" + (o.success || 0) + "</td><td class='num'>" + (o.partial || 0) + "</td>" +
+      "<td class='num'>" + (o.abstain_correct || 0) + "</td><td class='num'>" + (o.abstain_wrong || 0) + "</td>" +
+      "<td class='num'>" + (o.fail || 0) + "</td></tr>"; }).join("");
+  $("paired").innerHTML = "<tr><th>profile</th><th>model-only wins</th><th>baseline-only</th><th>p (exact)</th><th>power</th></tr>" +
+    D.paired.filter(r => r.versus === "B2-catalog").map(r =>
+      "<tr><td>" + esc(short(r.profileId)) + "</td><td class='num'>" + r.modelOnly + "</td><td class='num'>" + r.baselineOnly +
+      "</td><td class='num'>" + r.p.toExponential(1) + "</td><td><span class='chip dim'>" + esc(r.powerLabel || "") + "</span></td></tr>").join("");
+}
+
+// dataset + gates
+$("roles").innerHTML = "<tr><th>role</th><th>episodes</th></tr>" +
+  D.dataset.roles.map(r => "<tr><td class='mono'>" + esc(r.data_role) + "</td><td class='num'>" + r.n + "</td></tr>").join("");
+$("defects").innerHTML = D.dataset.defects.map(d => "<li>" + esc(d) + "</li>").join("");
+$("gates").innerHTML = D.gates.map(g =>
+  "<tr><td>" + esc(g.stage) + "</td><td><span class='chip " +
+  (g.disposition === "PASS" ? "good" : g.disposition.startsWith("PASS") ? "warn" : "bad") + "'>" + esc(g.disposition) + "</span></td>" +
+  "<td>" + esc(g.at.slice(0, 16).replace("T", " ")) + "</td><td style='word-break:break-all'>" + esc(g.key) + "</td></tr>").join("");
+
+// notes + footer
+$("notes").innerHTML = "<div class='eyebrow'>findings</div><h2 style='margin-top:.2em'>What this run established</h2>" +
+  D.notes.map(n => "<div class='note'>" + esc(n) + "</div>").join("");
+$("foot").innerHTML = "Generated " + esc(D.generatedAtUtc.slice(0, 16).replace("T", " ")) + " UTC from run <span class='mono'>" +
+  esc(D.campaign.runId) + "</span> · " + esc(D.campaign.sqlHost) +
+  " · regenerate with <span class='mono'>npm run report:data &amp;&amp; npm run report:html</span> in aidataapps/ghosttype";
+</script>

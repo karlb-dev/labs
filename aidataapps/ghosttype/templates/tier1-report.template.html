@@ -1,0 +1,460 @@
+<title>GhostType Tier-1 Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+:root{
+  --paper:#F4F6F8; --panel:#FFFFFF; --ink:#1B242E; --muted:#5C6B7A; --ghost:#8595A6;
+  --line:#D8DFE6; --accent:#0E7C86; --accent-soft:#0E7C861A;
+  --good:#2E7D4F; --good-soft:#2E7D4F17; --warn:#A8730F; --warn-soft:#A8730F17;
+  --bad:#B23E38; --bad-soft:#B23E3817; --abst:#5B5EA6; --abst-soft:#5B5EA617;
+  --code-bg:#EDF1F4; --sel:#0E7C8626;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#12171D; --panel:#1A2129; --ink:#E4EAF0; --muted:#93A2B1; --ghost:#66788A;
+    --line:#2A3441; --accent:#3FB2BC; --accent-soft:#3FB2BC22;
+    --good:#5CB985; --good-soft:#5CB98520; --warn:#D9A24A; --warn-soft:#D9A24A20;
+    --bad:#E07A72; --bad-soft:#E07A7220; --abst:#9A9DE0; --abst-soft:#9A9DE020;
+    --code-bg:#141B22; --sel:#3FB2BC33;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12171D; --panel:#1A2129; --ink:#E4EAF0; --muted:#93A2B1; --ghost:#66788A;
+  --line:#2A3441; --accent:#3FB2BC; --accent-soft:#3FB2BC22;
+  --good:#5CB985; --good-soft:#5CB98520; --warn:#D9A24A; --warn-soft:#D9A24A20;
+  --bad:#E07A72; --bad-soft:#E07A7220; --abst:#9A9DE0; --abst-soft:#9A9DE020;
+  --code-bg:#141B22; --sel:#3FB2BC33;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',system-ui,sans-serif;
+  margin:0;line-height:1.55;font-size:15px}
+.wrap{max-width:1140px;margin:0 auto;padding:0 24px 96px}
+a{color:var(--accent)}
+h1,h2,h3{text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(30px,4.5vw,44px);font-weight:800;letter-spacing:-.02em;margin:.2em 0 .1em}
+h2{font-size:22px;font-weight:700;margin:2.6em 0 .6em;letter-spacing:-.01em}
+h3{font-size:15px;font-weight:600;margin:1.4em 0 .5em}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);margin-top:44px}
+.sub{color:var(--muted);max-width:68ch}
+.identity{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+.identity span{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);
+  background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 11px}
+mono,.mono{font-family:'JetBrains Mono',monospace}
+.num{font-variant-numeric:tabular-nums;font-family:'JetBrains Mono',monospace}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tablecard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:6px 10px}
+.bar{position:relative;height:6px;background:var(--code-bg);border-radius:3px;min-width:64px;margin-top:5px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:3px;background:var(--accent)}
+.chip{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  border-radius:5px;padding:2px 8px;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.abst{background:var(--abst-soft);color:var(--abst)}
+.chip.dim{background:var(--code-bg);color:var(--muted)}
+.chip.acc{background:var(--accent-soft);color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.card h3{margin-top:0}
+.kpis{display:flex;flex-wrap:wrap;gap:26px;margin:10px 0 2px}
+.kpi .v{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:11px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+/* editor-style sample rendering — the ghost-text motif */
+.editor{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;white-space:pre-wrap;
+  word-break:break-word;overflow-x:auto}
+.editor .caret{display:inline-block;width:2px;height:1.15em;background:var(--accent);
+  vertical-align:text-bottom;margin:0 1px;animation:blink 1.2s steps(1) infinite}
+@media (prefers-reduced-motion: reduce){.editor .caret{animation:none}}
+@keyframes blink{50%{opacity:0}}
+.editor .ghosttext{color:var(--ghost);font-style:italic}
+.editor .ghosttext.ok{color:var(--good);font-style:normal}
+.editor .ghosttext.bad{color:var(--bad)}
+.editor .empty{color:var(--ghost);font-style:italic}
+.editor .lbl{display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);font-style:normal;margin-bottom:4px}
+/* explorer */
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.filters select{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);
+  background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+.fchip{font-family:'JetBrains Mono',monospace;font-size:11.5px;border:1px solid var(--line);
+  background:var(--panel);color:var(--muted);border-radius:99px;padding:5px 12px;cursor:pointer}
+.fchip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.fchip:focus-visible,.rowitem:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.explorer{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;align-items:start}
+@media(max-width:840px){.explorer{grid-template-columns:1fr}}
+.rowlist{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  max-height:640px;overflow-y:auto;padding:6px}
+.rowitem{display:block;width:100%;text-align:left;background:none;border:none;border-radius:8px;
+  padding:9px 11px;cursor:pointer;color:var(--ink);font-family:'Archivo',sans-serif}
+.rowitem:hover{background:var(--code-bg)}
+.rowitem.sel{background:var(--sel)}
+.rowitem .cid{font-family:'JetBrains Mono',monospace;font-size:11.5px}
+.rowitem .prev{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.detail{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;min-height:300px}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.scatterbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.scatterbox svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend b{font-weight:600;color:var(--ink)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:baseline}
+.note{border-left:3px solid var(--accent);background:var(--panel);border-radius:0 8px 8px 0;
+  padding:12px 16px;margin:10px 0;font-size:14px}
+.gatelog{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+.gatelog td{padding:5px 10px}
+footer{margin-top:70px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+.pairbars{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:12.5px}
+.pairbars .pb{height:16px;border-radius:3px;display:flex;align-items:center}
+.pairbars .pb i{height:100%;border-radius:3px}
+.pairbars .pb span{font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:6px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow" style="margin-top:52px">aidataapps · lab 04 · tier-1 mac campaign</div>
+  <h1>GhostType Tier-1 Bench</h1>
+  <p class="sub">Six local model servings replay 588 frozen SQL ghost-text episodes — cursor continuations and
+  intent-comment completions — under one frozen contract: raw-text transport, deterministic decode, pinned
+  ScriptDom parse oracle, and empty output as a first-class abstention. Every number regenerates from the
+  campaign database; every sample below is a real request from the run.</p>
+  <div class="identity" id="identity"></div>
+
+  <div class="eyebrow">verdict</div>
+  <h2 style="margin-top:.2em">Scoreboard</h2>
+  <div class="tablecard"><table id="scoreboard"></table></div>
+  <p class="sub" style="font-size:13.5px;margin-top:10px"><b>Exact / offer</b> counts a completion only when the model actually
+  offered one — abstentions are scored separately as trap behavior (101 of 588 episodes are traps where the schema
+  cannot answer the request and the correct output is nothing). No profile beat the deterministic floor on the
+  <i>bundled</i> headline metric; the per-offer and trap columns are where the models separate.</p>
+
+  <div class="eyebrow">thesis</div>
+  <h2 style="margin-top:.2em">Quality is priced in seconds</h2>
+  <div class="scatterbox">
+    <div id="scatter"></div>
+    <div class="legend" id="scatterlegend"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <h3>Same model, thinking on vs off — Gemma 4 26B-A4B</h3>
+      <div class="pairbars" id="gemmapair"></div>
+      <p class="sub" style="font-size:13px;margin-bottom:0">Reasoning bought no answer quality and cost 20–30×
+      latency plus an unbounded-reasoning pathology on 18% of rows — but it did buy abstention discipline.
+      On this workload, thinking is a <i>trust</i> feature, not a competence feature.</p>
+    </div>
+    <div class="card">
+      <h3>Trap discipline — 101 should-abstain episodes</h3>
+      <div class="pairbars" id="trapbars"></div>
+      <p class="sub" style="font-size:13px;margin-bottom:0">A ghost-text engine that invents SQL when the schema
+      can't answer is worse than one that stays silent. Muse is the only profile that reliably holds its tongue.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">profiles</div>
+  <h2 style="margin-top:.2em">Per-profile detail</h2>
+  <div class="grid2" id="profilecards"></div>
+
+  <div class="eyebrow">evidence</div>
+  <h2 style="margin-top:.2em">Sample explorer — real inputs, real outputs</h2>
+  <p class="sub">Curated evenly across profiles and outcome categories, straight from the campaign database.
+  The editor pane shows what the user had typed (▎ marks the cursor), the model's completion as ghost text,
+  and the gold answer beneath it.</p>
+  <div class="filters" id="filters"></div>
+  <div class="explorer">
+    <div class="rowlist" id="rowlist" role="listbox" aria-label="samples"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <div class="grid2" style="margin-top:40px">
+    <div class="card">
+      <h3>Deterministic baselines (H1 floor)</h3>
+      <div style="overflow-x:auto"><table id="baselines"></table></div>
+      <p class="sub" style="font-size:13px">Best lookup engine: 4 of 487 answerable episodes exact.
+      The dataset cannot be gamed by retrieval — model wins are real work.</p>
+    </div>
+    <div class="card">
+      <h3>Paired tests vs the B2 grammar-aware baseline</h3>
+      <div style="overflow-x:auto"><table id="paired"></table></div>
+      <p class="sub" style="font-size:13px">Exact McNemar on normalized-exact, all 588 rows. Power labels are
+      provisional pending the E-1 simulation.</p>
+    </div>
+  </div>
+
+  <div class="eyebrow">provenance</div>
+  <h2 style="margin-top:.2em">Dataset, gates, and scars</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Dataset v2 · 588 episodes</h3>
+      <div style="overflow-x:auto"><table id="roles"></table></div>
+      <h3>Package defects caught by the gates</h3>
+      <ul class="sub" style="font-size:13px;padding-left:18px" id="defects"></ul>
+    </div>
+    <div class="card">
+      <h3>Evidence event log</h3>
+      <div style="overflow-x:auto;max-height:420px;overflow-y:auto"><table class="gatelog" id="gates"></table></div>
+    </div>
+  </div>
+
+  <div id="notes"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const D = "__GHOSTTYPE_DATA__";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = (v) => v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%";
+const secs = (ms) => ms === null || ms === undefined ? "—" : ms >= 10000 ? (ms/1000).toFixed(0) + "s" : (ms/1000).toFixed(1) + "s";
+
+const PCOLORS = {
+  "muse-glimmer-30b-mlx":"#8A5CC0","qwen-3.8-27b-mlx":"#0E7C86","gemma-4-26b-a4b-nothink-mlx":"#2E7D4F",
+  "gemma-4-e4b-mlx":"#7FA3C0","gemma-4-26b-a4b-mlx":"#A8730F","olmo-3.1-32b-mlx":"#B23E38"};
+const PSHORT = {
+  "muse-glimmer-30b-mlx":"Muse 30B +DFlash","qwen-3.8-27b-mlx":"Qwen 3.8-27B (no-think)",
+  "gemma-4-26b-a4b-nothink-mlx":"Gemma 26B (no-think)","gemma-4-e4b-mlx":"Gemma E4B",
+  "gemma-4-26b-a4b-mlx":"Gemma 26B (thinking)","olmo-3.1-32b-mlx":"OLMo 3.1-32B"};
+const short = (p) => PSHORT[p] || p;
+const color = (p) => PCOLORS[p] || "var(--accent)";
+
+// identity
+$("identity").innerHTML = [
+  "run " + D.campaign.runId, D.campaign.parser, D.campaign.platform.split(" — ")[0],
+  ...D.campaign.frozenRules.slice(0,4)
+].map(t => "<span>" + esc(t) + "</span>").join("");
+
+// scoreboard
+{
+  const rows = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    const cur = p.classes.cursor_fragment, int_ = p.classes.intent_query;
+    const curPo = cur.exactPerOffer, intPo = int_.exactPerOffer;
+    const trapPct = p.traps.correct / p.traps.total;
+    const parseBad = cur.parseBad + int_.parseBad;
+    return { pid, p, curPo, intPo, trapPct, parseBad };
+  });
+  const maxPo = Math.max(...rows.map(r => r.curPo || 0));
+  $("scoreboard").innerHTML =
+    "<tr><th>profile</th><th>mode</th><th>cursor exact/offer</th><th>intent exact/offer</th>" +
+    "<th>traps correct</th><th>parse-bad offers</th><th>latency p50 · p95</th><th>truncated</th></tr>" +
+    rows.map(r => {
+      const c = r.p.classes.cursor_fragment, i = r.p.classes.intent_query;
+      return "<tr>" +
+      "<td><span class='dot' style='background:" + color(r.pid) + "'></span><b>" + esc(short(r.pid)) + "</b>" +
+        "<div class='mono' style='font-size:10.5px;color:var(--muted)'>" + esc(r.p.servedModelId) + "</div></td>" +
+      "<td><span class='chip dim'>" + esc(r.p.reasoningMode) + "</span></td>" +
+      "<td class='num'>" + pct(r.curPo) + " <span style='color:var(--muted);font-size:11px'>(" + c.exact + "/" + c.offered + ")</span>" +
+        "<div class='bar'><i style='width:" + (100 * (r.curPo || 0) / maxPo) + "%;background:" + color(r.pid) + "'></i></div></td>" +
+      "<td class='num'>" + pct(r.intPo) + " <span style='color:var(--muted);font-size:11px'>(" + i.exact + "/" + i.offered + ")</span></td>" +
+      "<td class='num'><span class='chip " + (r.trapPct > .8 ? "good" : r.trapPct > .4 ? "warn" : "bad") + "'>" +
+        r.p.traps.correct + "/" + r.p.traps.total + "</span></td>" +
+      "<td class='num'><span class='chip " + (r.parseBad === 0 ? "good" : r.parseBad < 25 ? "warn" : "bad") + "'>" + r.parseBad + "</span></td>" +
+      "<td class='num'>" + secs(r.p.latencyP50) + " · " + secs(r.p.latencyP95) + "</td>" +
+      "<td class='num'>" + (r.p.truncations ? "<span class='chip bad'>" + r.p.truncations + "</span>" : "<span class='chip dim'>0</span>") + "</td>" +
+      "</tr>";
+    }).join("");
+}
+
+// scatter: latency p50 (log x) vs cursor exact-per-offer
+{
+  const pts = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    return { pid, x: p.latencyP50, y: p.classes.cursor_fragment.exactPerOffer || 0 };
+  }).filter(p => p.x);
+  const W = 900, H = 380, L = 56, R = 24, T = 18, B = 46;
+  const xmin = 1000, xmax = 80000;
+  const xs = (v) => L + (Math.log10(v) - 3) / (Math.log10(xmax) - 3) * (W - L - R);
+  const ymax = 0.5;
+  const ys = (v) => T + (1 - v / ymax) * (H - T - B);
+  let svg = "<svg viewBox='0 0 " + W + " " + H + "' role='img' aria-label='latency versus cursor exact rate'>";
+  for (const g of [0, .1, .2, .3, .4, .5]) {
+    svg += "<line x1='" + L + "' x2='" + (W-R) + "' y1='" + ys(g) + "' y2='" + ys(g) + "' stroke='var(--line)' stroke-width='1'/>" +
+      "<text x='" + (L-8) + "' y='" + (ys(g)+4) + "' text-anchor='end' font-size='11' fill='var(--muted)' font-family='JetBrains Mono'>" + (g*100) + "%</text>";
+  }
+  for (const t of [1000, 2000, 5000, 10000, 20000, 60000]) {
+    svg += "<line y1='" + T + "' y2='" + (H-B) + "' x1='" + xs(t) + "' x2='" + xs(t) + "' stroke='var(--line)' stroke-width='1' stroke-dasharray='2 4'/>" +
+      "<text y='" + (H-B+18) + "' x='" + xs(t) + "' text-anchor='middle' font-size='11' fill='var(--muted)' font-family='JetBrains Mono'>" + (t/1000) + "s</text>";
+  }
+  svg += "<rect x='" + L + "' y='" + T + "' width='" + (xs(2500)-L) + "' height='" + (H-T-B) + "' fill='var(--good)' opacity='0.06'/>";
+  svg += "<text x='" + (L+6) + "' y='" + (T+16) + "' font-size='11' fill='var(--good)' font-family='JetBrains Mono'>ghost-text latency range</text>";
+  svg += "<line x1='" + L + "' x2='" + (W-R) + "' y1='" + ys(0.36*0.5/0.5) + "' y2='" + ys(0.36*0)+ "' stroke='none'/>";
+  for (const p of pts) {
+    svg += "<circle cx='" + xs(p.x) + "' cy='" + ys(p.y) + "' r='11' fill='" + color(p.pid) + "' opacity='0.9'/>" +
+      "<text x='" + xs(p.x) + "' y='" + (ys(p.y) - 17) + "' text-anchor='middle' font-size='12' font-weight='600' fill='var(--ink)' font-family='Archivo'>" + esc(short(p.pid)) + "</text>" +
+      "<text x='" + xs(p.x) + "' y='" + (ys(p.y) + 30) + "' text-anchor='middle' font-size='10.5' fill='var(--muted)' font-family='JetBrains Mono'>" + pct(p.y) + " · " + secs(p.x) + "</text>";
+  }
+  svg += "<text x='" + ((L+W-R)/2) + "' y='" + (H-6) + "' text-anchor='middle' font-size='11.5' fill='var(--muted)' font-family='Archivo'>median row latency (log scale) →</text>";
+  svg += "</svg>";
+  $("scatter").innerHTML = svg;
+  $("scatterlegend").innerHTML = "<span><b>Y:</b> exact-match rate when a completion was offered (cursor episodes)</span>" +
+    "<span><b>Shaded:</b> plausibly acceptable while-you-type latency (&le;2.5s) — only Gemma no-think lives there</span>";
+}
+
+// gemma pair + traps
+{
+  const bar = (label, val, max, colorVar, text) =>
+    "<div style='color:var(--muted)'>" + esc(label) + "</div>" +
+    "<div class='pb'><i style='width:" + Math.max(2, 100*val/max) + "%;background:" + colorVar + "'></i><span>" + esc(text) + "</span></div>";
+  const gt = D.profiles["gemma-4-26b-a4b-mlx"], gn = D.profiles["gemma-4-26b-a4b-nothink-mlx"];
+  if (gt && gn) {
+    $("gemmapair").innerHTML =
+      bar("cursor exact — thinking", gt.classes.cursor_fragment.exact, 50, color("gemma-4-26b-a4b-mlx"), gt.classes.cursor_fragment.exact + "") +
+      bar("cursor exact — no-think", gn.classes.cursor_fragment.exact, 50, color("gemma-4-26b-a4b-nothink-mlx"), gn.classes.cursor_fragment.exact + "") +
+      bar("traps correct — thinking", gt.traps.correct, 101, color("gemma-4-26b-a4b-mlx"), gt.traps.correct + "/101") +
+      bar("traps correct — no-think", gn.traps.correct, 101, color("gemma-4-26b-a4b-nothink-mlx"), gn.traps.correct + "/101") +
+      bar("latency p50 — thinking", Math.log10(gt.latencyP50), 5, color("gemma-4-26b-a4b-mlx"), secs(gt.latencyP50)) +
+      bar("latency p50 — no-think", Math.log10(gn.latencyP50), 5, color("gemma-4-26b-a4b-nothink-mlx"), secs(gn.latencyP50)) +
+      bar("unbounded reasoning", gt.truncations, 588, "var(--bad)", gt.truncations + "/588 rows");
+  }
+  $("trapbars").innerHTML = D.profileOrder.map(pid => {
+    const p = D.profiles[pid];
+    return bar(short(pid), p.traps.correct, 101, color(pid), p.traps.correct + "/101");
+  }).join("");
+}
+
+// profile cards
+$("profilecards").innerHTML = D.profileOrder.map(pid => {
+  const p = D.profiles[pid];
+  const c = p.classes.cursor_fragment, i = p.classes.intent_query;
+  const o = p.outcomes;
+  return "<div class='card'>" +
+    "<h3><span class='dot' style='background:" + color(pid) + "'></span>" + esc(short(pid)) + "</h3>" +
+    "<div class='mono' style='font-size:11px;color:var(--muted);margin-top:-6px'>" + esc(p.servedModelId) +
+      " · " + esc(p.quantization || "") + " · port gate " + esc(p.portGate || "—") + " · " + esc(p.decodeLabel) + "</div>" +
+    "<div class='kpis'>" +
+      "<div class='kpi'><div class='v'>" + pct(c.exactPerOffer) + "</div><div class='l'>cursor exact/offer</div></div>" +
+      "<div class='kpi'><div class='v'>" + pct(i.exactPerOffer) + "</div><div class='l'>intent exact/offer</div></div>" +
+      "<div class='kpi'><div class='v'>" + p.traps.correct + "/" + p.traps.total + "</div><div class='l'>traps</div></div>" +
+      "<div class='kpi'><div class='v'>" + secs(p.latencyP50) + "</div><div class='l'>latency p50</div></div>" +
+    "</div>" +
+    "<div class='mchips'>" +
+      "<span class='chip good'>success " + (o.success || 0) + "</span>" +
+      "<span class='chip acc'>partial " + (o.partial || 0) + "</span>" +
+      "<span class='chip abst'>abstain ✓ " + (o.abstain_correct || 0) + "</span>" +
+      "<span class='chip warn'>abstain ✗ " + (o.abstain_wrong || 0) + "</span>" +
+      "<span class='chip bad'>fail " + (o.fail || 0) + "</span>" +
+      (o.format_fail ? "<span class='chip bad'>format " + o.format_fail + "</span>" : "") +
+      (p.truncations ? "<span class='chip bad'>unbounded " + p.truncations + "</span>" : "") +
+    "</div>" +
+    "<div class='mono' style='font-size:11.5px;color:var(--muted)'>grounded (intent) " + i.grounded + "/" + i.rows +
+      " · parse-clean offers " + ((c.parseClean||0)+(i.parseClean||0)) + " vs bad " + (c.parseBad+i.parseBad) +
+      (p.tokensPerSecondMedian ? " · " + p.tokensPerSecondMedian + " tok/s" : "") +
+      (p.reasoningCharsMedian ? " · median reasoning " + p.reasoningCharsMedian + " chars" : "") + "</div>" +
+  "</div>";
+}).join("");
+
+// ---------- explorer ----------
+const state = { profile: "all", outcome: "all", cls: "all", sel: 0 };
+const OUTS = ["success","partial","fail","format_fail","abstain_wrong","abstain_correct"];
+const OUTCLS = { success:"good", partial:"acc", fail:"bad", format_fail:"bad", abstain_wrong:"warn", abstain_correct:"abst" };
+function drawFilters(){
+  $("filters").innerHTML =
+    "<select id='fprofile' aria-label='profile filter'><option value='all'>all profiles</option>" +
+      D.profileOrder.map(p => "<option value='" + p + "'>" + esc(short(p)) + "</option>").join("") + "</select>" +
+    "<select id='fcls' aria-label='class filter'><option value='all'>both classes</option>" +
+      "<option value='cursor_fragment'>cursor fragments</option><option value='intent_query'>intent queries</option></select>" +
+    OUTS.map(o => "<button class='fchip' data-o='" + o + "' aria-pressed='" + (state.outcome === o) + "'>" + o.replace("_"," ") + "</button>").join("");
+  $("fprofile").value = state.profile; $("fcls").value = state.cls;
+  $("fprofile").onchange = e => { state.profile = e.target.value; state.sel = 0; render(); };
+  $("fcls").onchange = e => { state.cls = e.target.value; state.sel = 0; render(); };
+  for (const b of $("filters").querySelectorAll(".fchip")) {
+    b.onclick = () => { state.outcome = state.outcome === b.dataset.o ? "all" : b.dataset.o; state.sel = 0; render(); };
+  }
+}
+function filtered(){
+  return D.samples.filter(s =>
+    (state.profile === "all" || s.profileId === state.profile) &&
+    (state.outcome === "all" || s.outcome === state.outcome) &&
+    (state.cls === "all" || s.completionClass === state.cls));
+}
+function ghostClass(s){
+  if (s.exact) return "ok";
+  if (s.parsePass === false || s.outcome === "fail" || s.outcome === "format_fail") return "bad";
+  return "";
+}
+function render(){
+  drawFilters();
+  const rows = filtered();
+  $("rowlist").innerHTML = rows.length === 0 ? "<div style='padding:14px;color:var(--muted)'>no samples match</div>" :
+    rows.map((s, idx) =>
+      "<button class='rowitem" + (idx === state.sel ? " sel" : "") + "' data-i='" + idx + "' role='option' aria-selected='" + (idx === state.sel) + "'>" +
+      "<span class='dot' style='background:" + color(s.profileId) + "'></span>" +
+      "<span class='cid'>" + esc(s.caseId) + "</span> " +
+      "<span class='chip " + OUTCLS[s.outcome] + "'>" + s.outcome.replace("_"," ") + "</span>" +
+      "<div class='prev'>" + esc((s.prefix || "").split("\n").pop() || s.prefix) + "</div></button>").join("");
+  for (const b of $("rowlist").querySelectorAll(".rowitem")) {
+    b.onclick = () => { state.sel = Number(b.dataset.i); render(); };
+  }
+  const s = rows[state.sel];
+  if (!s) { $("detail").innerHTML = ""; return; }
+  const chips = [
+    ["exact", s.exact, s.exact ? "good" : "dim"],
+    ["grounded", s.grounded, s.grounded === true ? "good" : s.grounded === false ? "bad" : null],
+    ["parse", s.parsePass, s.parsePass === true ? "good" : s.parsePass === false ? "bad" : null],
+    ["constraints", s.constraintPass, s.constraintPass === true ? "good" : s.constraintPass === false ? "bad" : null],
+  ].filter(c => c[2]).map(c => "<span class='chip " + c[2] + "'>" + c[0] + (c[1] === true ? " ✓" : c[1] === false ? " ✗" : "") + "</span>").join("");
+  const stats = [
+    s.latencyMs !== null ? secs(s.latencyMs) : null,
+    s.completionTokens !== null ? s.completionTokens + " out-tok" : null,
+    s.reasoningChars ? (s.reasoningChars) + " reasoning chars" : null,
+    s.suffixTrimmed ? "suffix-trim " + s.suffixTrimmed : null,
+    s.formatFailure ? "MODEL_FORMAT: " + s.formatFailure : null,
+    s.failureStage ? "stage: " + s.failureStage : null,
+  ].filter(Boolean).map(t => "<span class='chip dim'>" + esc(t) + "</span>").join("");
+  const modelGhost = s.model === "" ?
+      "<span class='empty'>∅ model returned nothing" + (s.expectEmpty ? " — correct: this is a trap episode" : "") + "</span>" :
+      "<span class='ghosttext " + ghostClass(s) + "'>" + esc(s.model) + "</span>";
+  $("detail").innerHTML =
+    "<div style='display:flex;flex-wrap:wrap;gap:8px;align-items:center'>" +
+      "<b class='mono'>" + esc(s.caseId) + "</b>" +
+      "<span class='chip dim'>" + esc(short(s.profileId)) + "</span>" +
+      "<span class='chip " + OUTCLS[s.outcome] + "'>" + s.outcome.replace("_"," ") + "</span>" +
+      "<span class='chip dim'>" + esc(s.completionClass.replace("_"," ")) + " · " + esc(s.dataRole) + "</span>" +
+      (s.expectEmpty ? "<span class='chip abst'>trap: correct answer is empty</span>" : "") +
+    "</div>" +
+    "<h3 style='margin-bottom:6px'>What the user had typed → model's ghost text</h3>" +
+    "<div class='editor'>" + esc(s.prefix) + "<span class='caret'></span>" + modelGhost +
+      (s.suffix ? "<span style='color:var(--muted)'>" + esc(s.suffix) + "</span>" : "") + "</div>" +
+    "<h3 style='margin-bottom:6px'>Gold answer</h3>" +
+    "<div class='editor'>" + (s.gold === "" ? "<span class='empty'>∅ expected empty — the schema cannot answer this</span>" :
+      "<span class='lbl'>canonical insertion</span>" + esc(s.gold)) + "</div>" +
+    (s.rawExcerpt ? "<h3 style='margin-bottom:6px'>Raw model output (format failure — never repaired)</h3><div class='editor'><span class='ghosttext bad'>" + esc(s.rawExcerpt) + "</span></div>" : "") +
+    "<div class='mchips'>" + chips + stats + "</div>";
+}
+render();
+
+// baselines
+{
+  const arms = Object.keys(D.baselines);
+  $("baselines").innerHTML = "<tr><th>arm</th><th>exact</th><th>partial</th><th>abstain ✓</th><th>abstain ✗</th><th>fail</th></tr>" +
+    arms.map(a => { const o = D.baselines[a]; return "<tr><td class='mono'>" + esc(a) + "</td>" +
+      "<td class='num'>" + (o.success || 0) + "</td><td class='num'>" + (o.partial || 0) + "</td>" +
+      "<td class='num'>" + (o.abstain_correct || 0) + "</td><td class='num'>" + (o.abstain_wrong || 0) + "</td>" +
+      "<td class='num'>" + (o.fail || 0) + "</td></tr>"; }).join("");
+  $("paired").innerHTML = "<tr><th>profile</th><th>model-only wins</th><th>baseline-only</th><th>p (exact)</th><th>power</th></tr>" +
+    D.paired.filter(r => r.versus === "B2-catalog").map(r =>
+      "<tr><td>" + esc(short(r.profileId)) + "</td><td class='num'>" + r.modelOnly + "</td><td class='num'>" + r.baselineOnly +
+      "</td><td class='num'>" + r.p.toExponential(1) + "</td><td><span class='chip dim'>" + esc(r.powerLabel || "") + "</span></td></tr>").join("");
+}
+
+// dataset + gates
+$("roles").innerHTML = "<tr><th>role</th><th>episodes</th></tr>" +
+  D.dataset.roles.map(r => "<tr><td class='mono'>" + esc(r.data_role) + "</td><td class='num'>" + r.n + "</td></tr>").join("");
+$("defects").innerHTML = D.dataset.defects.map(d => "<li>" + esc(d) + "</li>").join("");
+$("gates").innerHTML = D.gates.map(g =>
+  "<tr><td>" + esc(g.stage) + "</td><td><span class='chip " +
+  (g.disposition === "PASS" ? "good" : g.disposition.startsWith("PASS") ? "warn" : "bad") + "'>" + esc(g.disposition) + "</span></td>" +
+  "<td>" + esc(g.at.slice(0, 16).replace("T", " ")) + "</td><td style='word-break:break-all'>" + esc(g.key) + "</td></tr>").join("");
+
+// notes + footer
+$("notes").innerHTML = "<div class='eyebrow'>findings</div><h2 style='margin-top:.2em'>What this run established</h2>" +
+  D.notes.map(n => "<div class='note'>" + esc(n) + "</div>").join("");
+$("foot").innerHTML = "Generated " + esc(D.generatedAtUtc.slice(0, 16).replace("T", " ")) + " UTC from run <span class='mono'>" +
+  esc(D.campaign.runId) + "</span> · " + esc(D.campaign.sqlHost) +
+  " · regenerate with <span class='mono'>npm run report:data &amp;&amp; npm run report:html</span> in aidataapps/ghosttype";
+</script>

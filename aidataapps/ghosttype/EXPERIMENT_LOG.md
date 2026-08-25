@@ -349,3 +349,19 @@
   (muse-nothink: no template switch). Remaining for Colab lift-and-shift
   (not local): multi-user serving campaigns, M0/M2/R0 arm constructions,
   guided-JSON transport cell, execution oracles.
+
+- 2026-08-24 — Tier-1 HTML report pipeline (Lab 03 pattern): scripts/
+  export-report-data.ts pulls the whole campaign (per-profile metrics,
+  per-class per-offer stats, traps, baselines, paired tests, dataset/
+  oracle summary, evidence log) plus 120 curated real request samples
+  (prefix/gold/model output/metric bits/latency/reasoning size, spread
+  evenly across profile x outcome) into reports/tier1-report-data.json;
+  scripts/build-tier1-html-report.ts renders it into templates/
+  tier1-report.template.html -> standalone reports/ghosttype-tier1-
+  report.html + artifact fragment. Interactive sample explorer renders
+  episodes editor-style (typed prefix, cursor caret, model completion as
+  ghost text, gold beneath). Colab regenerates the same report from its
+  own DB via npm run report:data && report:html. Published as artifact
+  1a1d263d-e866-40fc-ace1-b0f3b0c24439. Bug worth remembering:
+  String.replace with a raw JSON payload expands $-patterns ($' etc.) —
+  injection now uses a replacement callback.

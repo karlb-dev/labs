@@ -30,7 +30,9 @@
     "db:bacpac": "./scripts/export-database.sh bacpac",
     "run:archive": "node --import tsx scripts/archive-run.ts",
     "repro": "./repro.sh",
-    "metrics:compute": "node --import tsx scripts/compute-metrics.ts"
+    "metrics:compute": "node --import tsx scripts/compute-metrics.ts",
+    "report:data": "node --import tsx scripts/export-report-data.ts",
+    "report:html": "node --import tsx scripts/build-tier1-html-report.ts"
   },
   "engines": {
     "node": ">=20.19"
