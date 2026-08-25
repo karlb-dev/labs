@@ -298,3 +298,22 @@
   100-row checkpoint, stop-if-failing, full 588 otherwise. Either
   outcome is informative: quality held = thinking was overhead; quality
   collapsed = measured value of reasoning on the same model.
+
+- 2026-08-24 — Muse campaign CLOSED (muse-glimmer-30b-mlx, 588/588
+  terminal, DFlash drafter on, non-deterministic-decode label). Final:
+  42 exact / 232 partial / 93 of 101 traps correct / 147 wrong abstains /
+  74 fail; ZERO truncations, ZERO parse-bad offers (only profile at 0).
+  Cross-profile per-offer exact (answerable rows): cursor Muse 33/77 =
+  42.9% best (Qwen 46/127 = 36.2%, E4B 27.8%, Gemma-think 25.0%, OLMo
+  11.9%); intent Muse 13/263 = 4.9% best. Trap behavior 92% vs next-best
+  63%. The flaw is recall: it wrongly abstains on ~30% of answerable
+  rows. Latency worst: avg 62.6s/row (~95% reasoning time). Verdict:
+  quality/trust leader, latency-disqualified for cursor ghost text,
+  candidate intent-mode specialist behind an abstention-threshold tune.
+  Muse-nothink gates (pre-registered db0d89ee): gate 1 PASS (quality
+  leader confirmed); gate 2 FAIL — mlx_vlm 0.6.15 Muse template ignores
+  chat_template_kwargs enable_thinking/thinking/reasoning_effort and
+  /no_think (system and inline): reasoning_content fills regardless.
+  Muse-nothink pass SKIPPED per pre-registration; a thinking-off Muse
+  would need template surgery or a different serving — logged as Tier-2
+  candidate, not run here.

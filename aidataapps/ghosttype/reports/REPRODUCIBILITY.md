@@ -1,6 +1,6 @@
 # GhostType REPRODUCIBILITY (Tier 1)
 
-run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-24T16:09:28.978Z · lab: aidataapps/ghosttype (Mac local campaign)
+run: `ghosttype-cpu-dev-20260823T213801Z` · generated 2026-08-25T02:28:14.592Z · lab: aidataapps/ghosttype (Mac local campaign)
 
 > Regenerated from GhostTypeControl by `npm run reports`. The database is the source of record.
 
