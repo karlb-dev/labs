@@ -32,8 +32,8 @@ Last updated: 2026-08-23 (update at every stage boundary and before/after long l
 | GT-5 deterministic baselines | DONE — B0–B4 scored in eval.row_scores; H1 floor: max 4/487 exact |
 | GT-7 replay runner + extraction | DONE — E4B campaign complete 588/588 (H1 not supported for 4B vehicle; see EXPERIMENT_LOG 2026-08-24) |
 | Port gates (4 MLX profiles) | RUNNING (background; canaries + determinism per profile) |
-| Mac quality campaign | IN PROGRESS — e4b DONE, qwen DONE, gemma-26b DONE (thinking-on; 18% reasoning-unbounded), olmo RUNNING, muse phase-1 RUNNING (100-row slice, 8K allowance, checkpoint per protocol); then FINAL slots: (1) gemma-4-26b-a4b-nothink (100-row checkpoint, stop if failing badly); (2) CONDITIONAL muse-nothink — only if Muse reasoning-on ends as quality leader AND :8021 canary shows a working enable_thinking=false switch (EXPERIMENT_LOG db0d89ee) |
-| Scoring + reports + repro | TOOLING DONE — metrics:compute, reports (7 Tier-1 docs), repro.sh rows, db:backup all live; final numbers land as campaigns complete |
+| Mac quality campaign | IN PROGRESS — e4b DONE, qwen DONE, gemma-26b DONE (thinking-on; 18% reasoning-unbounded), ALL SIX CAMPAIGNS TERMINAL: e4b, qwen, gemma-think, olmo, muse, gemma-nothink (muse-nothink skipped: gate 2 failed, no template switch) |
+| Scoring + reports + repro | DONE — final metrics/claims/reports regenerated; repro.sh --mode rows PASS; Tier-1 mac campaign CLOSED (see EXPERIMENT_LOG closeout entry) |
 
 ## Next command
 

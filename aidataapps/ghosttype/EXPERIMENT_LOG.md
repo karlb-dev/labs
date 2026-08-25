@@ -338,3 +338,14 @@
   (cursor per-offer 36.2% vs 26.3%) at 5x the latency; both have weak
   trap behavior. Product read: Gemma-nothink is the only profile in
   plausible ghost-text latency range (1.5-2.5s) on this hardware.
+
+- 2026-08-24 — TIER-1 MAC CAMPAIGN CLOSEOUT. repro.sh --mode rows PASS
+  (migrations, import with 588 hash re-verification, all GT-1 gates,
+  catalog snapshots, parse oracle, baselines B0-B4, metrics, 21-test
+  unit suite reproduced end-to-end). Six profile campaigns terminal
+  (3,528 model requests + 2,940 baseline rows scored): e4b, qwen,
+  gemma-think, olmo, muse, gemma-nothink. Every planned cell has a
+  terminal disposition; deferrals and skips are logged with reasons
+  (muse-nothink: no template switch). Remaining for Colab lift-and-shift
+  (not local): multi-user serving campaigns, M0/M2/R0 arm constructions,
+  guided-JSON transport cell, execution oracles.
